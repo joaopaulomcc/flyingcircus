@@ -9,6 +9,7 @@ scipy = "*"
 matplotlib = "*"
 pylint = "*"
 "pyside2" = "*"
+jupyter = "*"
 
 [dev-packages]
 "pep8" = "*"
