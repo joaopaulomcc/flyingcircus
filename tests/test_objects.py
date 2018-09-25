@@ -1,6 +1,8 @@
+import numpy as np
 from context import src
 
 from src import objects as obj
+
 
 def test_wing():
 
@@ -14,7 +16,7 @@ def test_wing():
     position = [0, 0, 0]
 
     simple_rectangular = obj.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
-                                 incidence, torsion, position)
+                                  incidence, torsion, position)
 
     print(f"area: {simple_rectangular.area}")
     print(f"AR: {simple_rectangular.AR}")
@@ -34,6 +36,27 @@ def test_wing():
     print(f"tip_chord: {simple_rectangular.tip_chord}")
 
 
+def test_panel():
+    x = np.array([0, 2])
+    y = np.array([0, 2])
+    xx, yy = np.meshgrid(x, y, indexing="ij")
+    zz = np.zeros((2, 2))
+
+    target_point = [1, 1, 0]
+    circulation = 1
+    infinity = 25
+
+    P = obj.Panel(xx, yy, zz)
+    induced_velocity, wake_induced_velocity = P.hs_induced_velocity(target_point, circulation, infinity)
+
+    print(f"Vector AC: {P.AC}")
+    print(f"Vector BD: {P.BD}")
+    print(f"Vector n: {P.n}")
+    print(f"Area n: {P.area}")
+    print(f"Collocation Point n: {P.col_point}")
+    print(f"induced_velocity: {induced_velocity}")
+    print(f"wake_induced_velocity: {wake_induced_velocity}")
+
 if __name__ == "__main__":
 
     print()
@@ -41,4 +64,4 @@ if __name__ == "__main__":
     print("= Testing objects module =")
     print("============================")
     print()
-    test_wing()
+    test_panel()

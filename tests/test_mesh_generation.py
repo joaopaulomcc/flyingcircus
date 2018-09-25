@@ -13,9 +13,9 @@ def test_generate_mesh():
 
     area = 20
     aspect_ratio = 5
-    taper_ratio = 0.5
-    sweep_quarter_chord = 0
-    dihedral = 5
+    taper_ratio = 0.66
+    sweep_quarter_chord = 25
+    dihedral = 25
     incidence = 0
     torsion = 0
     position = [0, 0, 0]
@@ -24,13 +24,13 @@ def test_generate_mesh():
                                   incidence, torsion, position)
 
     wing = simple_rectangular
-    n_semi_wingspam_panels = 6
+    n_semi_wingspam_panels = 5
     n_chord_panels = 4
     wingspam_discretization_type = "linear"
     chord_discretization_type = "linear"
 
     xx, yy, zz = msh.generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
-                      wingspam_discretization_type, chord_discretization_type)
+                                   wingspam_discretization_type, chord_discretization_type)
 
 
     fig = plt.figure()

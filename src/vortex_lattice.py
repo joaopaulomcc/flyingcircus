@@ -91,17 +91,18 @@ def vortex_ring(vertex_coordinates, target_point, circulation):
     gamma = circulation
 
     induced_velocity = np.array([0.0, 0.0, 0.0])
+    n_points = np.shape(vertex_array)[1]
 
-    for i in range(len(vertex_array)):
+    for i in range(n_points):
 
         # If the point is not the last vertex, connects it to the next vertex
-        if i != len(vertex_array) - 1:
-            Q = vortex_line(vertex_array[i, :], vertex_array[i + 1,:], P, gamma)
+        if i != n_points - 1:
+            Q = vortex_line(vertex_array[:, i], vertex_array[:, i + 1], P, gamma)
             induced_velocity = induced_velocity + Q
 
         # If the point is the last vertex, connects it to the first vertex
         else:
-            Q = vortex_line(vertex_array[i, :], vertex_array[0, :], P, gamma)
+            Q = vortex_line(vertex_array[:, i], vertex_array[:, 0], P, gamma)
             induced_velocity = induced_velocity + Q
 
     return induced_velocity
@@ -116,7 +117,7 @@ def vortex_horseshoe(vertex_coordinates, target_point, circulation):
 
     Args:
     vertex_coordinates 4 x (float, float, float): tupple or array with x, y and z coordinates of the
-                                                  ring vertex. Each line contains one point and the
+                                                  ring vertex. Each column contains one point and the
                                                   order of the vertex defines the direction of the
                                                   circulation
 
@@ -137,16 +138,17 @@ def vortex_horseshoe(vertex_coordinates, target_point, circulation):
     induced_velocity = np.array([0.0, 0.0, 0.0])
     wake_induced_velocity = np.array([0.0, 0.0, 0.0])
 
-    for i in range(len(vertex_array) - 1):
+    n_points = np.shape(vertex_array)[1]
+    for i in range(n_points - 1):
 
         # If the vortex segment doesn't belong to the wake
-        if (i != 0) and (i != len(vertex_array) - 2) :
-            Q = vortex_line(vertex_array[i, :], vertex_array[i + 1,:], P, gamma)
+        if (i != 0) and (i != n_points - 2):
+            Q = vortex_line(vertex_array[:, i], vertex_array[:, i + 1], P, gamma)
             induced_velocity = induced_velocity + Q
 
         # If the vortex segment belongs to the wake
         else:
-            Q = vortex_line(vertex_array[i, :], vertex_array[i + 1, :], P, gamma)
+            Q = vortex_line(vertex_array[:, i], vertex_array[:, i + 1], P, gamma)
             induced_velocity = induced_velocity + Q
             wake_induced_velocity = wake_induced_velocity + Q
 
@@ -154,4 +156,3 @@ def vortex_horseshoe(vertex_coordinates, target_point, circulation):
 
 
 
-def horseshoe_lifiting_line(mesh, velocity_vector, )

@@ -1,5 +1,6 @@
 from context import src
 
+import numpy as np
 from src import vortex_lattice as vlm
 
 
@@ -20,7 +21,7 @@ def test_vortex_line():
         print(f"# Vortex Line Test: FAIL")
 
     elif not (abs(induced_velocity_v[0] - 0) < 0.0000001 and abs(induced_velocity_v[1] - 0) < 0.0000001 and
-       abs(induced_velocity_v[2] - 0) < 0.0000001):
+         abs(induced_velocity_v[2] - 0) < 0.0000001):
 
         print(f"# Vortex Line Test: FAIL")
 
@@ -31,10 +32,10 @@ def test_vortex_line():
 
 def test_vortex_ring():
 
-    vertex_coordinates = [[0, 0, 0],
-                          [2, 0, 0],
-                          [2, 2, 0],
-                          [0, 2, 0]]
+    vertex_coordinates = np.array([[2, 0, 0],
+                                   [0, 0, 0],
+                                   [0, 2, 0],
+                                   [2, 2, 0]]).transpose()
 
     target_point = [1, 1, 0]
     circulation = 1
@@ -42,7 +43,7 @@ def test_vortex_ring():
     induced_velocity = vlm.vortex_ring(vertex_coordinates, target_point, circulation)
 
     if not (abs(induced_velocity[0] - 0) < 0.0000001 and abs(induced_velocity[1] - 0) < 0.0000001 and
-       abs(induced_velocity[2] - 0.45015816) < 0.0000001):
+       abs(induced_velocity[2] - (-0.45015816)) < 0.0000001):
 
         print(f"# Vortex Ring Test: FAIL")
 
@@ -53,10 +54,10 @@ def test_vortex_ring():
 
 def test_vortex_horseshoe():
 
-    vertex_coordinates = [[0, 0, 0],
-                          [2, 0, 0],
-                          [2, 2, 0],
-                          [0, 2, 0]]
+    vertex_coordinates = np.array([[2, 0, 0],
+                                   [0, 0, 0],
+                                   [0, 2, 0],
+                                   [2, 2, 0]]).transpose()
 
     target_point = [1, 1, 0]
     circulation = 1
@@ -69,10 +70,10 @@ def test_vortex_horseshoe():
 
     if not (abs(induced_velocity[0] - 0) < 0.0000001 and
             abs(induced_velocity[1] - 0) < 0.0000001 and
-            abs(induced_velocity[2] - 0.33761862) < 0.0000001 and
+            abs(induced_velocity[2] - (-0.33761862)) < 0.0000001 and
             abs(wake_induced_velocity[0] - 0) < 0.0000001 and
             abs(wake_induced_velocity[1] - 0) < 0.0000001 and
-            abs(wake_induced_velocity[2] - 0.22507908) < 0.0000001):
+            abs(wake_induced_velocity[2] - (-0.22507908)) < 0.0000001):
 
         print(f"# Vortex Ring Test: FAIL")
 
