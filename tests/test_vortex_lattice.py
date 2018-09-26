@@ -2,6 +2,9 @@ from context import src
 
 import numpy as np
 from src import vortex_lattice as vlm
+from src import objects as obj
+from src import mesh_generation as msh
+from src import functions as fc
 
 
 def test_vortex_line():
@@ -81,6 +84,48 @@ def test_vortex_horseshoe():
 
         print(f"# Vortex Ring Test: PASS")
 
+
+def test_lifting_line_horse_shoe():
+
+    area = 20
+    aspect_ratio = 5
+    taper_ratio = 1
+    sweep_quarter_chord = 0
+    dihedral = 0
+    incidence = 0
+    torsion = 0
+    position = [0, 0, 0]
+
+    alpha = 5
+    beta = 0
+    gamma = 0
+    attitude_vector = [alpha, beta, gamma]
+    altitude = 5000
+    simple_rectangular = obj.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
+                                  incidence, torsion, position)
+
+    true_airspeed = 100
+    flow_velocity_vector = fc.velocity_vector(true_airspeed, alpha, beta, gamma)[:,0]
+    infinity_mult = 25
+
+    wing = simple_rectangular
+    n_semi_wingspam_panels = 5
+    n_chord_panels = 1
+    wingspam_discretization_type = "linear"
+    chord_discretization_type = "linear"
+
+    gamma, exitCode = vlm.lifting_line_horse_shoe(simple_rectangular, attitude_vector,
+                                                  true_airspeed, altitude,
+                                                  n_semi_wingspam_panels, n_chord_panels,
+                                                  wingspam_discretization_type,
+                                                  chord_discretization_type,
+                                                  infinity_mult)
+
+    print(gamma)
+    print(exitCode)
+
+
+
 if __name__ == "__main__":
 
     print()
@@ -88,6 +133,8 @@ if __name__ == "__main__":
     print("= Testing vortex_lattice module =")
     print("=================================")
     print()
-    test_vortex_line()
-    test_vortex_ring()
-    test_vortex_horseshoe()
+    # test_vortex_line()
+    # test_vortex_ring()
+    # test_vortex_horseshoe()
+    # test_vortex_solver()
+    test_lifting_line_horse_shoe()

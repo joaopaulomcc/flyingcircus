@@ -66,6 +66,25 @@ def rotate_point(point_coord, rot_axis, rot_center, rot_angle, degrees=False):
     return rotated_points
 
 
+def velocity_vector(true_airspeed, alpha, beta, gamma):
+    x_axis = np.array([1, 0, 0])
+    y_axis = np.array([0, 1, 0])
+    z_axis = np.array([0, 0, 1])
+    origin = np.array([0, 0, 0])
+
+    vector = np.array([true_airspeed, 0, 0])[np.newaxis].transpose()
+
+    # Rotate around y for alfa
+    vector = rotate_point(vector, y_axis, origin, -alpha, degrees=True)
+
+    # Rotate around z for beta
+    vector = rotate_point(vector, z_axis, origin, -beta, degrees=True)
+
+    # Rotate around x for gamma
+    vector = rotate_point(vector, x_axis, origin, -gamma, degrees=True)
+
+    return vector
+
 
 
 

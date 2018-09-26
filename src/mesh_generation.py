@@ -3,6 +3,7 @@ import scipy as sc
 import matplotlib.pyplot as plt
 
 from .functions import rotate_point
+from .objects import Panel
 
 
 def generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
@@ -102,3 +103,52 @@ def generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
     span_points_zz = np.concatenate((span_points_zz_mirror, span_points_zz), axis=1)
 
     return span_points_xx, span_points_yy, span_points_zz
+
+
+def generate_panel_matrix(xx, yy, zz):
+    n_x = np.shape(xx)[0] - 1
+    n_y = np.shape(xx)[1] - 1
+    panel_matrix = [[None for x in range(n_y)] for y in range(n_x)]
+
+    for i in range(n_x):
+        for j in range(n_y):
+            xx_slice = xx[i:i + 2, j:j + 2]
+            yy_slice = yy[i:i + 2, j:j + 2]
+            zz_slice = zz[i:i + 2, j:j + 2]
+            panel_matrix[i][j] = Panel(xx_slice, yy_slice, zz_slice)
+
+    return panel_matrix
+
+
+def generate_col_points_matrix(xx, yy, zz):
+    n_x = np.shape(xx)[0] - 1
+    n_y = np.shape(xx)[1] - 1
+    col_points_matrix_xx = np.zeros((n_x, n_y))
+    col_points_matrix_yy = np.zeros((n_x, n_y))
+    col_points_matrix_zz = np.zeros((n_x, n_y))
+    panel_matrix = generate_panel_matrix(xx, yy, zz)
+
+    for i in range(n_x):
+        for j in range(n_y):
+            col_points_matrix_xx[i][j] = panel_matrix[i][j].col_point[0]
+            col_points_matrix_yy[i][j] = panel_matrix[i][j].col_point[1]
+            col_points_matrix_zz[i][j] = panel_matrix[i][j].col_point[2]
+
+    return col_points_matrix_xx, col_points_matrix_yy, col_points_matrix_zz
+
+
+def generate_n_vector_matrix(xx, yy, zz):
+    n_x = np.shape(xx)[0] - 1
+    n_y = np.shape(xx)[1] - 1
+    n_vector_matrix = [[None for x in range(n_y)] for y in range(n_x)]
+    panel_matrix = generate_panel_matrix(xx, yy, zz)
+
+    for i in range(n_x):
+        for j in range(n_y):
+            n_vector_matrix[i][j] = panel_matrix[i][j].col_point[0]
+            col_points_matrix_yy[i][j] = panel_matrix[i][j].col_point[1]
+            col_points_matrix_zz[i][j] = panel_matrix[i][j].col_point[2]
+
+    return col_points_matrix_xx, col_points_matrix_yy, col_points_matrix_zz
+
+

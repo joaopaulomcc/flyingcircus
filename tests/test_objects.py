@@ -42,7 +42,7 @@ def test_panel():
     xx, yy = np.meshgrid(x, y, indexing="ij")
     zz = np.zeros((2, 2))
 
-    target_point = [1, 1, 0]
+    target_point = np.array([1, 1, 0])
     circulation = 1
     infinity = 25
 
