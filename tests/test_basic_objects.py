@@ -1,7 +1,27 @@
-import numpy as np
-from context import src
+"""
+test_basic_elements.py
 
-from src import objects as obj
+Testing suite for basic_elements module
+
+Author: João Paulo Monteiro Cruvinel da Costa
+email: joaopaulomcc@gmail.com / joao.cruvinel@embraer.com.br
+github: joaopaulomcc
+"""
+# ==================================================================================================
+# IMPORTS
+
+import numpy as np
+import scipy as sc
+import matplotlib.pyplot as plt
+
+from numpy import sin, cos, tan, pi, dot, cross
+from numpy.linalg import norm
+
+from context import src
+from src import basic_objects
+
+# ==================================================================================================
+# TESTS
 
 
 def test_wing():
@@ -15,9 +35,11 @@ def test_wing():
     torsion = 0
     position = [0, 0, 0]
 
-    simple_rectangular = obj.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
-                                  incidence, torsion, position)
+    simple_rectangular = basic_objects.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord,
+                                            dihedral, incidence, torsion, position)
 
+    print()
+    print("TESTING Wing")
     print(f"area: {simple_rectangular.area}")
     print(f"AR: {simple_rectangular.AR}")
     print(f"taper_ratio: {simple_rectangular.taper_ratio}")
@@ -35,6 +57,8 @@ def test_wing():
     print(f"root_chord: {simple_rectangular.root_chord}")
     print(f"tip_chord: {simple_rectangular.tip_chord}")
 
+# --------------------------------------------------------------------------------------------------
+
 
 def test_panel():
     x = np.array([0, 2])
@@ -46,9 +70,11 @@ def test_panel():
     circulation = 1
     infinity = 25
 
-    P = obj.Panel(xx, yy, zz)
+    P = basic_objects.Panel(xx, yy, zz)
     induced_velocity, wake_induced_velocity = P.hs_induced_velocity(target_point, circulation, infinity)
 
+    print()
+    print("TESTING Panel")
     print(f"Vector AC: {P.AC}")
     print(f"Vector BD: {P.BD}")
     print(f"Vector n: {P.n}")
@@ -57,6 +83,10 @@ def test_panel():
     print(f"induced_velocity: {induced_velocity}")
     print(f"wake_induced_velocity: {wake_induced_velocity}")
 
+
+# ==================================================================================================
+# RUN TESTS
+
 if __name__ == "__main__":
 
     print()
@@ -64,4 +94,5 @@ if __name__ == "__main__":
     print("= Testing objects module =")
     print("============================")
     print()
+    test_wing()
     test_panel()

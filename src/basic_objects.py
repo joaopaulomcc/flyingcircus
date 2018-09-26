@@ -1,10 +1,24 @@
+"""
+basic_objects.py
+
+Collection of basic objects both aerodynamic and structural
+Except where explicitly stated all units are S.I.
+
+Author: João Paulo Monteiro Cruvinel da Costa
+email: joaopaulomcc@gmail.com / joao.cruvinel@embraer.com.br
+github: joaopaulomcc
+"""
+# ==================================================================================================
+# IMPORTS
 import numpy as np
 import scipy as sc
 import matplotlib.pyplot as plt
-from .vortex_lattice import vortex_horseshoe
-#from .vortex_lattice import horse_shoe_vertex
-from numpy import cos, sin, tan, dot, cross
+
+from numpy import sin, cos, tan, pi, dot, cross
 from numpy.linalg import norm
+
+from . import basic_elements
+# ==================================================================================================
 
 
 class Wing(object):
@@ -75,9 +89,9 @@ class Panel(object):
 
         vertex_coordinates = self.horse_shoe(infinity)
 
-        induced_velocity, wake_induced_velocity = vortex_horseshoe(vertex_coordinates,
-                                                                   target_point,
-                                                                   circulation)
+        induced_velocity, wake_induced_velocity = basic_elements.vortex_horseshoe(vertex_coordinates,
+                                                                                  target_point,
+                                                                                  circulation)
 
         return induced_velocity, wake_induced_velocity
 
