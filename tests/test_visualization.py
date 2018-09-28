@@ -1,7 +1,7 @@
 """
-test_vortex_lattice_method.py
+test_visualization.py
 
-Testing suite for cortex_lattice_method module
+Testing suite for visualization module
 
 Author: João Paulo Monteiro Cruvinel da Costa
 email: joaopaulomcc@gmail.com / joao.cruvinel@embraer.com.br
@@ -12,7 +12,12 @@ github: joaopaulomcc
 
 import numpy as np
 import scipy as sc
-#import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Qt5Agg')
+matplotlib.rcParams['backend.qt5']='PySide2'
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
+
 import timeit
 import time
 
@@ -24,16 +29,54 @@ from src import vortex_lattice_method
 from src import mesh
 from src import basic_objects
 from src import geometry
+from src import visualization
 from samples import wing_simple
 
 # ==============================================================================================
 
 
-def test_vortex_solver():
+
+def test_plot_results():
 
     area = 20
     aspect_ratio = 5
-    taper_ratio = 1
+    taper_ratio = 0.666
+    sweep_quarter_chord = 0
+    dihedral = 0
+    incidence = 0
+    torsion = 0
+    position = [0, 0, 0]
+
+    n_semi_wingspam_panels = 5
+    n_chord_panels = 4
+    wingspam_discretization_type = "linear"
+    chord_discretization_type = "linear"
+
+    alpha = 5
+    beta = 0
+    gamma = 0
+    attitude_vector = [alpha, beta, gamma]
+    altitude = 5000
+
+    true_airspeed = 100
+    flow_velocity_vector = geometry.velocity_vector(true_airspeed, alpha, beta, gamma)[:,0]
+    infinity_mult = 25
+
+    wing = basic_objects.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
+                              incidence, torsion, position)
+
+    print("Generating Mesh...")
+    start = time.time()
+    xx, yy, zz = mesh.generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
+                                    wingspam_discretization_type, chord_discretization_type)
+
+    visualization.plot_results(xx, yy, zz, gamma_grid)
+
+def test_plot_results():
+
+    area = 20
+    aspect_ratio = 5
+    taper_ratio = 0.666
     sweep_quarter_chord = 0
     dihedral = 0
     incidence = 0
@@ -84,6 +127,10 @@ def test_vortex_solver():
     end = time.time()
     print(f"Solving circulations completed in {end - start}")
 
+    gamma_grid = np.reshape(gamma, np.shape(panel_matrix))
+
+    visualization.plot_results(xx, yy, zz, gamma_grid)
+
     # gamma, exitCode = vlm.lifting_line_horse_shoe(simple_rectangular, attitude_vector,
     #                                               true_airspeed, altitude,
     #                                               n_semi_wingspam_panels, n_chord_panels,
@@ -100,9 +147,9 @@ def test_vortex_solver():
 if __name__ == "__main__":
 
     print()
-    print("========================================")
-    print("= Testing vortex_lattice_method module =")
-    print("========================================")
+    print("================================")
+    print("= Testing visualization module =")
+    print("================================")
     print()
-    print("Testing vortex_solver")
-    print(f"Total Execution Time: {timeit.timeit(test_vortex_solver, number=1) / 1}")
+    print("Testing plot_results")
+    test_plot_results()

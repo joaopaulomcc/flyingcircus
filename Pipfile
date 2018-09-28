@@ -10,6 +10,7 @@ matplotlib = "*"
 pylint = "*"
 "pyside2" = "*"
 jupyter = "*"
+numba = "*"
 
 [dev-packages]
 "pep8" = "*"
