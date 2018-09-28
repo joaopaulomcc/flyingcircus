@@ -122,7 +122,7 @@ def generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
     return span_points_xx, span_points_yy, span_points_zz
 
 
-def generate_panel_matrix(xx, yy, zz):
+def generate_panel_matrix(xx, yy, zz, infinity):
     n_x = np.shape(xx)[0] - 1
     n_y = np.shape(xx)[1] - 1
     panel_matrix = [[None for x in range(n_y)] for y in range(n_x)]
@@ -132,7 +132,7 @@ def generate_panel_matrix(xx, yy, zz):
             xx_slice = xx[i:i + 2, j:j + 2]
             yy_slice = yy[i:i + 2, j:j + 2]
             zz_slice = zz[i:i + 2, j:j + 2]
-            panel_matrix[i][j] = basic_objects.Panel(xx_slice, yy_slice, zz_slice)
+            panel_matrix[i][j] = basic_objects.Panel4(xx_slice, yy_slice, zz_slice, infinity)
 
     return panel_matrix
 

@@ -36,7 +36,7 @@ from samples import wing_simple
 
 
 
-def test_plot_results():
+def test_plot_mesh():
 
     area = 20
     aspect_ratio = 5
@@ -110,7 +110,7 @@ def test_plot_results():
 
     print("Generating Panel Matrix...")
     start = time.time()
-    panel_matrix = mesh.generate_panel_matrix(xx, yy, zz)
+    panel_matrix = mesh.generate_panel_matrix(xx, yy, zz, wing.wing_span)
     end = time.time()
     print(f"Generating Panel Matrix completeted in {end - start} seconds")
 

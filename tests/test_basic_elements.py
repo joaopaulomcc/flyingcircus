@@ -19,11 +19,12 @@ from numpy.linalg import norm
 from context import src
 from src import basic_elements
 
+import timeit
 # ==================================================================================================
 # TESTS
 
 
-def test_vortex_line():
+def test_vortex_segment():
 
     first_point = [1, 5, 0]
     second_point = [3, 1, 0]
@@ -105,6 +106,39 @@ def test_vortex_horseshoe():
 
         print(f"# Vortex Horseshoe Test: PASS")
 
+
+def test_vortex_horseshoe_4():
+
+    xx = np.array([[0, 0],
+                   [2, 2]])
+    yy = np.array([[0, 2],
+                   [0, 2]])
+    zz = np.array([[0, 0],
+                   [0, 0]])
+
+    target_point = [1, 1, 0]
+    circulation = 1
+
+    induced_velocity, wake_induced_velocity = basic_elements.vortex_horseshoe_4(xx, yy, zz,
+                                                                                target_point,
+                                                                                circulation)
+
+    #print(f"Induced velocity = {induced_velocity}")
+    #print(f"Wake Induced Velocity = {wake_induced_velocity}")
+
+    if not (abs(induced_velocity[0] - 0) < 0.0000001 and
+            abs(induced_velocity[1] - 0) < 0.0000001 and
+            abs(induced_velocity[2] - (-0.33761862)) < 0.0000001 and
+            abs(wake_induced_velocity[0] - 0) < 0.0000001 and
+            abs(wake_induced_velocity[1] - 0) < 0.0000001 and
+            abs(wake_induced_velocity[2] - (-0.22507908)) < 0.0000001):
+
+        print(f"# Vortex Horseshoe Test: FAIL")
+
+    else:
+
+        print(f"# Vortex Horseshoe Test: PASS")
+
 # ==================================================================================================
 # RUNNING TESTS
 if __name__ == "__main__":
@@ -114,6 +148,7 @@ if __name__ == "__main__":
     print("= Testing Basic Elements module =")
     print("=================================")
     print()
-    test_vortex_line()
-    test_vortex_ring()
-    test_vortex_horseshoe()
+    print(timeit.timeit(test_vortex_segment, number=1))
+    print(timeit.timeit(test_vortex_ring, number=1))
+    print(timeit.timeit(test_vortex_horseshoe, number=1))
+    print(timeit.timeit(test_vortex_horseshoe_4, number=1))

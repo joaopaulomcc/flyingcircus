@@ -20,6 +20,7 @@ from numpy import sin, cos, tan, pi, dot, cross
 from numpy.linalg import norm
 from scipy.sparse.linalg import gmres
 
+from .geometry import cross
 # from numba import jit
 # ==================================================================================================
 # VORTEX LATTICE METHOD
@@ -67,7 +68,7 @@ def vortex_solver(panel_vector, flow_velocity_vector, infinity):
         for j in range(n_panels):
             print("Calculating ind_vel ...")
             start = time.time()
-            ind_vel, _ = panel_vector[j].hs_induced_velocity(panel_vector[i].col_point, 1, infinity)
+            ind_vel, _ = panel_vector[j].hs_induced_velocity(panel_vector[i].col_point, 1)
             end = time.time()
             print(F"Calculating ind_vel executed in {end - start} seconds")
 

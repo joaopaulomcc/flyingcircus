@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from numpy import sin, cos, tan, pi, dot, cross
 from numpy.linalg import norm
+from numba import jit, jitclass
 
 from . import basic_elements
 # ==================================================================================================
@@ -92,6 +93,66 @@ class Panel(object):
         induced_velocity, wake_induced_velocity = basic_elements.vortex_horseshoe(vertex_coordinates,
                                                                                   target_point,
                                                                                   circulation)
+
+        return induced_velocity, wake_induced_velocity
+
+
+class Panel4(object):
+    """Panel object"""
+
+    def __init__(self, xx, yy, zz, infinity):
+        """Args:
+            xx [[float]] = grid with panel points x coordinates
+            yy [[float]] = grid with panel points x coordinates
+            zz [[float]] = grid with panel points x coordinates
+        """
+        self.xx = xx
+        self.yy = yy
+        self.zz = zz
+        self.infinity = infinity
+        self.A = np.array([xx[1][0], yy[1][0], zz[1][0]])
+        self.B = np.array([xx[0][0], yy[0][0], zz[0][0]])
+        self.C = np.array([xx[0][1], yy[0][1], zz[0][1]])
+        self.D = np.array([xx[1][1], yy[1][1], zz[1][1]])
+        self.AC = self.C - self.A
+        self.BD = self.D - self.B
+
+        self.l_chord = self.A - self.B
+        self.l_chord_1_4 = self.B + 0.25 * self.l_chord
+        self.l_chord_3_4 = self.B + 0.75 * self.l_chord
+
+        self.r_chord = self.D - self.C
+        self.r_chord_1_4 = self.C + 0.25 * self.r_chord
+        self.r_chord_3_4 = self.C + 0.75 * self.r_chord
+
+        self.l_edge = self.C - self.B
+        self.l_edge_1_2 = self.B + 0.5 * self.l_edge
+
+        self.t_edge = self.D - self.A
+        self.t_edge_1_2 = self.A + 0.5 * self.t_edge
+
+        self.col_point = 0.75 * (self.t_edge_1_2 - self.l_edge_1_2) + self.l_edge_1_2
+
+        self.spam = dot(self.l_edge, np.array([0, 1, 0]))
+        self.n = cross(self.BD, self.AC) / norm(cross(self.BD, self.AC))
+        self.area = dot(self.n, cross(self.BD, self.AC)) / 2
+
+        self.horse_shoe_xx = np.array([[self.l_chord_1_4[0], self.r_chord_1_4[0]],
+                                       [self.l_chord_1_4[0] + infinity, self.r_chord_1_4[0] + infinity]])
+
+        self.horse_shoe_yy = np.array([[self.l_chord_1_4[1], self.r_chord_1_4[1]],
+                                       [self.l_chord_1_4[1], self.r_chord_1_4[1]]])
+
+        self.horse_shoe_zz = np.array([[self.l_chord_1_4[2], self.r_chord_1_4[2]],
+                                       [self.l_chord_1_4[2], self.r_chord_1_4[2]]])
+
+    def hs_induced_velocity(self, target_point, circulation):
+
+        induced_velocity, wake_induced_velocity = basic_elements.vortex_horseshoe_4(self.horse_shoe_xx,
+                                                                                    self.horse_shoe_yy,
+                                                                                    self.horse_shoe_zz,
+                                                                                    target_point,
+                                                                                    circulation)
 
         return induced_velocity, wake_induced_velocity
 

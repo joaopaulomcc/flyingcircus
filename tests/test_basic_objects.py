@@ -84,6 +84,30 @@ def test_panel():
     print(f"wake_induced_velocity: {wake_induced_velocity}")
 
 
+def test_panel_4():
+    x = np.array([0, 2])
+    y = np.array([0, 2])
+    xx, yy = np.meshgrid(x, y, indexing="ij")
+    zz = np.zeros((2, 2))
+
+    target_point = np.array([1, 1, 0])
+    circulation = 1
+    infinity = 25
+
+    P = basic_objects.Panel4(xx, yy, zz, infinity)
+    induced_velocity, wake_induced_velocity = P.hs_induced_velocity(target_point, circulation)
+
+    print()
+    print("TESTING Panel")
+    print(f"Vector AC: {P.AC}")
+    print(f"Vector BD: {P.BD}")
+    print(f"Vector n: {P.n}")
+    print(f"Area n: {P.area}")
+    print(f"Collocation Point n: {P.col_point}")
+    print(f"induced_velocity: {induced_velocity}")
+    print(f"wake_induced_velocity: {wake_induced_velocity}")
+
+
 # ==================================================================================================
 # RUN TESTS
 
@@ -96,3 +120,4 @@ if __name__ == "__main__":
     print()
     test_wing()
     test_panel()
+    test_panel_4()
