@@ -36,7 +36,43 @@ from samples import wing_simple
 
 
 
+#def test_plot_results():
+#
+#    area = 20
+#    aspect_ratio = 5
+#    taper_ratio = 0.666
+#    sweep_quarter_chord = 0
+#    dihedral = 0
+#    incidence = 0
+#    torsion = 0
+#    position = [0, 0, 0]
+#
+#    n_semi_wingspam_panels = 10
+#    n_chord_panels = 4
+#    wingspam_discretization_type = "linear"
+#    chord_discretization_type = "linear"
+#
+#    alpha = 5
+#    beta = 0
+#    gamma = 0
+#    attitude_vector = [alpha, beta, gamma]
+#    altitude = 5000
+#
+#    true_airspeed = 100
+#    flow_velocity_vector = geometry.velocity_vector(true_airspeed, alpha, beta, gamma)[:,0]
+#    infinity_mult = 25
+#
+#    wing = basic_objects.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
+#                              incidence, torsion, position)
+#
+#    xx, yy, zz = mesh.generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
+#                                    wingspam_discretization_type, chord_discretization_type)
+#
+#    visualization.plot_results(xx, yy, zz, gamma_grid)
+#
 def test_plot_results():
+
+    start = time.time()
 
     area = 20
     aspect_ratio = 5
@@ -47,7 +83,7 @@ def test_plot_results():
     torsion = 0
     position = [0, 0, 0]
 
-    n_semi_wingspam_panels = 5
+    n_semi_wingspam_panels = 10
     n_chord_panels = 4
     wingspam_discretization_type = "linear"
     chord_discretization_type = "linear"
@@ -65,69 +101,21 @@ def test_plot_results():
     wing = basic_objects.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
                               incidence, torsion, position)
 
-    print("Generating Mesh...")
-    start = time.time()
     xx, yy, zz = mesh.generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
                                     wingspam_discretization_type, chord_discretization_type)
 
-    visualization.plot_results(xx, yy, zz, gamma_grid)
-
-def test_plot_results():
-
-    area = 20
-    aspect_ratio = 5
-    taper_ratio = 0.666
-    sweep_quarter_chord = 0
-    dihedral = 0
-    incidence = 0
-    torsion = 0
-    position = [0, 0, 0]
-
-    n_semi_wingspam_panels = 5
-    n_chord_panels = 4
-    wingspam_discretization_type = "linear"
-    chord_discretization_type = "linear"
-
-    alpha = 5
-    beta = 0
-    gamma = 0
-    attitude_vector = [alpha, beta, gamma]
-    altitude = 5000
-
-    true_airspeed = 100
-    flow_velocity_vector = geometry.velocity_vector(true_airspeed, alpha, beta, gamma)[:,0]
-    infinity_mult = 25
-
-    wing = basic_objects.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
-                              incidence, torsion, position)
-
-    print("Generating Mesh...")
-    start = time.time()
-    xx, yy, zz = mesh.generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
-                                    wingspam_discretization_type, chord_discretization_type)
-    end = time.time()
-    print(f"Generating Mesh completed in {end - start} seconds")
-
-    print("Generating Panel Matrix...")
-    start = time.time()
     panel_matrix = mesh.generate_panel_matrix(xx, yy, zz)
-    end = time.time()
-    print(f"Generating Panel Matrix completeted in {end - start} seconds")
 
-    print("Generating Panel Vector...")
-    start = time.time()
     panel_vector = vortex_lattice_method.flatten(panel_matrix)
-    end = time.time()
-    print(f"Generating Panel Vector completed in {end - start} seconds")
 
-    print("Solving circulations...")
-    start = time.time()
+
     gamma = vortex_lattice_method.vortex_solver(panel_vector, flow_velocity_vector,
                                                 infinity_mult * wing.wing_span)
-    end = time.time()
-    print(f"Solving circulations completed in {end - start}")
 
     gamma_grid = np.reshape(gamma, np.shape(panel_matrix))
+
+    end = time.time()
+    print(f"Total execution time: {end - start} s")
 
     visualization.plot_results(xx, yy, zz, gamma_grid)
 

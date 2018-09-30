@@ -40,8 +40,8 @@ def test_vortex_solver():
     torsion = 0
     position = [0, 0, 0]
 
-    n_semi_wingspam_panels = 5
-    n_chord_panels = 4
+    n_semi_wingspam_panels = 25
+    n_chord_panels = 5
     wingspam_discretization_type = "linear"
     chord_discretization_type = "linear"
 
@@ -58,31 +58,15 @@ def test_vortex_solver():
     wing = basic_objects.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
                               incidence, torsion, position)
 
-    print("Generating Mesh...")
-    start = time.time()
     xx, yy, zz = mesh.generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
                                     wingspam_discretization_type, chord_discretization_type)
-    end = time.time()
-    print(f"Generating Mesh completed in {end - start} seconds")
 
-    print("Generating Panel Matrix...")
-    start = time.time()
     panel_matrix = mesh.generate_panel_matrix(xx, yy, zz)
-    end = time.time()
-    print(f"Generating Panel Matrix completeted in {end - start} seconds")
 
-    print("Generating Panel Vector...")
-    start = time.time()
     panel_vector = vortex_lattice_method.flatten(panel_matrix)
-    end = time.time()
-    print(f"Generating Panel Vector completed in {end - start} seconds")
 
-    print("Solving circulations...")
-    start = time.time()
     gamma = vortex_lattice_method.vortex_solver(panel_vector, flow_velocity_vector,
                                                 infinity_mult * wing.wing_span)
-    end = time.time()
-    print(f"Solving circulations completed in {end - start}")
 
     # gamma, exitCode = vlm.lifting_line_horse_shoe(simple_rectangular, attitude_vector,
     #                                               true_airspeed, altitude,
