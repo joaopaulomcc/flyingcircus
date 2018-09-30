@@ -83,7 +83,7 @@ def test_plot_results():
     torsion = 0
     position = [0, 0, 0]
 
-    n_semi_wingspam_panels = 5
+    n_semi_wingspam_panels = 10
     n_chord_panels = 4
     wingspam_discretization_type = "linear"
     chord_discretization_type = "linear"

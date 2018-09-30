@@ -12,8 +12,9 @@ github: joaopaulomcc
 import numpy as np
 import scipy as sc
 
-from numpy import sin, cos, tan, pi, dot, cross
-from numpy.linalg import norm
+from numpy import sin, cos, tan, pi
+
+from .fast_operations import dot, cross, norm, normalize
 
 import matplotlib
 matplotlib.use('Qt5Agg')

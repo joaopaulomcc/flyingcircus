@@ -14,16 +14,16 @@ import numpy as np
 import scipy as sc
 import matplotlib.pyplot as plt
 
-from numpy import sin, cos, tan, pi, dot#, cross
+from numpy import sin, cos, tan, pi
 from numpy.linalg import norm
 
-from .geometry import cross
 from numba import jit
+from .fast_operations import dot, cross, norm
 # ==================================================================================================
 # AERODYNAMICS
 
 
-#@jit(nopython=True)
+@jit(nopython=True)
 def vortex_segment(first_point, second_point, target_point, circulation):
     """
     Calculates the induced velocity by a vortex line segment at a point.
@@ -130,7 +130,7 @@ def vortex_ring(vertex_coordinates, target_point, circulation):
 
 # --------------------------------------------------------------------------------------------------
 
-
+@jit(nopython=True)
 def vortex_horseshoe(vertex_coordinates, target_point, circulation):
     """
     Calculates the induced velocity by a horseshoe vortex at a point.
@@ -154,90 +154,29 @@ def vortex_horseshoe(vertex_coordinates, target_point, circulation):
     """
 
     # Converting inputs to numpy arrays and changing names to reference notation
-    vertex_array = np.array(vertex_coordinates)
-    P = np.array(target_point)
+    P = target_point
     gamma = circulation
 
     induced_velocity = np.array([0.0, 0.0, 0.0])
     wake_induced_velocity = np.array([0.0, 0.0, 0.0])
 
-    n_points = np.shape(vertex_array)[1]
+    n_points = (vertex_coordinates).shape[1]
     for i in range(n_points - 1):
 
         # If the vortex segment doesn't belong to the wake
         if (i != 0) and (i != n_points - 2):
-            Q = vortex_segment(vertex_array[:, i], vertex_array[:, i + 1], P, gamma)
+            Q = vortex_segment(vertex_coordinates[:, i], vertex_coordinates[:, i + 1], P, gamma)
             induced_velocity = induced_velocity + Q
 
         # If the vortex segment belongs to the wake
         else:
-            Q = vortex_segment(vertex_array[:, i], vertex_array[:, i + 1], P, gamma)
+            Q = vortex_segment(vertex_coordinates[:, i], vertex_coordinates[:, i + 1], P, gamma)
             induced_velocity = induced_velocity + Q
             wake_induced_velocity = wake_induced_velocity + Q
 
     return induced_velocity, wake_induced_velocity
 
 # --------------------------------------------------------------------------------------------------
-
-
-#@jit(nopython=True, cache=True, nogil=True)
-def vortex_horseshoe_4(xx, yy, zz, target_point, circulation):
-    """
-    Calculates the induced velocity by a horseshoe vortex at a point.
-
-    Notation and algorithm can be found on the book "Low-Speed Aerodynamics" by Joseph Katz and
-    Allen Plotkin, 2nd edition, pages 256-258;331-334
-
-    Args:
-    vertex_coordinates 4 x (float, float, float): tupple or array with x, y and z coordinates of the
-                                                  ring vertex. Each column contains one point and the
-                                                  order of the vertex defines the direction of the
-                                                  circulation
-
-    target_point (float, float, float): tupple or array with x, y and z coordinates of the point
-                                        where the induced velocity is to be calculated
-
-    circulation (float): intensity of the vortex segment circulation
-
-    Returns:
-    np.array([float, float, float]): numpy array of the induced velocity vector
-    """
-
-    # Converting inputs to numpy arrays and changing names to reference notation
-    # vertex_array = vertex_coordinates
-    P = target_point
-    gamma = circulation
-
-    #induced_velocity = np.array([0.0, 0.0, 0.0])
-    #wake_induced_velocity = np.array([0.0, 0.0, 0.0])
-
-    #n_points = np.shape(vertex_array)[1]
-
-    wake_induced_velocity = (vortex_segment([xx[1][0], yy[1][0], zz[1][0]],
-                                           [xx[0][0], yy[0][0], zz[0][0]],
-                                           P, gamma)
-                             + vortex_segment([xx[0][1], yy[0][1], zz[0][1]],
-                                             [xx[1][1], yy[1][1], zz[1][1]],
-                                             P, gamma))
-
-    induced_velocity = wake_induced_velocity + vortex_segment([xx[0][0], yy[0][0], zz[0][0]],
-                                                              [xx[0][1], yy[0][1], zz[0][1]],
-                                                              P, gamma)
-
-#    for i in range(n_points - 1):
-#
-#        # If the vortex segment doesn't belong to the wake
-#        if (i != 0) and (i != n_points - 2):
-#            Q = vortex_segment(vertex_array[:, i], vertex_array[:, i + 1], P, gamma)
-#            induced_velocity = induced_velocity + Q
-#
-#        # If the vortex segment belongs to the wake
-#        else:
-#            Q = vortex_segment(vertex_array[:, i], vertex_array[:, i + 1], P, gamma)
-#            induced_velocity = induced_velocity + Q
-#            wake_induced_velocity = wake_induced_velocity + Q
-
-    return induced_velocity, wake_induced_velocity
 
 # ==================================================================================================
 # STRUCTURES

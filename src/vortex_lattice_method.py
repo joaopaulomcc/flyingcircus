@@ -16,11 +16,11 @@ import scipy as sc
 import time
 import matplotlib.pyplot as plt
 
-from numpy import sin, cos, tan, pi, dot, cross
+from numpy import sin, cos, tan, pi
 from numpy.linalg import norm
 from scipy.sparse.linalg import gmres
 
-from .geometry import cross
+from .fast_operations import dot, cross, norm, normalize
 # from numba import jit
 # ==================================================================================================
 # VORTEX LATTICE METHOD
@@ -55,38 +55,22 @@ def vortex_solver(panel_vector, flow_velocity_vector, infinity):
     right_hand_side_vector = np.zeros((n_panels, 1))
 
     # For each colocation point i calculate the influence of panel j with a cirulation of 1
-    print("Calculating influence matrix ...")
-    start1 = time.time()
 
     for i in range(n_panels):
-        print("Calculating right_hand_side_vector ...")
-        start = time.time()
+
         right_hand_side_vector[i][0] = dot(-flow_velocity_vector, panel_vector[i].n)
-        end = time.time()
-        print(F"Calculating right_hand_side_vector executed in {end - start} seconds")
 
         for j in range(n_panels):
-            print("Calculating ind_vel ...")
-            start = time.time()
+
             ind_vel, _ = panel_vector[j].hs_induced_velocity(panel_vector[i].col_point, 1)
-            end = time.time()
-            print(F"Calculating ind_vel executed in {end - start} seconds")
 
-            print("Calculating influence_coef_matrix[i][j] ...")
-            start = time.time()
             influence_coef_matrix[i][j] = dot(ind_vel, panel_vector[i].n)
-            end = time.time()
-            print(F"Calculating influence_coef_matrix[i][j] executed in {end - start} seconds")
 
-    end = time.time()
-    print(F"Calculating influence matrix executed in {end - start1} seconds")
     # Solve linear system using scipy library
     # gamma = np.linalg.solve(influence_coef_matrix, right_hand_side_vector)
-    print("Solving System...")
-    start = time.time()
+
     gamma, _ = sc.sparse.linalg.lgmres(influence_coef_matrix, right_hand_side_vector)
-    end = time.time()
-    print(F"Solving System executed in {end - start} seconds")
+
     return gamma
 
 # --------------------------------------------------------------------------------------------------

@@ -13,29 +13,11 @@ import numpy as np
 import scipy as sc
 import matplotlib.pyplot as plt
 
-from numpy import sin, cos, tan, pi, dot
-from numpy.linalg import norm
+from numpy import sin, cos, tan, pi
+from .fast_operations import dot, cross, norm, normalize
 
-from numba import jit, double
-import math
-import numpy as np
-
-@jit
-def cross(vec1, vec2):
-    """ Calculate the cross product of two 3d vectors. """
-    result = np.zeros(3)
-    return cross_(vec1, vec2, result)
-
-
-@jit(nopython=True)
-def cross_(vec1, vec2, result):
-    """ Calculate the cross product of two 3d vectors. """
-    a1, a2, a3 = double(vec1[0]), double(vec1[1]), double(vec1[2])
-    b1, b2, b3 = double(vec2[0]), double(vec2[1]), double(vec2[2])
-    result[0] = a2 * b3 - a3 * b2
-    result[1] = a3 * b1 - a1 * b3
-    result[2] = a1 * b2 - a2 * b1
-    return result
+# ==================================================================================================
+# FUNCTIONS
 
 
 def rotate_point(point_coord, rot_axis, rot_center, rot_angle, degrees=False):
@@ -53,10 +35,8 @@ def rotate_point(point_coord, rot_axis, rot_center, rot_angle, degrees=False):
     """
 
     # Converts inputs to numpy arrays, normalizes axis vector
-    point_coord = np.array(point_coord)
-    rot_center = np.array(rot_center)
     rot_center = (rot_center[np.newaxis]).transpose()
-    U = np.array(rot_axis) / norm(rot_axis)
+    U = normalize(rot_axis)
 
     if degrees:
         theta = np.radians(rot_angle)
@@ -96,6 +76,8 @@ def rotate_point(point_coord, rot_axis, rot_center, rot_angle, degrees=False):
     rotated_points = rotated_points + rot_center
 
     return rotated_points
+
+# --------------------------------------------------------------------------------------------------
 
 
 def velocity_vector(true_airspeed, alpha, beta, gamma):
