@@ -83,15 +83,15 @@ def test_vortex_horseshoe():
                                    [0, 2, 0],
                                    [2, 2, 0]]).transpose()
 
-    target_point = np.array([1, 1, 0])
-    circulation = 1
+    target_point = np.array([1, 1, 0], dtype=)
+    circulation = 1.0
 
     induced_velocity, wake_induced_velocity = basic_elements.vortex_horseshoe(vertex_coordinates,
                                                                               target_point,
                                                                               circulation)
 
-    # print(f"Induced velocity = {induced_velocity}")
-    # print(f"Wake Induced Velocity = {wake_induced_velocity}")
+    print(f"Induced velocity = {induced_velocity}")
+    print(f"Wake Induced Velocity = {wake_induced_velocity}")
 
     if not (abs(induced_velocity[0] - 0) < 0.0000001 and
             abs(induced_velocity[1] - 0) < 0.0000001 and

@@ -66,7 +66,7 @@ def vortex_segment(first_point, second_point, target_point, circulation):
     # Verification to deal with cases where the point of interest is situated in the vicinity of the
     # vortex line which for numerical purposes is assumed to have a very small radius
     # epsilon = 0.0001 (one milimiter, if meters are being used as the reference unit)
-    epsilon = 0.001
+    epsilon = 0.0001
 
     if (norm(R1) < epsilon or norm(R2) < epsilon or norm(cross(R1, R2)) ** 2 < epsilon):
         induced_velocity = np.array([0.0, 0.0, 0.0])

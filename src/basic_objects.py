@@ -134,7 +134,7 @@ class Panel(object):
 
         self.col_point = 0.75 * (self.t_edge_1_2 - self.l_edge_1_2) + self.l_edge_1_2
 
-        self.spam = dot(self.l_edge, np.array([0, 1, 0]))
+        self.span = dot(self.l_edge, np.array([0, 1, 0]))
         self.n = normalize(cross(self.BD, self.AC))
         self.area = dot(self.n, cross(self.BD, self.AC)) / 2
 

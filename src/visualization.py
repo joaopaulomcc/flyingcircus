@@ -56,6 +56,9 @@ def set_axes_equal(ax):
     ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
     ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
+# --------------------------------------------------------------------------------------------------
+
+
 def plot_mesh(xx, yy, zz):
 
     fig = plt.figure()
@@ -64,6 +67,8 @@ def plot_mesh(xx, yy, zz):
     ax.plot_wireframe(xx, yy, zz)
     set_axes_equal(ax)
     plt.show()
+
+# --------------------------------------------------------------------------------------------------
 
 
 def plot_results(xx, yy, zz, color_variable):
