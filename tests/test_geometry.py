@@ -27,9 +27,9 @@ from src import geometry
 def test_rotate_point():
 
     points_coord = np.array([[5, 5, 0], [0, 10, 0]]).transpose()
-    axis = [1, 0, 0]
+    axis = np.array([1, 0, 0])
     rotation_angle = 45
-    rotation_center = [0, 5, 0]
+    rotation_center = np.array([0, 5, 0])
 
     rot_point = geometry.rotate_point(points_coord, axis, rotation_center, rotation_angle, degrees=True)
 

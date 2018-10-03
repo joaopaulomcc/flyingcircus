@@ -11,15 +11,15 @@ github: joaopaulomcc
 # IMPORTS
 import numpy as np
 import scipy as sc
-
-from numpy import sin, cos, tan, pi, dot, cross
-from numpy.linalg import norm
-
 import matplotlib
-matplotlib.use('Qt5Agg')
-matplotlib.rcParams['backend.qt5']='PySide2'
 import matplotlib.pyplot as plt
+
 from mpl_toolkits.mplot3d import axes3d
+from numpy import sin, cos, tan, pi
+
+from .fast_operations import dot, cross, norm, normalize
+
+
 
 # ==================================================================================================
 # Functions
@@ -55,6 +55,9 @@ def set_axes_equal(ax):
     ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
     ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
+# --------------------------------------------------------------------------------------------------
+
+
 def plot_mesh(xx, yy, zz):
 
     fig = plt.figure()
@@ -63,6 +66,8 @@ def plot_mesh(xx, yy, zz):
     ax.plot_wireframe(xx, yy, zz)
     set_axes_equal(ax)
     plt.show()
+
+# --------------------------------------------------------------------------------------------------
 
 
 def plot_results(xx, yy, zz, color_variable):

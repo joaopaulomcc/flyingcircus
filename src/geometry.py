@@ -11,10 +11,13 @@ github: joaopaulomcc
 # IMPORTS
 import numpy as np
 import scipy as sc
-import matplotlib.pyplot as plt
 
-from numpy import sin, cos, tan, pi, dot, cross
-from numpy.linalg import norm
+from numpy import sin, cos, tan, pi
+from numba import jit
+from .fast_operations import dot, cross, norm, normalize
+
+# ==================================================================================================
+# FUNCTIONS
 
 
 def rotate_point(point_coord, rot_axis, rot_center, rot_angle, degrees=False):
@@ -32,10 +35,8 @@ def rotate_point(point_coord, rot_axis, rot_center, rot_angle, degrees=False):
     """
 
     # Converts inputs to numpy arrays, normalizes axis vector
-    point_coord = np.array(point_coord)
-    rot_center = np.array(rot_center)
     rot_center = (rot_center[np.newaxis]).transpose()
-    U = np.array(rot_axis) / norm(rot_axis)
+    U = normalize(rot_axis)
 
     if degrees:
         theta = np.radians(rot_angle)
@@ -76,6 +77,8 @@ def rotate_point(point_coord, rot_axis, rot_center, rot_angle, degrees=False):
 
     return rotated_points
 
+# --------------------------------------------------------------------------------------------------
+
 
 def velocity_vector(true_airspeed, alpha, beta, gamma):
     x_axis = np.array([1, 0, 0])
@@ -95,6 +98,26 @@ def velocity_vector(true_airspeed, alpha, beta, gamma):
     vector = rotate_point(vector, x_axis, origin, -gamma, degrees=True)
 
     return vector
+
+# --------------------------------------------------------------------------------------------------
+
+
+def angle_between(vector_1, vector_2):
+
+    cos_theta = dot(vector_1, vector_2) / (norm(vector_1) * norm(vector_2))
+    theta = np.arccos(cos_theta)
+
+    return theta
+
+# --------------------------------------------------------------------------------------------------
+
+
+def cos_between(vector_1, vector_2):
+
+    cos_theta = dot(vector_1, vector_2) / (norm(vector_1) * norm(vector_2))
+
+    return cos_theta
+
 
 
 

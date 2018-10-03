@@ -19,16 +19,17 @@ from numpy.linalg import norm
 from context import src
 from src import basic_elements
 
+import timeit
 # ==================================================================================================
 # TESTS
 
 
-def test_vortex_line():
+def test_vortex_segment():
 
-    first_point = [1, 5, 0]
-    second_point = [3, 1, 0]
-    target_point = [8, 5, 0]
-    vicinity_point = [3, 1, 0.001]
+    first_point = np.array([1, 5, 0])
+    second_point = np.array([3, 1, 0])
+    target_point = np.array([8, 5, 0])
+    vicinity_point = np.array([3, 1, 0.001])
     circulation = 1
 
     induced_velocity = basic_elements.vortex_segment(first_point, second_point, target_point, circulation)
@@ -82,15 +83,15 @@ def test_vortex_horseshoe():
                                    [0, 2, 0],
                                    [2, 2, 0]]).transpose()
 
-    target_point = [1, 1, 0]
-    circulation = 1
+    target_point = np.array([1, 1, 0])
+    circulation = 1.0
 
     induced_velocity, wake_induced_velocity = basic_elements.vortex_horseshoe(vertex_coordinates,
                                                                               target_point,
                                                                               circulation)
 
-    # print(f"Induced velocity = {induced_velocity}")
-    # print(f"Wake Induced Velocity = {wake_induced_velocity}")
+    print(f"Induced velocity = {induced_velocity}")
+    print(f"Wake Induced Velocity = {wake_induced_velocity}")
 
     if not (abs(induced_velocity[0] - 0) < 0.0000001 and
             abs(induced_velocity[1] - 0) < 0.0000001 and
@@ -105,6 +106,42 @@ def test_vortex_horseshoe():
 
         print(f"# Vortex Horseshoe Test: PASS")
 
+# --------------------------------------------------------------------------------------------------
+
+
+def test_beam_3D_stiff():
+
+    E = 210e9
+    G = 84e9
+    A = 2e-2
+    Iy = 10e-5
+    Iz = 20e-5
+    J = 5e-5
+    L = 3
+
+    stiff_matrix = basic_elements.beam_3D_stiff(E, A, L, G, J, Iy, Iz)
+    print("# beam_3D_stiff test:")
+    print(stiff_matrix)
+
+# --------------------------------------------------------------------------------------------------
+
+
+def test_beam_3D_rot():
+
+    A = np.array([[1., 0., 0.],
+                  [0., 1., 0.],
+                  [0., 0., 1.]])
+
+    B = np.array([[1., 0., 0.],
+                  [0., 0., -1.],
+                  [0., 1., 0.]])
+
+    rot_matrix = basic_elements.beam_3D_rot(A, B)
+
+    print("# beam_3D_rot test:")
+    print(rot_matrix)
+
+
 # ==================================================================================================
 # RUNNING TESTS
 if __name__ == "__main__":
@@ -114,6 +151,8 @@ if __name__ == "__main__":
     print("= Testing Basic Elements module =")
     print("=================================")
     print()
-    test_vortex_line()
-    test_vortex_ring()
-    test_vortex_horseshoe()
+    print(timeit.timeit(test_vortex_segment, number=1))
+    print(timeit.timeit(test_vortex_ring, number=1))
+    print(timeit.timeit(test_vortex_horseshoe, number=1))
+    test_beam_3D_stiff()
+    test_beam_3D_rot()

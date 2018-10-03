@@ -11,14 +11,12 @@ github: joaopaulomcc
 # IMPORTS
 import numpy as np
 import scipy as sc
-import matplotlib.pyplot as plt
 
-from numpy import sin, cos, tan, pi, dot, cross
-from numpy.linalg import norm
+from numpy import sin, cos, tan, pi
 
 from . import geometry
 from . import basic_objects
-
+from .fast_operations import dot, cross, norm, normalize
 # ==================================================================================================
 # FUNCTIONS
 
@@ -95,8 +93,8 @@ def generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
     span_points = np.concatenate((span_points_x_vector, span_points_y_vector, span_points_z_vector),
                                  axis=0)
 
-    rot_axis = [1, 0, 0]    # x axis
-    rot_center = [0, 0, 0]  # origin
+    rot_axis = np.array([1, 0, 0])    # x axis
+    rot_center = np.array([0, 0, 0])  # origin
     rot_angle = wing.dihedral_rad
 
     span_points_rot = geometry.rotate_point(span_points, rot_axis, rot_center, rot_angle, degrees=False)
@@ -119,10 +117,10 @@ def generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
     span_points_yy = np.concatenate((span_points_yy_mirror, span_points_yy), axis=1)
     span_points_zz = np.concatenate((span_points_zz_mirror, span_points_zz), axis=1)
 
-    return span_points_xx, span_points_yy, span_points_zz
+    return span_points_xx,  span_points_yy, span_points_zz
 
 
-def generate_panel_matrix(xx, yy, zz):
+def generate_panel_matrix(xx, yy, zz, infinity):
     n_x = np.shape(xx)[0] - 1
     n_y = np.shape(xx)[1] - 1
     panel_matrix = [[None for x in range(n_y)] for y in range(n_x)]
@@ -132,18 +130,18 @@ def generate_panel_matrix(xx, yy, zz):
             xx_slice = xx[i:i + 2, j:j + 2]
             yy_slice = yy[i:i + 2, j:j + 2]
             zz_slice = zz[i:i + 2, j:j + 2]
-            panel_matrix[i][j] = basic_objects.Panel(xx_slice, yy_slice, zz_slice)
+            panel_matrix[i][j] = basic_objects.Panel(xx_slice, yy_slice, zz_slice, infinity)
 
     return panel_matrix
 
 
-def generate_col_points_matrix(xx, yy, zz):
+def generate_col_points_matrix(xx, yy, zz, infinity):
     n_x = np.shape(xx)[0] - 1
     n_y = np.shape(xx)[1] - 1
     col_points_matrix_xx = np.zeros((n_x, n_y))
     col_points_matrix_yy = np.zeros((n_x, n_y))
     col_points_matrix_zz = np.zeros((n_x, n_y))
-    panel_matrix = generate_panel_matrix(xx, yy, zz)
+    panel_matrix = generate_panel_matrix(xx, yy, zz, infinity)
 
     for i in range(n_x):
         for j in range(n_y):
