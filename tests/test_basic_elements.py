@@ -83,7 +83,7 @@ def test_vortex_horseshoe():
                                    [0, 2, 0],
                                    [2, 2, 0]]).transpose()
 
-    target_point = np.array([1, 1, 0], dtype=)
+    target_point = np.array([1, 1, 0])
     circulation = 1.0
 
     induced_velocity, wake_induced_velocity = basic_elements.vortex_horseshoe(vertex_coordinates,
@@ -106,6 +106,41 @@ def test_vortex_horseshoe():
 
         print(f"# Vortex Horseshoe Test: PASS")
 
+# --------------------------------------------------------------------------------------------------
+
+
+def test_beam_3D_stiff():
+
+    E = 210e9
+    G = 84e9
+    A = 2e-2
+    Iy = 10e-5
+    Iz = 20e-5
+    J = 5e-5
+    L = 3
+
+    stiff_matrix = basic_elements.beam_3D_stiff(E, A, L, G, J, Iy, Iz)
+    print("# beam_3D_stiff test:")
+    print(stiff_matrix)
+
+# --------------------------------------------------------------------------------------------------
+
+
+def test_beam_3D_rot():
+
+    A = np.array([[1., 0., 0.],
+                  [0., 1., 0.],
+                  [0., 0., 1.]])
+
+    B = np.array([[1., 0., 0.],
+                  [0., 0., -1.],
+                  [0., 1., 0.]])
+
+    rot_matrix = basic_elements.beam_3D_rot(A, B)
+
+    print("# beam_3D_rot test:")
+    print(rot_matrix)
+
 
 # ==================================================================================================
 # RUNNING TESTS
@@ -119,3 +154,5 @@ if __name__ == "__main__":
     print(timeit.timeit(test_vortex_segment, number=1))
     print(timeit.timeit(test_vortex_ring, number=1))
     print(timeit.timeit(test_vortex_horseshoe, number=1))
+    test_beam_3D_stiff()
+    test_beam_3D_rot()

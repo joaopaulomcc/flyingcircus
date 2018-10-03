@@ -11,7 +11,6 @@ github: joaopaulomcc
 # IMPORTS
 import numpy as np
 import scipy as sc
-import matplotlib.pyplot as plt
 
-from numpy import sin, cos, tan, pi, dot, cross
-from numpy.linalg import norm
+from numpy import sin, cos, tan, pi
+from .fast_operations import dot, cross, norm

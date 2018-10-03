@@ -31,36 +31,6 @@ from samples import wing_simple
 from numba import jit
 # ==============================================================================================
 
-
-area = 19.4
-aspect_ratio = 6.39
-taper_ratio = 0.42
-sweep_quarter_chord = 0
-dihedral = 7
-incidence = 0
-torsion = 0
-position = [0, 0, 0]
-
-n_semi_wingspam_panels = 15
-n_chord_panels = 6
-wingspam_discretization_type = "linear"
-chord_discretization_type = "linear"
-
-alpha = 3.6
-beta = 0
-gamma = 0
-attitude_vector = [alpha, beta, gamma]
-altitude = 0
-
-density, pressure, temperature = atmosphere.ISA(altitude)
-
-true_airspeed = 113.
-flow_velocity_vector = geometry.velocity_vector(true_airspeed, alpha, beta, gamma)[:,0]
-infinity_mult = 25.
-
-wing = basic_objects.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
-                          incidence, torsion, position)
-
 @jit
 def test_plot_mesh():
 
@@ -68,6 +38,9 @@ def test_plot_mesh():
                                     wingspam_discretization_type, chord_discretization_type)
 
     visualization.plot_mesh(xx, yy, zz)
+
+# --------------------------------------------------------------------------------------------------
+
 
 @jit
 def test_plot_results():
@@ -103,6 +76,37 @@ if __name__ == "__main__":
     print("= Testing visualization module =")
     print("================================")
     print()
+
+    area = 19.4
+    aspect_ratio = 6.39
+    taper_ratio = 0.42
+    sweep_quarter_chord = 0
+    dihedral = 7
+    incidence = 0
+    torsion = 0
+    position = [0, 0, 0]
+
+    n_semi_wingspam_panels = 50
+    n_chord_panels = 6
+    wingspam_discretization_type = "linear"
+    chord_discretization_type = "linear"
+
+    alpha = 3.6
+    beta = 0
+    gamma = 0
+    attitude_vector = [alpha, beta, gamma]
+    altitude = 0
+
+    density, pressure, temperature = atmosphere.ISA(altitude)
+
+    true_airspeed = 113.
+    flow_velocity_vector = geometry.velocity_vector(true_airspeed, alpha, beta, gamma)[:,0]
+    infinity_mult = 25.
+
+    wing = basic_objects.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
+                              incidence, torsion, position)
+
+
     print("Testing plot_results")
     #test_plot_mesh()
     test_plot_results()

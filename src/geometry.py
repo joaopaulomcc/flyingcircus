@@ -11,9 +11,9 @@ github: joaopaulomcc
 # IMPORTS
 import numpy as np
 import scipy as sc
-import matplotlib.pyplot as plt
 
 from numpy import sin, cos, tan, pi
+from numba import jit
 from .fast_operations import dot, cross, norm, normalize
 
 # ==================================================================================================
@@ -98,6 +98,25 @@ def velocity_vector(true_airspeed, alpha, beta, gamma):
     vector = rotate_point(vector, x_axis, origin, -gamma, degrees=True)
 
     return vector
+
+# --------------------------------------------------------------------------------------------------
+
+
+def angle_between(vector_1, vector_2):
+
+    cos_theta = dot(vector_1, vector_2) / (norm(vector_1) * norm(vector_2))
+    theta = np.arccos(cos_theta)
+
+    return theta
+
+# --------------------------------------------------------------------------------------------------
+
+
+def cos_between(vector_1, vector_2):
+
+    cos_theta = dot(vector_1, vector_2) / (norm(vector_1) * norm(vector_2))
+
+    return cos_theta
 
 
 

@@ -11,16 +11,15 @@ github: joaopaulomcc
 # IMPORTS
 import numpy as np
 import scipy as sc
+import matplotlib
+import matplotlib.pyplot as plt
 
+from mpl_toolkits.mplot3d import axes3d
 from numpy import sin, cos, tan, pi
 
 from .fast_operations import dot, cross, norm, normalize
 
-import matplotlib
-matplotlib.use('Qt5Agg')
-matplotlib.rcParams['backend.qt5']='PySide2'
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import axes3d
+
 
 # ==================================================================================================
 # Functions

@@ -12,12 +12,11 @@ github: joaopaulomcc
 # IMPORTS
 import numpy as np
 import scipy as sc
-import matplotlib.pyplot as plt
 
 from numpy import sin, cos, tan, pi
-from numpy.linalg import norm
-
 from numba import jit
+
+from . import geometry
 from .fast_operations import dot, cross, norm
 # ==================================================================================================
 # AERODYNAMICS
@@ -130,6 +129,7 @@ def vortex_ring(vertex_coordinates, target_point, circulation):
 
 # --------------------------------------------------------------------------------------------------
 
+
 @jit(nopython=True)
 def vortex_horseshoe(vertex_coordinates, target_point, circulation):
     """
@@ -181,3 +181,80 @@ def vortex_horseshoe(vertex_coordinates, target_point, circulation):
 # ==================================================================================================
 # STRUCTURES
 
+
+def beam_3D_stiff(E, A, L, G, J, Iy, Iz):
+
+    K = np.zeros((12, 12))
+
+    K[0][0] = E * A / L
+    K[0][6] = -E * A / L
+    K[6][0] = K[0][6]
+
+    K[1][1] = 12 * E * Iz / L ** 3
+    K[1][5] = 6 * E * Iz / L ** 2
+    K[5][1] = K[1][5]
+    K[1][7] = -12 * E * Iz / L ** 3
+    K[7][1] = K[1][7]
+    K[1][11] = 6 * E * Iz / L ** 2
+    K[11][1] = K[1][11]
+
+    K[2][2] = 12 * E * Iy / L ** 3
+    K[2][4] = -6 * E * Iy / L ** 2
+    K[4][2] = K[2][4]
+    K[2][8] = -12 * E * Iy / L ** 3
+    K[8][2] = K[2][8]
+    K[2][10] = -6 * E * Iy / L ** 2
+    K[10][2] = K[2][10]
+
+    K[3][3] = G * J / L
+    K[3][9] = -G * J / L
+    K[9][3] = K[3][9]
+
+    K[4][4] = 4 * E * Iy / L
+    K[4][8] = 6 * E * Iy / L ** 2
+    K[8][4] = K[4][8]
+    K[4][10] = 2 * E * Iy / L
+    K[10][4] = K[4][10]
+
+    K[5][5] = 4 * E * Iz / L
+    K[5][7] = -6 * E * Iz / L ** 2
+    K[7][5] = K[5][7]
+    K[5][11] = 2 * E * Iz / L
+    K[11][5] = K[5][11]
+
+    K[6][6] = E * A / L
+
+    K[7][7] = 12 * E * Iz / L ** 3
+    K[7][11] = -6 * E * Iz / L ** 2
+    K[11][7] = K[7][11]
+
+    K[8][8] = 12 * E * Iy / L ** 3
+    K[8][10] = 6 * E * Iy / L ** 2
+    K[10][8] = K[8][10]
+
+    K[9][9] = G * J / L
+
+    K[10][10] = 4 * E * Iy / L
+
+    K[11][11] = 4 * E * Iz / L
+
+    return K
+
+# --------------------------------------------------------------------------------------------------
+
+
+def beam_3D_rot(global_coord, local_coord):
+
+    zero = np.zeros((3, 3))
+    r = np.zeros((3, 3))
+
+    for i in range(3):
+        for j in range(3):
+            r[i][j] = geometry.cos_between(local_coord[:, i], global_coord[:, j])
+
+    R = np.block([[r, zero, zero, zero],
+                  [zero, r, zero, zero],
+                  [zero, zero, r, zero],
+                  [zero, zero, zero, r]])
+
+    return R

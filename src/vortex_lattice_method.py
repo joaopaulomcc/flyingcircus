@@ -14,11 +14,9 @@ github: joaopaulomcc
 import numpy as np
 import scipy as sc
 import time
-#import matplotlib.pyplot as plt
 
 from numpy import sin, cos, tan, pi
-from numpy.linalg import norm
-from scipy.sparse.linalg import gmres
+import scipy.sparse.linalg as spla
 
 from .fast_operations import dot, cross, norm, normalize
 from numba import jit
@@ -69,7 +67,7 @@ def gamma_solver(panel_vector, flow_velocity_vector, infinity):
 
     # Solve linear system using scipy library
 
-    gamma, _ = sc.sparse.linalg.gmres(influence_coef_matrix, right_hand_side_vector)
+    gamma, _ = spla.gmres(influence_coef_matrix, right_hand_side_vector)
 
     #np.savetxt("influence.csv", influence_coef_matrix, delimiter=",")
     #np.savetxt("RHS.csv", right_hand_side_vector, delimiter=",")

@@ -11,7 +11,6 @@ github: joaopaulomcc
 # IMPORTS
 import numpy as np
 import scipy as sc
-import matplotlib.pyplot as plt
 
 from numpy import sin, cos, tan, pi
 
@@ -118,7 +117,7 @@ def generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
     span_points_yy = np.concatenate((span_points_yy_mirror, span_points_yy), axis=1)
     span_points_zz = np.concatenate((span_points_zz_mirror, span_points_zz), axis=1)
 
-    return span_points_xx, span_points_yy, span_points_zz
+    return span_points_xx,  span_points_yy, span_points_zz
 
 
 def generate_panel_matrix(xx, yy, zz, infinity):
