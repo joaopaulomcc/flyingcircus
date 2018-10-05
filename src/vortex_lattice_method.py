@@ -36,7 +36,7 @@ def flatten(panel_matrix):
 # --------------------------------------------------------------------------------------------------
 
 
-@jit
+#@jit
 def gamma_solver(panel_vector, flow_velocity_vector, infinity):
     """Receives a vector of panel objects and the airflow velocity. Using this information
     calculates the influence matrix, the right hand side velocity vector and solves the resulting

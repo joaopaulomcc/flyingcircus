@@ -60,30 +60,6 @@ def test_wing():
 # --------------------------------------------------------------------------------------------------
 
 
-#def test_panel():
-#    x = np.array([0, 2])
-#    y = np.array([0, 2])
-#    xx, yy = np.meshgrid(x, y, indexing="ij")
-#    zz = np.zeros((2, 2))
-#
-#    target_point = np.array([1, 1, 0])
-#    circulation = 1
-#    infinity = 25
-#
-#    P = basic_objects.Panel(xx, yy, zz)
-#    induced_velocity, wake_induced_velocity = P.hs_induced_velocity(target_point, circulation, infinity)
-#
-#    print()
-#    print("TESTING Panel")
-#    print(f"Vector AC: {P.AC}")
-#    print(f"Vector BD: {P.BD}")
-#    print(f"Vector n: {P.n}")
-#    print(f"Area n: {P.area}")
-#    print(f"Collocation Point n: {P.col_point}")
-#    print(f"induced_velocity: {induced_velocity}")
-#    print(f"wake_induced_velocity: {wake_induced_velocity}")
-
-
 def test_panel():
     x = np.array([0, 2])
     y = np.array([0, 2])
@@ -107,6 +83,97 @@ def test_panel():
     print(f"induced_velocity: {induced_velocity}")
     print(f"wake_induced_velocity: {wake_induced_velocity}")
 
+# --------------------------------------------------------------------------------------------------
+
+
+def test_beam_element():
+
+    E = 210e9
+    G = 84e9
+    A = 2e-2
+    Iy = 10e-5
+    Iz = 20e-5
+    J = 5e-5
+
+    point_A = np.array([0, 0, 0])
+    point_B = np.array([3, 0, 0])
+    rotation = pi / 3
+    correlation_vector = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+
+    beam = basic_objects.BeamElement(point_A, point_B, rotation, correlation_vector, E, A, G, J, Iy, Iz)
+    print(beam.__dict__)
+
+# --------------------------------------------------------------------------------------------------
+
+
+def test_material():
+
+    name = "Steel"
+    density = 8000
+    young_modulus = 200e9
+    shear_modulus = 80e9
+    poisson_ratio = 0.25
+    yield_strength = 350e6
+    ultimate_strength = 420e6
+
+    mat_steel = basic_objects.Material(name, young_modulus, shear_modulus, poisson_ratio, density, yield_strength, ultimate_strength)
+    print(mat_steel.__dict__)
+
+# --------------------------------------------------------------------------------------------------
+
+
+def test_section():
+
+    area = 2e-2
+    m_inertia_y = 10e-5
+    m_inertia_z = 20e-5
+    polar_moment = 5e-5
+    rotation = pi / 6
+
+    section = basic_objects.Section(area, rotation, m_inertia_y, m_inertia_z, polar_moment)
+    print(section.__dict__)
+
+# --------------------------------------------------------------------------------------------------
+
+
+def test_beam():
+
+    point_A = np.array([0, 0, 0])
+    point_B = np.array([3, 3, 3])
+
+    name = "Steel"
+    density = 8000
+    young_modulus = 200e9
+    shear_modulus = 80e9
+    poisson_ratio = 0.25
+    yield_strength = 350e6
+    ultimate_strength = 420e6
+
+    mat_steel = basic_objects.Material(name, young_modulus, shear_modulus, poisson_ratio, density, yield_strength, ultimate_strength)
+
+    area = 2e-2
+    m_inertia_y = 10e-5
+    m_inertia_z = 20e-5
+    polar_moment = 5e-5
+    rotation = pi / 6
+
+    section = basic_objects.Section(area, rotation, m_inertia_y, m_inertia_z, polar_moment)
+
+    n_elements = 5
+
+    beam = basic_objects.Beam(point_A, point_B, section, mat_steel)
+    print(beam.__dict__)
+
+    print("# Mesh points: ")
+    print(beam.mesh(n_elements))
+
+# --------------------------------------------------------------------------------------------------
+
+
+def test_beam():
+
+
+
 
 # ==================================================================================================
 # RUN TESTS
@@ -118,5 +185,10 @@ if __name__ == "__main__":
     print("= Testing objects module =")
     print("============================")
     print()
-    test_wing()
-    test_panel()
+    #test_wing()
+    #test_panel()
+    #test_beam_element()
+    #test_material()
+    #test_section()
+    #test_beam()
+

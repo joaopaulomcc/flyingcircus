@@ -54,9 +54,9 @@ def rotate_point(point_coord, rot_axis, rot_center, rot_angle, degrees=False):
     I = np.identity(3)
 
     # Cross product matrix
-    CPM = np.array([[  0, -u2,  u1],
-                    [ u2,   0, -u0],
-                    [-u1,  u0,   0]])
+    CPM = np.array([[ 0., -u2,  u1],
+                    [ u2,  0., -u0],
+                    [-u1,  u0,  0.]])
 
     # Tensor product U X U, this is NOT a cross product
     TP = np.tensordot(U, U, axes=0)
@@ -81,10 +81,10 @@ def rotate_point(point_coord, rot_axis, rot_center, rot_angle, degrees=False):
 
 
 def velocity_vector(true_airspeed, alpha, beta, gamma):
-    x_axis = np.array([1, 0, 0])
-    y_axis = np.array([0, 1, 0])
-    z_axis = np.array([0, 0, 1])
-    origin = np.array([0, 0, 0])
+    x_axis = np.array([1., 0., 0.])
+    y_axis = np.array([0., 1., 0.])
+    z_axis = np.array([0., 0., 1.])
+    origin = np.array([0., 0., 0.])
 
     vector = np.array([true_airspeed, 0, 0])[np.newaxis].transpose()
 
