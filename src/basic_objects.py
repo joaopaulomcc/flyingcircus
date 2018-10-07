@@ -114,12 +114,11 @@ class Panel(object):
 
 class BeamElement(object):
 
-    def __init__(self, point_A, point_B, rotation, correlation_vector, E, A, G, J, Iy, Iz):
+    def __init__(self, point_A_index, point_B_index, rotation, E, A, G, J, Iy, Iz):
 
-        self.point_A = point_A
-        self.point_B = point_B
+        self.point_A_index = point_A_index
+        self.point_B_index = point_B_index
         self.rotation = rotation
-        self.correlation_vector = correlation_vector
         self.E = E
         self.A = A
         self.G = G
@@ -127,10 +126,13 @@ class BeamElement(object):
         self.Iy = Iy
         self.Iz = Iz
 
-        self.N = self.point_B - self.point_A
-        self.Nxy = np.array([self.N[0], self.N[1], 0])
+    def calc_rotation_matrix(self, grid):
+        
+        point_A = grid[self.point_A_index]
+        point_B = grid[self.point_B_index]
 
-        self.L = norm(self.N)
+        N = point_B - point_A
+        Nxy = np.array([N[0], N[1], 0])
 
         X = np.array([1., 0., 0.])
         Y = np.array([0., 1., 0.])
@@ -140,11 +142,16 @@ class BeamElement(object):
         global_coord_system = np.eye(3)
         local_coord_sys = np.eye(3)
 
-        elev = pi / 2 - geometry.angle_between(self.N, Z)
-        azim = geometry.angle_between(self.Nxy, X)
+        elev = pi / 2 - geometry.angle_between(N, Z)
+
+        # Solution for the case in witch the vector is parallel to the Z axis
+        if norm(Nxy) == 0:
+            azim = 0
+        else:
+            azim = geometry.angle_between(Nxy, X)
 
         # Rotation around X
-        local_coord_sys = geometry.rotate_point(local_coord_sys, X, origin, rotation)
+        local_coord_sys = geometry.rotate_point(local_coord_sys, X, origin, self.rotation)
 
         # Rotation around Y
         local_coord_sys = geometry.rotate_point(local_coord_sys, Y, origin, elev)
@@ -153,18 +160,39 @@ class BeamElement(object):
         local_coord_sys = geometry.rotate_point(local_coord_sys, Z, origin, azim)
 
         # Local coordinate system
-        self.x = local_coord_sys[:, 0]
-        self.y = local_coord_sys[:, 1]
-        self.z = local_coord_sys[:, 2]
+        #x = local_coord_sys[:, 0]
+        #y = local_coord_sys[:, 1]
+        #z = local_coord_sys[:, 2]
 
         # Rotation matrix
-        self.rotation_matrix = basic_elements.beam_3D_rot(global_coord_system, local_coord_sys)
+        rotation_matrix = basic_elements.beam_3D_rot(global_coord_system, local_coord_sys)
+
+        return rotation_matrix
+
+
+    def calc_K_local(self, grid):
+
+        point_A = grid[self.point_A_index]
+        point_B = grid[self.point_B_index]
+
+        N = point_B - point_A
+        L = norm(N)
 
         # Local Stiffness Matrix
-        self.K_local = basic_elements.beam_3D_stiff(self.E, self.A, self.L, self.G, self.J, self.Iy, self.Iz)
+        K_local = basic_elements.beam_3D_stiff(self.E, self.A, L, self.G, self.J, self.Iy, self.Iz)
+
+        return K_local
+
+    
+    def calc_K_global(self, grid):
+
+        rotation_matrix = self.calc_rotation_matrix(grid)
+        K_local = self.calc_K_local(grid)
 
         # Global Stiffness Matrix
-        self.K_global = self.rotation_matrix.transpose() @ (self.K_local @ self.rotation_matrix)
+        K_global = rotation_matrix.transpose() @ (K_local @ rotation_matrix)
+
+        return K_global
 
 # --------------------------------------------------------------------------------------------------
 
@@ -174,7 +202,6 @@ class Structure():
     def __init__(self, points, beams, loads, constraints):
 
         self.points = points
-        self.loads = loads
         self.beams = beams
         self.loads = loads
         self.constraints = constraints
@@ -184,17 +211,22 @@ class Structure():
 
 class Beam():
 
-    def __init__(self, point_A, point_B, section, material):
+    def __init__(self, structure_points, point_A_index, point_B_index, section, material, n_elements):
 
-        self.point_A = point_A
-        self.point_B = point_B
+        self.structure_points = structure_points
+        self.point_A_index = point_A_index
+        self.point_B_index = point_B_index
+        self.point_A = structure_points[point_A_index]
+        self.point_B = structure_points[point_B_index]
         self.section = section
         self.material = material
+        self.n_elements = n_elements
+        self.vector = self.point_B - self.point_A
+        self.L = norm(self.vector)
 
     def mesh(self, n_elements):
-
-        vector = self.point_B - self.point_A
-        delta = vector / n_elements
+        
+        delta = self.vector / n_elements
 
         mesh_points = []
 
@@ -202,8 +234,7 @@ class Beam():
 
             mesh_points.append(self.point_A + i * delta)
 
-        mesh_points = np.array(mesh_points).transpose()
-
+        mesh_points = np.array(mesh_points)
         return mesh_points
 
 
@@ -242,17 +273,17 @@ class Section():
 
 class Load():
 
-    def __init__(self, components, type):
+    def __init__(self, application_point_index, components):
 
+        self.application_point_index = application_point_index
         self.components = components
-        self.type = type
 
 # --------------------------------------------------------------------------------------------------
 
 
 class Constraint():
 
-    def __int__(self, application_point_index, deflections):
+    def __init__(self, application_point_index, dof_constraints):
 
         self.application_point_index = application_point_index
-        self.deflections = deflections
+        self.dof_constraints = dof_constraints

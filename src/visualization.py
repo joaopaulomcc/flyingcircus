@@ -86,3 +86,22 @@ def plot_results(xx, yy, zz, color_variable):
     fig.colorbar(m,  shrink=0.5, aspect=5)
     set_axes_equal(ax)
     plt.show()
+
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_structure(structure):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d', proj_type="persp")
+
+    for beam in structure.beams:
+        point_A = structure.points[beam.point_A_index]
+        point_B = structure.points[beam.point_B_index]
+        x = [point_A[0], point_B[0]]
+        y = [point_A[1], point_B[1]]
+        z = [point_A[2], point_B[2]]
+        ax.plot(x, y, z, "-ko")
+
+    set_axes_equal(ax)
+    plt.show()

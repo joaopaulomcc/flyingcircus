@@ -65,6 +65,65 @@ def test_plot_results():
 
     visualization.plot_results(xx, yy, zz, lift_grid)
 
+# --------------------------------------------------------------------------------------------------
+
+
+def test_plot_structure():
+
+    name = "Steel"
+    density = 8000
+    young_modulus = 200e9
+    shear_modulus = 80e9
+    poisson_ratio = 0.25
+    yield_strength = 350e6
+    ultimate_strength = 420e6
+
+    mat_steel = basic_objects.Material(name, young_modulus, shear_modulus, poisson_ratio, density, yield_strength, ultimate_strength)
+
+    area = 2e-2
+    m_inertia_y = 10e-5
+    m_inertia_z = 20e-5
+    polar_moment = 5e-5
+    rotation = pi / 6
+
+    section = basic_objects.Section(area, rotation, m_inertia_y, m_inertia_z, polar_moment)
+
+    structure_points = np.array([[0, 0, 0],
+                                 [2, 0, 0],
+                                 [5, 0, 0],
+                                 [5, 0, 1],
+                                 [2, -5, 0.4],
+                                 [2, 5, 0.4],
+                                 [5, -2, 1],
+                                 [5, 2, 1]])
+
+    fuselage_frontal = basic_objects.Beam(structure_points, 0, 1, section, mat_steel)
+    fuselage_posterior = basic_objects.Beam(structure_points, 1, 2, section, mat_steel)
+    wing_left = basic_objects.Beam(structure_points, 1, 4, section, mat_steel)
+    wing_right = basic_objects.Beam(structure_points, 1, 5, section, mat_steel)
+    tail_vertical = basic_objects.Beam(structure_points, 2, 3, section, mat_steel)
+    tail_horizontal_left = basic_objects.Beam(structure_points, 3, 6, section, mat_steel)
+    tail_horizontal_right = basic_objects.Beam(structure_points, 3, 7, section, mat_steel)
+
+    beams = [fuselage_frontal,
+             fuselage_posterior,
+             wing_left,
+             wing_right,
+             tail_vertical,
+             tail_horizontal_left,
+             tail_horizontal_right]
+
+    constraint = basic_objects.Constraint(1, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    constraints = [[constraint]]
+
+    lift_left_wing = basic_objects.Load(4, np.array([0, 10000, 0, 0, 100, 0]))
+    lift_right_wing = basic_objects.Load(5, np.array([0, 10000, 0, 0, 100, 0]))
+
+    loads = [lift_left_wing, lift_right_wing]
+
+    aircraft_structure = basic_objects.Structure(structure_points, beams, loads, constraints)
+
+    visualization.plot_structure(aircraft_structure)
 
 # ==================================================================================================
 # RUNNING TESTS
@@ -106,6 +165,7 @@ if __name__ == "__main__":
     wing = basic_objects.Wing(area, aspect_ratio, taper_ratio, sweep_quarter_chord, dihedral,
                               incidence, torsion, position)
 
-    print("Testing plot_results")
+    #print("Testing plot_results")
     #test_plot_mesh()
-    test_plot_results()
+    #test_plot_results()
+    test_plot_structure()

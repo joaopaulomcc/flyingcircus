@@ -18,7 +18,7 @@ from . import geometry
 from . import basic_objects
 from .fast_operations import dot, cross, norm, normalize
 # ==================================================================================================
-# FUNCTIONS
+# AERODYNAMICS
 
 
 def generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
@@ -119,6 +119,8 @@ def generate_mesh(wing, n_semi_wingspam_panels, n_chord_panels,
 
     return span_points_xx,  span_points_yy, span_points_zz
 
+# --------------------------------------------------------------------------------------------------
+
 
 def generate_panel_matrix(xx, yy, zz, infinity):
     n_x = np.shape(xx)[0] - 1
@@ -133,6 +135,8 @@ def generate_panel_matrix(xx, yy, zz, infinity):
             panel_matrix[i][j] = basic_objects.Panel(xx_slice, yy_slice, zz_slice, infinity)
 
     return panel_matrix
+
+# --------------------------------------------------------------------------------------------------
 
 
 def generate_col_points_matrix(xx, yy, zz, infinity):
@@ -150,3 +154,9 @@ def generate_col_points_matrix(xx, yy, zz, infinity):
             col_points_matrix_zz[i][j] = panel_matrix[i][j].col_point[2]
 
     return col_points_matrix_xx, col_points_matrix_yy, col_points_matrix_zz
+
+# ==================================================================================================
+# STRUCTURES
+
+
+
