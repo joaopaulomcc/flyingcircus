@@ -97,13 +97,13 @@ def test_plot_structure():
                                  [5, -2, 1],
                                  [5, 2, 1]])
 
-    fuselage_frontal = basic_objects.Beam(structure_points, 0, 1, section, mat_steel)
-    fuselage_posterior = basic_objects.Beam(structure_points, 1, 2, section, mat_steel)
-    wing_left = basic_objects.Beam(structure_points, 1, 4, section, mat_steel)
-    wing_right = basic_objects.Beam(structure_points, 1, 5, section, mat_steel)
-    tail_vertical = basic_objects.Beam(structure_points, 2, 3, section, mat_steel)
-    tail_horizontal_left = basic_objects.Beam(structure_points, 3, 6, section, mat_steel)
-    tail_horizontal_right = basic_objects.Beam(structure_points, 3, 7, section, mat_steel)
+    fuselage_frontal = basic_objects.Beam(structure_points, 0, 1, section, mat_steel, 5)
+    fuselage_posterior = basic_objects.Beam(structure_points, 1, 2, section, mat_steel, 5)
+    wing_left = basic_objects.Beam(structure_points, 1, 4, section, mat_steel, 5)
+    wing_right = basic_objects.Beam(structure_points, 1, 5, section, mat_steel, 5)
+    tail_vertical = basic_objects.Beam(structure_points, 2, 3, section, mat_steel, 5)
+    tail_horizontal_left = basic_objects.Beam(structure_points, 3, 6, section, mat_steel, 5)
+    tail_horizontal_right = basic_objects.Beam(structure_points, 3, 7, section, mat_steel, 5)
 
     beams = [fuselage_frontal,
              fuselage_posterior,

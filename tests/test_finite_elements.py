@@ -26,13 +26,12 @@ from src import mesh
 from src import basic_objects
 from src import geometry
 from src import visualization
+from src import finite_element_method
+
 from samples import wing_simple
 
 from numba import jit
 # ==================================================================================================
-
-def test_generate_FEM_mesh():
-
 #    name = "Steel"
 #    density = 8000
 #    young_modulus = 200e9
@@ -59,7 +58,7 @@ def test_generate_FEM_mesh():
 #    beam_0 = basic_objects.Beam(structure_points, 0, 1, section, mat_steel, 3)
 #    beam_1 = basic_objects.Beam(structure_points, 1, 2, section, mat_steel, 3)
 #    beam_2 = basic_objects.Beam(structure_points, 1, 3, section, mat_steel, 3)
-# 
+#
 #    beams = [beam_0,
 #             beam_1,
 #             beam_2]
@@ -74,9 +73,13 @@ def test_generate_FEM_mesh():
 #
 #    structure = basic_objects.Structure(structure_points, beams, loads, constraints)
 
+
+def test_generate_FEM_mesh():
+
+    # Material definition
     name = "Aluminiun"
     density = 0.0975
-    young_modulus = 10e7
+    young_modulus = 1e7
     shear_modulus = 3770000
     poisson_ratio = 0.33
     yield_strength = 350e6
@@ -84,6 +87,7 @@ def test_generate_FEM_mesh():
 
     mat_aluminiun = basic_objects.Material(name, young_modulus, shear_modulus, poisson_ratio, density, yield_strength, ultimate_strength)
 
+    # Section definition
     area = 1
     m_inertia_y = 0.08333333
     m_inertia_z = 0.08333333
@@ -92,9 +96,12 @@ def test_generate_FEM_mesh():
 
     section = basic_objects.Section(area, rotation, m_inertia_y, m_inertia_z, polar_moment)
 
+    # Structure points definition
     structure_points = np.array([[0, 0, 0],
                                  [10, 0, 0],
                                  [20, 0, 0]])
+
+    # Structure beams definition
 
     beam_0 = basic_objects.Beam(structure_points, 0, 1, section, mat_aluminiun, 5)
     beam_1 = basic_objects.Beam(structure_points, 1, 2, section, mat_aluminiun, 5)
@@ -102,154 +109,209 @@ def test_generate_FEM_mesh():
     beams = [beam_0,
              beam_1]
 
-    constraint_1 = basic_objects.Constraint(0, [0, 0, 0, None, None, None])
+    # Structure ddefinition
+    structure = basic_objects.Structure(structure_points, beams)
+
+    # Element Length
+    element_length = 2
+
+    print("# Testing generate_FEM_mesh")
+    start = time.time()
+    nodes, fem_elements = finite_element_method.generate_FEM_mesh(structure, element_length)
+    end = time.time()
+    print(f"- Test completed in {end - start}")
+
+# --------------------------------------------------------------------------------------------------
+
+
+def test_create_global_FEM_matrices():
+
+    # Material definition
+    name = "Aluminiun"
+    density = 0.0975
+    young_modulus = 1e7
+    shear_modulus = 3770000
+    poisson_ratio = 0.33
+    yield_strength = 350e6
+    ultimate_strength = 420e6
+
+    mat_aluminiun = basic_objects.Material(name, young_modulus, shear_modulus, poisson_ratio, density, yield_strength, ultimate_strength)
+
+    # Section definition
+    area = 1
+    m_inertia_y = 0.08333333
+    m_inertia_z = 0.08333333
+    polar_moment = 0.1408333
+    rotation = 0
+
+    section = basic_objects.Section(area, rotation, m_inertia_y, m_inertia_z, polar_moment)
+
+    # Structure points definition
+    structure_points = np.array([[0, 0, 0],
+                                 [10, 0, 0],
+                                 [20, 0, 0]])
+
+    # Structure beams definition
+
+    beam_0 = basic_objects.Beam(structure_points, 0, 1, section, mat_aluminiun, 5)
+    beam_1 = basic_objects.Beam(structure_points, 1, 2, section, mat_aluminiun, 5)
+
+    beams = [beam_0,
+             beam_1]
+
+    # Structure definition
+    structure = basic_objects.Structure(structure_points, beams)
+
+    # Element Length
+    element_length = 2
+
+    nodes, fem_elements = finite_element_method.generate_FEM_mesh(structure, element_length)
+
+    # Loads definition
+    force = basic_objects.Load(1, np.array([0, 100, 0, 0, 0, 0]))
+    loads = [force]
+
+    print("# Testing create_global_FEM_matrices")
+    start = time.time()
+    K_global, F_global = finite_element_method.create_global_FEM_matrices(nodes, fem_elements, loads)
+    end = time.time()
+    print(f"- Test completed in {end - start}")
+
+# --------------------------------------------------------------------------------------------------
+
+
+def test_FEM_solver():
+
+    # Material definition
+    name = "Aluminiun"
+    density = 0.0975
+    young_modulus = 1e7
+    shear_modulus = 3770000
+    poisson_ratio = 0.33
+    yield_strength = 350e6
+    ultimate_strength = 420e6
+
+    mat_aluminiun = basic_objects.Material(name, young_modulus, shear_modulus, poisson_ratio, density, yield_strength, ultimate_strength)
+
+    # Section definition
+    area = 1
+    m_inertia_y = 0.08333333
+    m_inertia_z = 0.08333333
+    polar_moment = 0.1408333
+    rotation = 0
+
+    section = basic_objects.Section(area, rotation, m_inertia_y, m_inertia_z, polar_moment)
+
+    # Structure points definition
+    structure_points = np.array([[0, 0, 0],
+                                 [10, 0, 0],
+                                 [20, 0, 0]])
+
+    # Structure beams definition
+    beam_0 = basic_objects.Beam(structure_points, 0, 1, section, mat_aluminiun, 5)
+    beam_1 = basic_objects.Beam(structure_points, 1, 2, section, mat_aluminiun, 5)
+
+    beams = [beam_0,
+             beam_1]
+
+    # Structure definition
+    structure = basic_objects.Structure(structure_points, beams)
+
+    # Element Length
+    element_length = 2
+
+    # Mesh generation
+    nodes, fem_elements = finite_element_method.generate_FEM_mesh(structure, element_length)
+
+    # Loads definition
+    force = basic_objects.Load(1, np.array([0, 100, 0, 0, 0, 0]))
+    loads = [force]
+
+    # Global matrices
+    K_global, F_global = finite_element_method.create_global_FEM_matrices(nodes, fem_elements, loads)
+
+    # Constraints definition
+    constraint_1 = basic_objects.Constraint(0, [0, 0, 0, 0, None, None])
     constraint_2 = basic_objects.Constraint(2, [0, 0, 0, None, None, None])
     constraints = [constraint_1, constraint_2]
 
-    force = basic_objects.Load(1, np.array([0, 100, 0, 0, 0, 0]))
+    print("# Testing FEM_solver")
+    start = time.time()
+    X_global = finite_element_method.FEM_solver(K_global, F_global, constraints)
+    end = time.time()
+    print(f"- Test completed in {end - start}")
 
+# --------------------------------------------------------------------------------------------------
+
+
+def test_structural_solver():
+
+    # Material definition
+    name = "Aluminiun"
+    density = 0.0975
+    young_modulus = 1e7
+    shear_modulus = 3770000
+    poisson_ratio = 0.33
+    yield_strength = 350e6
+    ultimate_strength = 420e6
+
+    mat_aluminiun = basic_objects.Material(name, young_modulus, shear_modulus, poisson_ratio, density, yield_strength, ultimate_strength)
+
+    # Section definition
+    area = 1
+    m_inertia_y = 0.08333333
+    m_inertia_z = 0.08333333
+    polar_moment = 0.1408333
+    rotation = 0
+
+    section = basic_objects.Section(area, rotation, m_inertia_y, m_inertia_z, polar_moment)
+
+    # Structure points definition
+    structure_points = np.array([[0, 0, 0],
+                                 [10, 0, 0],
+                                 [20, 0, 0]])
+
+    # Structure beams definition
+    beam_0 = basic_objects.Beam(structure_points, 0, 1, section, mat_aluminiun, 5)
+    beam_1 = basic_objects.Beam(structure_points, 1, 2, section, mat_aluminiun, 5)
+
+    beams = [beam_0,
+             beam_1]
+
+    # Structure definition
+    structure = basic_objects.Structure(structure_points, beams)
+
+    # Element Length
+    element_length = 2
+
+    # Loads definition
+    force = basic_objects.Load(1, np.array([0, 100, 0, 0, 0, 0]))
     loads = [force]
 
-    structure = basic_objects.Structure(structure_points, beams, loads, constraints)
+    # Constraints definition
+    constraint_1 = basic_objects.Constraint(0, [0, 0, 0, 0, None, None])
+    constraint_2 = basic_objects.Constraint(2, [0, 0, 0, None, None, None])
+    constraints = [constraint_1, constraint_2]
 
-    n_points = len(structure.points)
-    n_nodes = n_points
+    print("# Testing structural_solver")
+    start = time.time()
+    deformed_grid, deformations, force_vector = finite_element_method.structural_solver(structure, loads, constraints, element_length)
+    end = time.time()
+    print(f"- Test completed in {end - start}")
 
-    n_elements = 0
-
-    nodes = []
-    fem_elements = []
-
-    for point in structure.points:
-
-        nodes.append(point)
-    
-    for beam in structure.beams:
-
-        mesh_points = beam.mesh(beam.n_elements)
-
-        for i, point in enumerate(mesh_points):
-            if i == 0:
-                continue
-
-            elif i == 1:
-                nodes.append(point)
-                n_nodes += 1
-                fem_element = basic_objects.BeamElement(beam.point_A_index, n_nodes - 1, 
-                                                        0,
-                                                        beam.material.young_modulus,
-                                                        beam.section.area,
-                                                        beam.material.shear_modulus,
-                                                        beam.section.polar_moment,
-                                                        beam.section.m_inertia_y,
-                                                        beam.section.m_inertia_z)
-                fem_elements.append(fem_element)
-                n_elements += 1
-
-            elif i == len(mesh_points) - 1:
-
-                fem_element = basic_objects.BeamElement(n_nodes - 1, beam.point_B_index, 
-                                                        0,
-                                                        beam.material.young_modulus,
-                                                        beam.section.area,
-                                                        beam.material.shear_modulus,
-                                                        beam.section.polar_moment,
-                                                        beam.section.m_inertia_y,
-                                                        beam.section.m_inertia_z)
-                fem_elements.append(fem_element)
-                n_elements += 1
-
-            else:
-                nodes.append(point)
-                n_nodes += 1
-                fem_element = basic_objects.BeamElement(n_nodes - 2, n_nodes - 1, 
-                                                        0,
-                                                        beam.material.young_modulus,
-                                                        beam.section.area,
-                                                        beam.material.shear_modulus,
-                                                        beam.section.polar_moment,
-                                                        beam.section.m_inertia_y,
-                                                        beam.section.m_inertia_z)
-                fem_elements.append(fem_element)
-                n_elements += 1
-
-    # Generate global stiffness matrix
-    K_global = np.zeros((n_nodes * 6, n_nodes * 6))
-    F_global = np.zeros((n_nodes * 6, 1))
-    X_global = np.zeros((n_nodes * 6, 1))
-
-    for fem_element in fem_elements:
-        K_element = fem_element.calc_K_global(nodes)
-        A_index = fem_element.point_A_index * 6
-        B_index = fem_element.point_B_index * 6
-        correlation_vector = [A_index, A_index + 1, A_index + 2, A_index + 3, A_index + 4, A_index + 5,
-                              B_index, B_index + 1, B_index + 2, B_index + 3, B_index + 4, B_index + 5]
-
-        for i in range(len(correlation_vector)):
-            for j in range(len(correlation_vector)):
-                K_global[correlation_vector[i]][correlation_vector[j]] += K_element[i][j]
-
-    # Generate Force Matrix
-    for load in structure.loads:
-        node_index = load.application_point_index * 6
-        correlation_vector = [node_index, node_index + 1, node_index + 2, node_index + 3, node_index + 4, node_index + 5]
-
-        for i in range(len(correlation_vector)):
-            F_global[correlation_vector[i]] += load.components[i]
-
-    # Find constrained degrees of freedom
-    constrained_dof = [False for i in range(n_nodes * 6)]
-
-    for constraint in constraints:
-        node_index = constraint.application_point_index * 6
-        correlation_vector = [node_index, node_index + 1, node_index + 2, node_index + 3, node_index + 4, node_index + 5]
-
-        for i in range(len(correlation_vector)):
-            if constraint.dof_constraints[i] != None:
-                constrained_dof[correlation_vector[i]] = True
-                X_global[correlation_vector[i]] += constraint.dof_constraints[i]
-
-    
-    # Find deformations
-    red_K_global = np.copy(K_global)
-    red_F_global = np.copy(F_global)
-
-    dof_to_delete = []
-    for i, dof in enumerate(constrained_dof):
-        if dof:
-            dof_to_delete.append(i)
-
-    red_F_global = np.delete(red_F_global, dof_to_delete, 0)
-    red_K_global = np.delete(red_K_global, dof_to_delete, 0)
-    red_K_global = np.delete(red_K_global, dof_to_delete, 1)
-
-    # Solve linear System
-    red_X_global = np.linalg.solve(red_K_global, red_F_global)
-
-    # Copy results do deformation vector
-    counter = 0
-    for i, dof in enumerate(constrained_dof):
-        if not dof:
-            X_global[i] = red_X_global[counter]
-            counter += 1
-    
-    # Find support reactions
-
-    new_F = K_global @ X_global
-
-
-    # Deformed grid
-    deformations = np.reshape(X_global, (n_nodes, 6))
-
-    nodes_deformed = []
-    for i, node in enumerate(nodes):
-        nodes_deformed.append([node[0] + deformations[i][0],
-                               node[1] + deformations[i][1],
-                               node[2] + deformations[i][2]])
-    
-    
-
-    print()
+# ===============================================================================================
 
 if __name__ == "__main__":
+
+    print()
+    print("========================================")
+    print("= Testing finite_element_method module =")
+    print("========================================")
+    print()
     test_generate_FEM_mesh()
+    print()
+    test_create_global_FEM_matrices()
+    print()
+    test_FEM_solver()
+    print()
+    test_structural_solver()

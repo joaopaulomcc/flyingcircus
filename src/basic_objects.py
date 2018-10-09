@@ -127,7 +127,7 @@ class BeamElement(object):
         self.Iz = Iz
 
     def calc_rotation_matrix(self, grid):
-        
+
         point_A = grid[self.point_A_index]
         point_B = grid[self.point_B_index]
 
@@ -183,7 +183,7 @@ class BeamElement(object):
 
         return K_local
 
-    
+
     def calc_K_global(self, grid):
 
         rotation_matrix = self.calc_rotation_matrix(grid)
@@ -199,12 +199,10 @@ class BeamElement(object):
 
 class Structure():
 
-    def __init__(self, points, beams, loads, constraints):
+    def __init__(self, points, beams):
 
         self.points = points
         self.beams = beams
-        self.loads = loads
-        self.constraints = constraints
 
 # --------------------------------------------------------------------------------------------------
 
@@ -225,7 +223,7 @@ class Beam():
         self.L = norm(self.vector)
 
     def mesh(self, n_elements):
-        
+
         delta = self.vector / n_elements
 
         mesh_points = []
