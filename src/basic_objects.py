@@ -85,6 +85,7 @@ class Panel(object):
         self.t_edge_1_2 = self.A + 0.5 * self.t_edge
 
         self.col_point = 0.75 * (self.t_edge_1_2 - self.l_edge_1_2) + self.l_edge_1_2
+        self.aero_center = 0.25 * (self.t_edge_1_2 - self.l_edge_1_2) + self.l_edge_1_2
 
         self.span = dot(self.l_edge, np.array([0, 1, 0]))
         self.n = normalize(cross(self.BD, self.AC))

@@ -285,13 +285,13 @@ def test_structural_solver():
     element_length = 2
 
     # Loads definition
-    force = basic_objects.Load(1, np.array([0, 100, 0, 0, 0, 0]))
+    force = basic_objects.Load(0, np.array([0, 100, 0, 0, 0, 0]))
     loads = [force]
 
     # Constraints definition
-    constraint_1 = basic_objects.Constraint(0, [0, 0, 0, 0, None, None])
+    constraint_1 = basic_objects.Constraint(1, [0, 0, 0, 0, 0, 0])
     constraint_2 = basic_objects.Constraint(2, [0, 0, 0, None, None, None])
-    constraints = [constraint_1, constraint_2]
+    constraints = [constraint_1]
 
     print("# Testing structural_solver")
     start = time.time()

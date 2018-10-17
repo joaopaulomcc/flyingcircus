@@ -46,57 +46,72 @@ def generate_FEM_mesh(structure, element_length=None):
             mesh_points = beam.mesh(beam.n_elements)
 
         # Generate beam elements and nodes
-        for i, point in enumerate(mesh_points):
-
-            # TODO calculation of section rotation
+        if len(mesh_points) == 2:
             section_rotation = 0
+            fem_element = basic_objects.BeamElement(beam.point_A_index, beam.point_B_index,
+                                                    section_rotation,
+                                                    beam.material.young_modulus,
+                                                    beam.section.area,
+                                                    beam.material.shear_modulus,
+                                                    beam.section.polar_moment,
+                                                    beam.section.m_inertia_y,
+                                                    beam.section.m_inertia_z)
 
-            if i == 0:
-                continue
+            fem_elements.append(fem_element)
 
-            # Second node is connected to initial point
-            elif i == 1:
-                nodes.append(point)
-                n_nodes += 1
-                fem_element = basic_objects.BeamElement(beam.point_A_index, n_nodes - 1,
-                                                        section_rotation,
-                                                        beam.material.young_modulus,
-                                                        beam.section.area,
-                                                        beam.material.shear_modulus,
-                                                        beam.section.polar_moment,
-                                                        beam.section.m_inertia_y,
-                                                        beam.section.m_inertia_z)
-                fem_elements.append(fem_element)
-                n_elements += 1
+        else:
 
-            # Penultimum node is connected to the final point
-            elif i == len(mesh_points) - 1:
+            for i, point in enumerate(mesh_points):
 
-                fem_element = basic_objects.BeamElement(n_nodes - 1, beam.point_B_index,
-                                                        section_rotation,
-                                                        beam.material.young_modulus,
-                                                        beam.section.area,
-                                                        beam.material.shear_modulus,
-                                                        beam.section.polar_moment,
-                                                        beam.section.m_inertia_y,
-                                                        beam.section.m_inertia_z)
-                fem_elements.append(fem_element)
-                n_elements += 1
+                # TODO calculation of section rotation
+                section_rotation = 0
 
-            # Intermediary nodes are connected to the previous node
-            else:
-                nodes.append(point)
-                n_nodes += 1
-                fem_element = basic_objects.BeamElement(n_nodes - 2, n_nodes - 1,
-                                                        section_rotation,
-                                                        beam.material.young_modulus,
-                                                        beam.section.area,
-                                                        beam.material.shear_modulus,
-                                                        beam.section.polar_moment,
-                                                        beam.section.m_inertia_y,
-                                                        beam.section.m_inertia_z)
-                fem_elements.append(fem_element)
-                n_elements += 1
+                if i == 0:
+                    continue
+
+                # Second node is connected to initial point
+                elif i == 1:
+                    nodes.append(point)
+                    n_nodes += 1
+                    fem_element = basic_objects.BeamElement(beam.point_A_index, n_nodes - 1,
+                                                            section_rotation,
+                                                            beam.material.young_modulus,
+                                                            beam.section.area,
+                                                            beam.material.shear_modulus,
+                                                            beam.section.polar_moment,
+                                                            beam.section.m_inertia_y,
+                                                            beam.section.m_inertia_z)
+                    fem_elements.append(fem_element)
+                    n_elements += 1
+
+                # Penultimum node is connected to the final point
+                elif i == len(mesh_points) - 1:
+
+                    fem_element = basic_objects.BeamElement(n_nodes - 1, beam.point_B_index,
+                                                            section_rotation,
+                                                            beam.material.young_modulus,
+                                                            beam.section.area,
+                                                            beam.material.shear_modulus,
+                                                            beam.section.polar_moment,
+                                                            beam.section.m_inertia_y,
+                                                            beam.section.m_inertia_z)
+                    fem_elements.append(fem_element)
+                    n_elements += 1
+
+                # Intermediary nodes are connected to the previous node
+                else:
+                    nodes.append(point)
+                    n_nodes += 1
+                    fem_element = basic_objects.BeamElement(n_nodes - 2, n_nodes - 1,
+                                                            section_rotation,
+                                                            beam.material.young_modulus,
+                                                            beam.section.area,
+                                                            beam.material.shear_modulus,
+                                                            beam.section.polar_moment,
+                                                            beam.section.m_inertia_y,
+                                                            beam.section.m_inertia_z)
+                    fem_elements.append(fem_element)
+                    n_elements += 1
 
     return nodes, fem_elements
 
@@ -203,4 +218,4 @@ def structural_solver(structure, loads, constraints, element_length=None):
                               deformations[i][4],
                               deformations[i][5]])
 
-    return deformed_grid, deformations, force_vector
+    return deformed_grid, force_vector, deformations, nodes, fem_elements

@@ -58,6 +58,17 @@ def set_axes_equal(ax):
 # --------------------------------------------------------------------------------------------------
 
 
+def plot_surface(xx, yy, zz):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d', proj_type="persp")
+    ax.plot_surface(xx, yy, zz)
+    set_axes_equal(ax)
+    plt.show(block=False)
+
+# --------------------------------------------------------------------------------------------------
+
+
 def plot_mesh(xx, yy, zz):
 
     fig = plt.figure()
@@ -65,7 +76,7 @@ def plot_mesh(xx, yy, zz):
     ax.autoscale(False)
     ax.plot_wireframe(xx, yy, zz)
     set_axes_equal(ax)
-    plt.show()
+    plt.show(block=False)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -85,7 +96,7 @@ def plot_results(xx, yy, zz, color_variable):
                            linewidth=0.5, antialiased=False)
     fig.colorbar(m,  shrink=0.5, aspect=5)
     set_axes_equal(ax)
-    plt.show()
+    plt.show(block=False)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -101,7 +112,61 @@ def plot_structure(structure):
         x = [point_A[0], point_B[0]]
         y = [point_A[1], point_B[1]]
         z = [point_A[2], point_B[2]]
-        ax.plot(x, y, z, "-ko")
+        ax.plot(x, y, z, "-ko", markersize=2)
 
     set_axes_equal(ax)
-    plt.show()
+    plt.show(block=False)
+
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_aircraft(xx, yy, zz, structure):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d', proj_type="persp")
+
+    for beam in structure.beams:
+        point_A = structure.points[beam.point_A_index]
+        point_B = structure.points[beam.point_B_index]
+        x = [point_A[0], point_B[0]]
+        y = [point_A[1], point_B[1]]
+        z = [point_A[2], point_B[2]]
+        ax.plot(x, y, z, "-ko", markersize=2)
+
+    ax.plot_wireframe(xx, yy, zz)
+
+    set_axes_equal(ax)
+    plt.show(block=False)
+
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_deformation(elements, nodes, deformations, scale=1):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d', proj_type="persp")
+
+    # Original Structure
+    for element in elements:
+        point_A = nodes[element.point_A_index]
+        point_B = nodes[element.point_B_index]
+        x = [point_A[0], point_B[0]]
+        y = [point_A[1], point_B[1]]
+        z = [point_A[2], point_B[2]]
+        ax.plot(x, y, z, "--ko", markersize=2)
+
+    # Deformed Structure
+    deformations = np.delete(deformations, [3, 4, 5], axis=1)
+    deformed_nodes = nodes + deformations * scale
+
+    for element in elements:
+        point_A = deformed_nodes[element.point_A_index]
+        point_B = deformed_nodes[element.point_B_index]
+        x = [point_A[0], point_B[0]]
+        y = [point_A[1], point_B[1]]
+        z = [point_A[2], point_B[2]]
+        ax.plot(x, y, z, "-ro", markersize=2)
+
+    set_axes_equal(ax)
+    plt.show(block=False)
+

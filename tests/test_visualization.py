@@ -121,7 +121,7 @@ def test_plot_structure():
 
     loads = [lift_left_wing, lift_right_wing]
 
-    aircraft_structure = basic_objects.Structure(structure_points, beams, loads, constraints)
+    aircraft_structure = basic_objects.Structure(structure_points, beams)
 
     visualization.plot_structure(aircraft_structure)
 
