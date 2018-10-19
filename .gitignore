@@ -71,6 +71,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+test_notebook.ipynb
 
 # pyenv
 .python-version
@@ -105,5 +106,14 @@ venv.bak/
 
 # latex
 *.aux
+*.brf
+*.glo
+*.lof
+*.log
+*.lot
+*.out
 *.synctex.gz
+*.toc
 
+# VSCode
+settings.json
