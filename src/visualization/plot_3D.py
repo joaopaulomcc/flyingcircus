@@ -17,9 +17,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from numpy import sin, cos, tan, pi
 
-from .fast_operations import dot, cross, norm, normalize
-
-
+from .. import mathematics as m
 
 # ==================================================================================================
 # Functions
