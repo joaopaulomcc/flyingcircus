@@ -56,23 +56,48 @@ def set_axes_equal(ax):
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_surface(xx, yy, zz):
+def plot_surface(meshs):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d', proj_type="persp")
-    ax.plot_surface(xx, yy, zz)
+
+    for mesh in meshs:
+        xx = mesh[0]
+        yy = mesh[1]
+        zz = mesh[2]
+        ax.plot_surface(xx, yy, zz)
+
+    # Plot coordinate system
+    ax.quiver([0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black")
+    ax.scatter([0], [0], [0], color="red")
+
+    ax.set_xlabel('X axis')
+    ax.set_ylabel('Y axis')
+    ax.set_zlabel('Z axis')
     set_axes_equal(ax)
     plt.show(block=False)
 
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_mesh(xx, yy, zz):
+def plot_mesh(meshs): 
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d', proj_type="persp")
-    ax.autoscale(False)
-    ax.plot_wireframe(xx, yy, zz)
+
+    for mesh in meshs:
+        xx = mesh[0]
+        yy = mesh[1]
+        zz = mesh[2]
+        ax.plot_wireframe(xx, yy, zz)
+
+    # Plot coordinate system
+    ax.quiver([0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black")
+    ax.scatter([0], [0], [0], color="red")
+
+    ax.set_xlabel('X axis')
+    ax.set_ylabel('Y axis')
+    ax.set_zlabel('Z axis')
     set_axes_equal(ax)
     plt.show(block=False)
 
@@ -89,10 +114,17 @@ def plot_results(xx, yy, zz, color_variable):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d', proj_type="persp")
-    ax.autoscale(False)
     surf = ax.plot_surface(xx, yy, zz, facecolors=fcolors, vmin=minn, vmax=maxx, shade=False,
                            linewidth=0.5, antialiased=False)
     fig.colorbar(m,  shrink=0.5, aspect=5)
+
+    # Plot coordinate system
+    ax.quiver([0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black")
+    ax.scatter([0], [0], [0], color="red")
+
+    ax.set_xlabel('X axis')
+    ax.set_ylabel('Y axis')
+    ax.set_zlabel('Z axis')
     set_axes_equal(ax)
     plt.show(block=False)
 
@@ -112,6 +144,13 @@ def plot_structure(structure):
         z = [point_A[2], point_B[2]]
         ax.plot(x, y, z, "-ko", markersize=2)
 
+    # Plot coordinate system
+    ax.quiver([0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black")
+    ax.scatter([0], [0], [0], color="red")
+    
+    ax.set_xlabel('X axis')
+    ax.set_ylabel('Y axis')
+    ax.set_zlabel('Z axis')
     set_axes_equal(ax)
     plt.show(block=False)
 
@@ -133,6 +172,13 @@ def plot_aircraft(xx, yy, zz, structure):
 
     ax.plot_wireframe(xx, yy, zz)
 
+    # Plot coordinate system
+    ax.quiver([0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black")
+    ax.scatter([0], [0], [0], color="red")
+    
+    ax.set_xlabel('X axis')
+    ax.set_ylabel('Y axis')
+    ax.set_zlabel('Z axis')
     set_axes_equal(ax)
     plt.show(block=False)
 
@@ -165,6 +211,13 @@ def plot_deformation(elements, nodes, deformations, scale=1):
         z = [point_A[2], point_B[2]]
         ax.plot(x, y, z, "-ro", markersize=2)
 
+    # Plot coordinate system
+    ax.quiver([0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black")
+    ax.scatter([0], [0], [0], color="red")
+    
+    ax.set_xlabel('X axis')
+    ax.set_ylabel('Y axis')
+    ax.set_zlabel('Z axis')
     set_axes_equal(ax)
     plt.show(block=False)
 

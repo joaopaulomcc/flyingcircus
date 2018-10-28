@@ -15,6 +15,7 @@ numba = "*"
 [dev-packages]
 "pep8" = "*"
 pytest = "*"
+black = "*"
 
 [requires]
 python_version = "3.6"
