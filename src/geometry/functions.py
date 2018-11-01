@@ -2,6 +2,24 @@ import numpy as np
 from numpy import sin, cos, tan, arccos, arcsin, arctan
 
 from .. import mathematics as m
+from numba import jit
+
+# --------------------------------------------------------------------------------------------------
+
+
+@jit(nopython=True)
+def distance_point_to_line(line_point_1, line_point_2, point):
+    """
+    reference: http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+    """
+    x0 = point
+    x1 = line_point_1
+    x2 = line_point_2
+
+    distance = m.norm(m.cross((x0 - x1), (x0 - x2))) / m.norm(x2 - x1)
+
+    return distance
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -197,12 +215,12 @@ def connect_surface_grid(
     surface_list,
     surface_incidence,
     surface_position,
-    n_span_panels,
     n_chord_panels,
+    n_span_panels_list,
+    chord_discretization,
+    span_discretization_list,
+    torsion_function_list,
     control_surface_dictionary,
-    chord_discretization="linear",
-    span_discretization="linear",
-    torsion_function="linear",
 ):
 
     connected_grids = []
@@ -211,6 +229,10 @@ def connect_surface_grid(
     surface_z = surface_position[2]
 
     for i, surface in enumerate(surface_list):
+
+        n_span_panels = n_span_panels_list[i]
+        span_discretization = span_discretization_list[i]
+        torsion_function = torsion_function_list[i]
 
         if surface.identifier in control_surface_dictionary:
             control_surface_deflection = control_surface_dictionary[surface.identifier]
@@ -259,6 +281,8 @@ def connect_surface_grid(
             surface_mesh_xx, surface_mesh_yy, surface_mesh_zz, final_point
         )
 
-        connected_grids.append([surface_mesh_xx, surface_mesh_yy, surface_mesh_zz])
+        connected_grids.append(
+            {"xx": surface_mesh_xx, "yy": surface_mesh_yy, "zz": surface_mesh_zz}
+        )
 
     return connected_grids

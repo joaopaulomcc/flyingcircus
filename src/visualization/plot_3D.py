@@ -62,9 +62,9 @@ def plot_surface(meshs):
     ax = fig.add_subplot(111, projection='3d', proj_type="persp")
 
     for mesh in meshs:
-        xx = mesh[0]
-        yy = mesh[1]
-        zz = mesh[2]
+        xx = mesh["xx"]
+        yy = mesh["yy"]
+        zz = mesh["zz"]
         ax.plot_surface(xx, yy, zz)
 
     # Plot coordinate system
@@ -80,15 +80,15 @@ def plot_surface(meshs):
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_mesh(meshs): 
+def plot_mesh(meshs):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d', proj_type="persp")
 
     for mesh in meshs:
-        xx = mesh[0]
-        yy = mesh[1]
-        zz = mesh[2]
+        xx = mesh["xx"]
+        yy = mesh["yy"]
+        zz = mesh["zz"]
         ax.plot_wireframe(xx, yy, zz)
 
     # Plot coordinate system
@@ -147,7 +147,7 @@ def plot_structure(structure):
     # Plot coordinate system
     ax.quiver([0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black")
     ax.scatter([0], [0], [0], color="red")
-    
+
     ax.set_xlabel('X axis')
     ax.set_ylabel('Y axis')
     ax.set_zlabel('Z axis')
@@ -175,7 +175,7 @@ def plot_aircraft(xx, yy, zz, structure):
     # Plot coordinate system
     ax.quiver([0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black")
     ax.scatter([0], [0], [0], color="red")
-    
+
     ax.set_xlabel('X axis')
     ax.set_ylabel('Y axis')
     ax.set_zlabel('Z axis')
@@ -214,7 +214,7 @@ def plot_deformation(elements, nodes, deformations, scale=1):
     # Plot coordinate system
     ax.quiver([0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black")
     ax.scatter([0], [0], [0], color="red")
-    
+
     ax.set_xlabel('X axis')
     ax.set_ylabel('Y axis')
     ax.set_zlabel('Z axis')

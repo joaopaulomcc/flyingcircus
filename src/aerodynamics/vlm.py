@@ -32,7 +32,7 @@ def create_panel_grid(macro_surface_mesh):
 
     # Count number of chord and spam panels
     for surface_mesh in macro_surface_mesh:
-        i, j = np.shape(surface_mesh.xx)
+        i, j = np.shape(surface_mesh["xx"])
         n_chord_panels = (i - 1)
         n_span_panels += (j - 1)
 
@@ -42,12 +42,15 @@ def create_panel_grid(macro_surface_mesh):
     # Populate Panel Grid
     span_index = 0
     for surface_mesh in macro_surface_mesh:
-        n_x, n_y = np.shape(surface_mesh)
+        n_x, n_y = np.shape(surface_mesh["xx"])
+        n_x -= 1
+        n_y -= 1
+
         for i in range(n_x):
             for j in range(n_y):
-                xx_slice = surface_mesh.xx[i:i + 2, j:j + 2]
-                yy_slice = surface_mesh.yy[i:i + 2, j:j + 2]
-                zz_slice = surface_mesh.zz[i:i + 2, j:j + 2]
+                xx_slice = surface_mesh["xx"][i:i + 2, j:j + 2]
+                yy_slice = surface_mesh["yy"][i:i + 2, j:j + 2]
+                zz_slice = surface_mesh["zz"][i:i + 2, j:j + 2]
                 panel_grid[i][j + span_index] = objects.PanelHorseShoe(xx_slice, yy_slice, zz_slice)
 
         span_index += n_y
@@ -70,7 +73,7 @@ def flatten(panel_matrix):
 
 
 #@jit
-def gamma_solver(panel_vector, flow_velocity_vector, infinity):
+def gamma_solver(panel_vector, flow_velocity_vector):
     """Receives a vector of panel objects and the airflow velocity. Using this information
     calculates the influence matrix, the right hand side velocity vector and solves the resulting
     linear system. Returns a vector with the circulation for each one of the panels.

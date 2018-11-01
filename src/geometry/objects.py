@@ -5,6 +5,9 @@ from numpy import sin, cos, tan, pi
 from . import functions as f
 from .. import mathematics as m
 
+# ==================================================================================================
+# OBJECTS
+
 
 class Airfoil(object):
     def __init__(self, upper_spline, lower_spline, cl_alpha, cd_alpha, cm_alpha):
@@ -13,6 +16,8 @@ class Airfoil(object):
         self.cl_alpha_spline = cl_alpha
         self.cd_alpha_spline = cd_alpha
         self.cm_alpha_spline = cm_alpha
+
+# ==================================================================================================
 
 
 class Section(object):
@@ -24,6 +29,61 @@ class Section(object):
         self.Izz = Izz
         self.J = J
         self.shear_center = shear_center
+
+# ==================================================================================================
+
+
+class Panel(object):
+    """Panel object"""
+
+    def __init__(self, xx, yy, zz):
+        """Args:
+            xx [[float]] = grid with panel points x coordinates
+            yy [[float]] = grid with panel points x coordinates
+            zz [[float]] = grid with panel points x coordinates
+        """
+        self.xx = xx
+        self.yy = yy
+        self.zz = zz
+        self.A = np.array([xx[1][0], yy[1][0], zz[1][0]])
+        self.B = np.array([xx[0][0], yy[0][0], zz[0][0]])
+        self.C = np.array([xx[0][1], yy[0][1], zz[0][1]])
+        self.D = np.array([xx[1][1], yy[1][1], zz[1][1]])
+        self.AC = self.C - self.A
+        self.BD = self.D - self.B
+
+        self.l_chord = self.A - self.B
+        self.l_chord_1_4 = self.B + 0.25 * self.l_chord
+        self.l_chord_3_4 = self.B + 0.75 * self.l_chord
+
+        self.r_chord = self.D - self.C
+        self.r_chord_1_4 = self.C + 0.25 * self.r_chord
+        self.r_chord_3_4 = self.C + 0.75 * self.r_chord
+
+        self.l_edge = self.C - self.B
+        self.l_edge_1_2 = self.B + 0.5 * self.l_edge
+
+        self.t_edge = self.D - self.A
+        self.t_edge_1_2 = self.A + 0.5 * self.t_edge
+
+        self.col_point = 0.75 * (self.t_edge_1_2 - self.l_edge_1_2) + self.l_edge_1_2
+        self.aero_center = 0.25 * (self.t_edge_1_2 - self.l_edge_1_2) + self.l_edge_1_2
+
+        self.span = m.dot(self.l_edge, np.array([0, 1, 0]))
+        self.n = m.normalize(m.cross(self.BD, self.AC))
+        self.area = m.dot(self.n, m.cross(self.BD, self.AC)) / 2
+
+        infinity = 100000
+        hs_A = np.array([self.l_chord_1_4[0] + infinity, self.l_chord_1_4[1], self.l_chord_1_4[2]])
+        hs_B = np.array([self.l_chord_1_4[0], self.l_chord_1_4[1], self.l_chord_1_4[2]])
+        hs_C = np.array([self.r_chord_1_4[0], self.r_chord_1_4[1], self.r_chord_1_4[2]])
+        hs_D = np.array([self.r_chord_1_4[0] + infinity, self.r_chord_1_4[1], self.r_chord_1_4[2]])
+        hs_A = hs_A[np.newaxis]
+        hs_B = hs_B[np.newaxis]
+        hs_C = hs_C[np.newaxis]
+        hs_D = hs_D[np.newaxis]
+
+# ==================================================================================================
 
 
 class Surface(object):
@@ -55,14 +115,20 @@ class Surface(object):
         self.leading_edge_sweep_angle_rad = np.radians(leading_edge_sweep_angle_deg)
         self.dihedral_angle_rad = np.radians(dihedral_angle_deg)
         self.tip_torsion_angle_rad = np.radians(tip_torsion_angle_deg)
-        self.quarter_chord_sweep_ang_rad = np.arctan(
-            length
-            / (
-                length * tan(self.leading_edge_sweep_angle_rad)
-                + 0.25 * tip_chord
-                - 0.25 * root_chord
+
+        # Avoid division by zero when the section is rectangular
+        if root_chord == tip_chord:
+            self.quarter_chord_sweep_ang_rad = self.leading_edge_sweep_angle_rad
+        else:
+            self.quarter_chord_sweep_ang_rad = np.arctan(
+                length
+                / (
+                    length * tan(self.leading_edge_sweep_angle_rad)
+                    + 0.25 * tip_chord
+                    - 0.25 * root_chord
+                )
             )
-        )
+
         self.quarter_chord_sweep_ang_deg = np.degrees(self.quarter_chord_sweep_ang_rad)
 
         self.span = length * cos(self.dihedral_angle_rad)
@@ -70,6 +136,8 @@ class Surface(object):
         self.true_area = length * (root_chord + tip_chord) / 2
         self.taper_ratio = tip_chord / root_chord
         self.aspect_ratio = (self.span ** 2) / self.ref_area
+
+    # ----------------------------------------------------------------------------------------------
 
     def generate_aero_mesh(
         self,
@@ -136,8 +204,6 @@ class Surface(object):
         ) / (tip_points_yy - root_points_yy)
         planar_mesh_points_zz = np.zeros((n_chord_points, n_span_points))
 
-        # TODO fix bug when control_surface_hinge_position is None
-        
         # Apply control surface rotation
         if self.control_surface_hinge_position is not None:
 
@@ -187,71 +253,71 @@ class Surface(object):
             planar_mesh_points_yy[(hinge_index + 1) :, :] = control_surface_points_yy
             planar_mesh_points_zz[(hinge_index + 1) :, :] = control_surface_points_zz
 
-            # Generate definitive mesh array
-            mesh_points_xx = np.zeros(np.shape(planar_mesh_points_xx))
-            mesh_points_yy = np.zeros(np.shape(planar_mesh_points_yy))
-            mesh_points_zz = np.zeros(np.shape(planar_mesh_points_zz))
+        # Generate definitive mesh array
+        mesh_points_xx = np.zeros(np.shape(planar_mesh_points_xx))
+        mesh_points_yy = np.zeros(np.shape(planar_mesh_points_yy))
+        mesh_points_zz = np.zeros(np.shape(planar_mesh_points_zz))
 
-            # Applying wing torsion
-            for i in range(n_span_points):
-                # Extract section points from grid
-                section_points_x = planar_mesh_points_xx[:, i]
-                section_points_y = planar_mesh_points_yy[:, i]
-                section_points_z = planar_mesh_points_zz[:, i]
+        # Applying wing torsion
+        for i in range(n_span_points):
+            # Extract section points from grid
+            section_points_x = planar_mesh_points_xx[:, i]
+            section_points_y = planar_mesh_points_yy[:, i]
+            section_points_z = planar_mesh_points_zz[:, i]
 
-                # Convert points from grid to list
-                section_points = f.grid_to_vector(
-                    section_points_x, section_points_y, section_points_z
-                )
-
-                # Calculate rotation characteristics and apply rotation
-                rot_angle = torsion_function(section_points_y[0] / self.length)
-                rot_axis = np.array([0, 1, 0])  # Y axis
-                rot_center = section_points_x.min() + 0.25 * (
-                    section_points_x.max() - section_points_x.min()
-                )
-
-                rot_section_points = f.rotate_point(
-                    section_points, rot_axis, rot_center, rot_angle
-                )
-
-                # Convert section points from list to grid
-                shape = (n_chord_points, 1)
-                rot_section_points_x, rot_section_points_y, rot_section_points_z = f.vector_to_grid(
-                    rot_section_points, shape
-                )
-
-                # Paste rotated section into grid
-                mesh_points_xx[:, i] = rot_section_points_x[:, 0]
-                mesh_points_yy[:, i] = rot_section_points_y[:, 0]
-                mesh_points_zz[:, i] = rot_section_points_z[:, 0]
-
-            # Apply wing dihedral
-
-            # Convert grid to list
-            mesh_points = f.grid_to_vector(
-                mesh_points_xx, mesh_points_yy, mesh_points_zz
+            # Convert points from grid to list
+            section_points = f.grid_to_vector(
+                section_points_x, section_points_y, section_points_z
             )
 
             # Calculate rotation characteristics and apply rotation
-            rot_angle = self.dihedral_angle_rad
-            rot_axis = np.array([1, 0, 0])  # X axis
-            rot_center = np.array([0, 0, 0])
-
-            rot_mesh_points = f.rotate_point(
-                mesh_points, rot_axis, rot_center, rot_angle
+            rot_angle = torsion_function(section_points_y[0] / self.length)
+            rot_axis = np.array([0, 1, 0])  # Y axis
+            rot_center = section_points_x.min() + 0.25 * (
+                section_points_x.max() - section_points_x.min()
             )
 
-            # Convert mesh_points from list to grid
-            shape = (n_chord_points, n_span_points)
-            mesh_points_xx, mesh_points_yy, mesh_points_zz = f.vector_to_grid(
-                rot_mesh_points, shape
+            rot_section_points = f.rotate_point(
+                section_points, rot_axis, rot_center, rot_angle
             )
+
+            # Convert section points from list to grid
+            shape = (n_chord_points, 1)
+            rot_section_points_x, rot_section_points_y, rot_section_points_z = f.vector_to_grid(
+                rot_section_points, shape
+            )
+
+            # Paste rotated section into grid
+            mesh_points_xx[:, i] = rot_section_points_x[:, 0]
+            mesh_points_yy[:, i] = rot_section_points_y[:, 0]
+            mesh_points_zz[:, i] = rot_section_points_z[:, 0]
+
+        # Apply wing dihedral
+
+        # Convert grid to list
+        mesh_points = f.grid_to_vector(
+            mesh_points_xx, mesh_points_yy, mesh_points_zz
+        )
+
+        # Calculate rotation characteristics and apply rotation
+        rot_angle = self.dihedral_angle_rad
+        rot_axis = np.array([1, 0, 0])  # X axis
+        rot_center = np.array([0, 0, 0])
+
+        rot_mesh_points = f.rotate_point(
+            mesh_points, rot_axis, rot_center, rot_angle
+        )
+
+        # Convert mesh_points from list to grid
+        shape = (n_chord_points, n_span_points)
+        mesh_points_xx, mesh_points_yy, mesh_points_zz = f.vector_to_grid(
+            rot_mesh_points, shape
+        )
 
         return mesh_points_xx, mesh_points_yy, mesh_points_zz
 
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 
 
 class MacroSurface(object):
@@ -271,47 +337,60 @@ class MacroSurface(object):
 
         self.control_surfaces = control_surfaces
 
+    # ----------------------------------------------------------------------------------------------
     def create_mesh(
         self,
         n_chord_panels,
-        n_span_panels,
+        n_span_panels_list,
+        chord_discretization,
+        span_discretization_list,
+        torsion_function_list,
         control_surface_deflection_dict=dict(),
-        chord_discretization="linear",
-        span_discretization="linear",
-        torsion_function="linear",
     ):
 
         if self.symmetry_plane == "XZ" or self.symmetry_plane == "xz":
 
             middle_index = int(len(self.surface_list) / 2)
+
             left_side = self.surface_list[:middle_index]
+            left_side_n_span_panels_list = n_span_panels_list[:middle_index]
+            left_side_span_discretization_list = span_discretization_list[:middle_index]
+            left_side_torsion_function_list = torsion_function_list[:middle_index]
+
             right_side = self.surface_list[middle_index:]
+            right_side_n_span_panels_list = n_span_panels_list[:middle_index]
+            right_side_span_discretization_list = span_discretization_list[:middle_index]
+            right_side_torsion_function_list = torsion_function_list[:middle_index]
 
             # If the surface is on the left side of the aircraft mirror it's mesh
             left_side = np.flip(left_side)
+            left_side_n_span_panels_list = np.flip(left_side_n_span_panels_list)
+            left_side_span_discretization_list = np.flip(left_side_span_discretization_list)
+            left_side_torsion_function_list = np.flip(left_side_torsion_function_list)
 
             left_side_meshs = f.connect_surface_grid(
                 left_side,
                 self.incidence_rad,
                 self.position,
-                n_span_panels,
                 n_chord_panels,
-                control_surface_deflection_dict,
+                left_side_n_span_panels_list,
                 chord_discretization,
-                span_discretization,
+                left_side_span_discretization_list,
+                left_side_torsion_function_list,
+                control_surface_deflection_dict,
             )
 
             mirrored_grids = []
             for mesh in left_side_meshs:
-                grid_xx = mesh[0]
-                grid_yy = mesh[1]
-                grid_zz = mesh[2]
+                grid_xx = mesh["xx"]
+                grid_yy = mesh["yy"]
+                grid_zz = mesh["zz"]
                 mirror_plane = self.symmetry_plane
 
                 grid_xx, grid_yy, grid_zz = f.mirror_grid(
                     grid_xx, grid_yy, grid_zz, mirror_plane
                 )
-                mirrored_grids.append([grid_xx, grid_yy, grid_zz])
+                mirrored_grids.append({"xx": grid_xx, "yy": grid_yy, "zz": grid_zz})
 
             left_side_meshs = mirrored_grids
 
@@ -320,11 +399,12 @@ class MacroSurface(object):
                 right_side,
                 self.incidence_rad,
                 self.position,
-                n_span_panels,
                 n_chord_panels,
-                control_surface_deflection_dict,
+                right_side_n_span_panels_list,
                 chord_discretization,
-                span_discretization,
+                right_side_span_discretization_list,
+                right_side_torsion_function_list,
+                control_surface_deflection_dict,
             )
 
             macro_surface_mesh = left_side_meshs + right_side_meshs
@@ -335,12 +415,12 @@ class MacroSurface(object):
                 self.surface_list,
                 self.incidence_rad,
                 self.position,
-                n_span_panels,
                 n_chord_panels,
-                control_surface_deflection_dict,
+                n_span_panels_list,
                 chord_discretization,
-                span_discretization,
+                span_discretization_list,
+                torsion_function_list,
+                control_surface_deflection_dict,
             )
 
         return macro_surface_mesh
-

@@ -4,7 +4,11 @@ from context import src
 from src import geometry
 from src import visualization
 
+# ==================================================================================================
+# ==================================================================================================
 # Super Tucano Geometrical Data
+
+# WING
 
 # Stub
 root_chord = 2.24
@@ -15,7 +19,7 @@ length = 0.615
 leading_edge_sweep_angle_deg = 0
 dihedral_angle_deg = 0
 tip_torsion_angle_deg = 0
-control_surface_hinge_position = 0.75
+control_surface_hinge_position = None
 
 surface_identifier = "right_stub"
 right_stub = geometry.objects.Surface(
@@ -45,6 +49,7 @@ left_stub = geometry.objects.Surface(
     control_surface_hinge_position,
 )
 
+# --------------------------------------------------------------------------------------------------
 # Flap
 root_chord = 2.24
 root_section = "flap_root_section"
@@ -84,6 +89,7 @@ left_flap = geometry.objects.Surface(
     control_surface_hinge_position,
 )
 
+# --------------------------------------------------------------------------------------------------
 # Aileron
 root_chord = 1.6
 root_section = "aileron_root_section"
@@ -123,6 +129,7 @@ left_aileron = geometry.objects.Surface(
     control_surface_hinge_position,
 )
 
+# --------------------------------------------------------------------------------------------------
 # Wing
 wing_surface_list = [
     left_aileron,
@@ -140,29 +147,7 @@ wing = geometry.objects.MacroSurface(
     wing_position, wing_incidence, wing_surface_list, symmetry_plane=wing_symmetry_plane
 )
 
-
-wing_control_surface_deflection_dict = {
-    "left_aileron": 5,
-    "left_flap": 45,
-    "right_flap": 45,
-    "right_aileron": -5,
-}
-
-n_chord_panels = 10
-n_span_panels = 10
-chord_discretization = "linear"
-span_discretization = "linear"
-torsion_function = "linear"
-
-wing_mesh = wing.create_mesh(
-    n_chord_panels,
-    n_span_panels,
-    wing_control_surface_deflection_dict,
-    chord_discretization=chord_discretization,
-    span_discretization=span_discretization,
-    torsion_function=torsion_function,
-)
-
+# ==================================================================================================
 # Horizontal Tail
 root_chord = 1.29
 root_section = "elevator_root_section"
@@ -214,23 +199,7 @@ h_tail = geometry.objects.MacroSurface(
     symmetry_plane=h_tail_symmetry_plane,
 )
 
-h_tail_control_surface_deflection_dict = {"left_elevator": -10, "right_elevator": -10}
-
-n_chord_panels = 10
-n_span_panels = 10
-chord_discretization = "linear"
-span_discretization = "linear"
-torsion_function = "linear"
-
-h_tail_mesh = h_tail.create_mesh(
-    n_chord_panels,
-    n_span_panels,
-    h_tail_control_surface_deflection_dict,
-    chord_discretization=chord_discretization,
-    span_discretization=span_discretization,
-    torsion_function=torsion_function,
-)
-
+# ==================================================================================================
 # Vertical Tail
 root_chord = 1.33
 root_section = "right_aileron_root_section"
@@ -267,23 +236,73 @@ v_tail = geometry.objects.MacroSurface(
     symmetry_plane=v_tail_symmetry_plane,
 )
 
-n_chord_panels = 10
-n_span_panels = 10
-chord_discretization = "linear"
-span_discretization = "linear"
-torsion_function = "linear"
+# ==================================================================================================
+# ==================================================================================================
+# Mesh Generation
 
-v_tail_control_surface_deflection_dict = {"rudder": 10}
+# Wing
+wing_n_chord_panels = 10
+wing_n_span_panels_list = [10, 10, 10, 10, 10, 10]
+wing_chord_discretization = "linear"
+wing_span_discretization_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
+wing_torsion_function_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
 
-v_tail_mesh = v_tail.create_mesh(
-    n_chord_panels,
-    n_span_panels,
-    v_tail_control_surface_deflection_dict,
-    chord_discretization=chord_discretization,
-    span_discretization=span_discretization,
-    torsion_function=torsion_function,
+wing_control_surface_deflection_dict = {
+    "left_aileron": 35,
+    "left_flap": 45,
+    "right_flap": 45,
+    "right_aileron": -35,
+}
+
+wing_mesh = wing.create_mesh(
+    wing_n_chord_panels,
+    wing_n_span_panels_list,
+    wing_chord_discretization,
+    wing_span_discretization_list,
+    wing_torsion_function_list,
+    wing_control_surface_deflection_dict,
 )
 
+# ==================================================================================================
+# Horizontal Tail
+h_tail_n_chord_panels = 10
+h_tail_n_span_panels_list = [10, 10]
+h_tail_chord_discretization = "linear"
+h_tail_span_discretization_list = ["linear", "linear"]
+h_tail_torsion_function_list = ["linear", "linear"]
+
+h_tail_control_surface_deflection_dict = {"left_elevator": 30, "right_elevator": 30}
+
+h_tail_mesh = h_tail.create_mesh(
+    h_tail_n_chord_panels,
+    h_tail_n_span_panels_list,
+    h_tail_chord_discretization,
+    h_tail_span_discretization_list,
+    h_tail_torsion_function_list,
+    h_tail_control_surface_deflection_dict,
+)
+
+# ==================================================================================================
+# Vertical Tail
+v_tail_n_chord_panels = 10
+v_tail_n_span_panels_list = [10]
+v_tail_chord_discretization = "linear"
+v_tail_span_discretization_list = ["linear"]
+v_tail_torsion_function_list = ["linear"]
+
+v_tail_control_surface_deflection_dict = {"rudder": 30}
+
+v_tail_mesh = v_tail.create_mesh(
+    v_tail_n_chord_panels,
+    v_tail_n_span_panels_list,
+    v_tail_chord_discretization,
+    v_tail_span_discretization_list,
+    v_tail_torsion_function_list,
+    v_tail_control_surface_deflection_dict,
+)
+
+# ==================================================================================================
+# Aircraft
 aircraft_mesh = wing_mesh + h_tail_mesh + v_tail_mesh
 
 visualization.plot_3D.plot_surface(aircraft_mesh)
