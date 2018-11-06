@@ -9,6 +9,49 @@ from .. import mathematics as m
 # OBJECTS
 
 
+class Aircraft(object):
+
+    def __init__(self, name, components, engines, inertial_properties):
+        self.name = name
+        self.components = components
+        self.engines = engines
+        self.inertial_properties = inertial_properties
+
+# ==================================================================================================
+
+
+class Engine(object):
+
+    def __init__(self, position, inertial_properties, thrust_vector, thrust_function):
+        self.position = position
+        self.inertial_properties = inertial_properties
+        self.thrust_vector = thrust_vector
+        self.thrust_function = thrust_function
+
+    def thrust(self, throttle, parameters):
+        
+        thrust_force = self.thrust_function(throttle, parameters) * self.thrust_vector
+
+        return thrust_force
+
+# ==================================================================================================
+
+
+class MaterialPoint(object):
+
+    def __init__(self, mass, cg_position, Ixx, Iyy, Izz, Ixy, Ixz, Iyz):
+        self.mass = mass
+        self.cg_position = cg_position
+        self.Ixx = Ixx
+        self.Iyy = Iyy
+        self.Izz = Izz
+        self.Ixy = Ixy
+        self.Ixz = Ixz
+        self.Iyz = Iyz
+
+# ==================================================================================================
+
+
 class Airfoil(object):
     def __init__(self, upper_spline, lower_spline, cl_alpha, cd_alpha, cm_alpha):
         self.upper_spline = upper_spline
