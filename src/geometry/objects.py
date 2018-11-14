@@ -190,6 +190,7 @@ class Surface(object):
         chord_discretization="linear",
         span_discretization="linear",
         torsion_function="linear",
+        torsion_center=0.0,
     ):
 
         n_chord_points = n_chord_panels + 1
@@ -296,50 +297,11 @@ class Surface(object):
             planar_mesh_points_yy[(hinge_index + 1) :, :] = control_surface_points_yy
             planar_mesh_points_zz[(hinge_index + 1) :, :] = control_surface_points_zz
 
-        # Generate definitive mesh array
-        mesh_points_xx = np.zeros(np.shape(planar_mesh_points_xx))
-        mesh_points_yy = np.zeros(np.shape(planar_mesh_points_yy))
-        mesh_points_zz = np.zeros(np.shape(planar_mesh_points_zz))
-
-        # Applying wing torsion
-        for i in range(n_span_points):
-            # Extract section points from grid
-            section_points_x = planar_mesh_points_xx[:, i]
-            section_points_y = planar_mesh_points_yy[:, i]
-            section_points_z = planar_mesh_points_zz[:, i]
-
-            # Convert points from grid to list
-            section_points = f.grid_to_vector(
-                section_points_x, section_points_y, section_points_z
-            )
-
-            # Calculate rotation characteristics and apply rotation
-            rot_angle = torsion_function(section_points_y[0] / self.length)
-            rot_axis = np.array([0, 1, 0])  # Y axis
-            rot_center = section_points_x.min() + 0.25 * (
-                section_points_x.max() - section_points_x.min()
-            )
-
-            rot_section_points = f.rotate_point(
-                section_points, rot_axis, rot_center, rot_angle
-            )
-
-            # Convert section points from list to grid
-            shape = (n_chord_points, 1)
-            rot_section_points_x, rot_section_points_y, rot_section_points_z = f.vector_to_grid(
-                rot_section_points, shape
-            )
-
-            # Paste rotated section into grid
-            mesh_points_xx[:, i] = rot_section_points_x[:, 0]
-            mesh_points_yy[:, i] = rot_section_points_y[:, 0]
-            mesh_points_zz[:, i] = rot_section_points_z[:, 0]
-
         # Apply wing dihedral
 
         # Convert grid to list
         mesh_points = f.grid_to_vector(
-            mesh_points_xx, mesh_points_yy, mesh_points_zz
+            planar_mesh_points_xx, planar_mesh_points_yy, planar_mesh_points_zz
         )
 
         # Calculate rotation characteristics and apply rotation
@@ -357,20 +319,68 @@ class Surface(object):
             rot_mesh_points, shape
         )
 
-        return mesh_points_xx, mesh_points_yy, mesh_points_zz
+        # Generate definitive mesh array
+        t_mesh_points_xx = np.zeros(np.shape(planar_mesh_points_xx))
+        t_mesh_points_yy = np.zeros(np.shape(planar_mesh_points_yy))
+        t_mesh_points_zz = np.zeros(np.shape(planar_mesh_points_zz))
+
+        # Applying wing torsion
+        for i in range(n_span_points):
+            # Extract section points from grid
+            section_points_x = mesh_points_xx[:, i]
+            section_points_y = mesh_points_yy[:, i]
+            section_points_z = mesh_points_zz[:, i]
+
+            # Convert points from grid to list
+            section_points = f.grid_to_vector(
+                section_points_x, section_points_y, section_points_z
+            )
+
+            # Calculate rotation characteristics and apply rotation
+            rot_angle = torsion_function(section_points_y[0] / (self.length * np.cos(self.dihedral_angle_rad)))
+            rot_axis = np.array([0, 1, 0])  # Y axis
+
+            # Calculate Rotation center
+            section_point_1 = section_points[:,0]
+            section_point_2 = section_points[:,n_chord_points - 1]
+            section_vector = section_point_2 - section_point_1
+            rot_center = section_point_1 + torsion_center * section_vector
+
+            #rot_center = section_points_x.min() + torsion_center * (
+            #    section_points_x.max() - section_points_x.min()
+            #)
+
+            rot_section_points = f.rotate_point(
+                section_points, rot_axis, rot_center, rot_angle
+            )
+
+            # Convert section points from list to grid
+            shape = (n_chord_points, 1)
+            rot_section_points_x, rot_section_points_y, rot_section_points_z = f.vector_to_grid(
+                rot_section_points, shape
+            )
+
+            # Paste rotated section into grid
+            t_mesh_points_xx[:, i] = rot_section_points_x[:, 0]
+            t_mesh_points_yy[:, i] = rot_section_points_y[:, 0]
+            t_mesh_points_zz[:, i] = rot_section_points_z[:, 0]
+
+
+        return t_mesh_points_xx, t_mesh_points_yy, t_mesh_points_zz
 
 
 # ==================================================================================================
 
 
 class MacroSurface(object):
-    def __init__(self, position, incidence, surface_list, symmetry_plane=None):
+    def __init__(self, position, incidence, surface_list, symmetry_plane=None, torsion_center=0.25):
 
         self.position = position
         self.incidence_degrees = incidence
         self.incidence_rad = np.radians(incidence)
         self.surface_list = surface_list
         self.symmetry_plane = symmetry_plane
+        self.torsion_center = torsion_center
 
         control_surfaces = []
 
@@ -420,6 +430,7 @@ class MacroSurface(object):
                 chord_discretization,
                 left_side_span_discretization_list,
                 left_side_torsion_function_list,
+                self.torsion_center,
                 control_surface_deflection_dict,
             )
 
@@ -435,7 +446,7 @@ class MacroSurface(object):
                 )
                 mirrored_grids.append({"xx": grid_xx, "yy": grid_yy, "zz": grid_zz})
 
-            left_side_meshs = mirrored_grids
+            left_side_meshs = list(np.flip(mirrored_grids))
 
             # On the right side no modification is needed
             right_side_meshs = f.connect_surface_grid(
@@ -447,6 +458,7 @@ class MacroSurface(object):
                 chord_discretization,
                 right_side_span_discretization_list,
                 right_side_torsion_function_list,
+                self.torsion_center,
                 control_surface_deflection_dict,
             )
 
@@ -463,6 +475,7 @@ class MacroSurface(object):
                 chord_discretization,
                 span_discretization_list,
                 torsion_function_list,
+                self.torsion_center,
                 control_surface_deflection_dict,
             )
 

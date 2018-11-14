@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from context import src
 from src import geometry
-from src import visualization
+from src import visualization as vis
+from src import aerodynamics as aero
 
 # ==================================================================================================
 # ==================================================================================================
@@ -240,12 +241,36 @@ v_tail = geometry.objects.MacroSurface(
 # ==================================================================================================
 # Mesh Generation
 
+n_chord_panels = 5
+n_span_panels = 5
+
 # Wing
-wing_n_chord_panels = 10
-wing_n_span_panels_list = [10, 10, 10, 10, 10, 10]
+wing_n_chord_panels = n_chord_panels
+wing_n_span_panels_list = [
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+]
 wing_chord_discretization = "linear"
-wing_span_discretization_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
-wing_torsion_function_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
+wing_span_discretization_list = [
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+]
+wing_torsion_function_list = [
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+]
 
 wing_control_surface_deflection_dict = {
     "left_aileron": 35,
@@ -265,8 +290,8 @@ wing_mesh = wing.create_mesh(
 
 # ==================================================================================================
 # Horizontal Tail
-h_tail_n_chord_panels = 10
-h_tail_n_span_panels_list = [10, 10]
+h_tail_n_chord_panels = n_chord_panels
+h_tail_n_span_panels_list = [n_span_panels, n_span_panels]
 h_tail_chord_discretization = "linear"
 h_tail_span_discretization_list = ["linear", "linear"]
 h_tail_torsion_function_list = ["linear", "linear"]
@@ -284,8 +309,8 @@ h_tail_mesh = h_tail.create_mesh(
 
 # ==================================================================================================
 # Vertical Tail
-v_tail_n_chord_panels = 10
-v_tail_n_span_panels_list = [10]
+v_tail_n_chord_panels = n_chord_panels
+v_tail_n_span_panels_list = [n_span_panels]
 v_tail_chord_discretization = "linear"
 v_tail_span_discretization_list = ["linear"]
 v_tail_torsion_function_list = ["linear"]
@@ -305,5 +330,41 @@ v_tail_mesh = v_tail.create_mesh(
 # Aircraft
 aircraft_mesh = wing_mesh + h_tail_mesh + v_tail_mesh
 
-visualization.plot_3D.plot_surface(aircraft_mesh)
-plt.show()
+# visualization.plot_3D.plot_surface(aircraft_mesh)
+# plt.show()
+
+aircraft_aero_mesh = [wing_mesh, h_tail_mesh, v_tail_mesh]
+velocity_vector = np.array([100, 0, 0])
+rotation_vector = np.array([0, 0, 0])
+attitude_vector = np.array([5, 0, 0])
+center = np.array([0, 0, 0])
+altitude = 0
+
+(
+    components_force_vector,
+    components_panel_vectors,
+    components_force_grids,
+    components_panel_grids,
+    components_gamma_vector,
+    components_gamma_grid,
+) = aero.vlm.aero_loads(
+    aircraft_aero_mesh,
+    velocity_vector,
+    rotation_vector,
+    attitude_vector,
+    altitude,
+    center,
+)
+
+components_delta_p_grids = []
+components_force_mag_grids = []
+
+for panels, forces in zip(components_panel_grids, components_force_grids):
+
+    delta_p, force = aero.vlm.calc_panels_delta_pressure(panels, forces)
+    components_delta_p_grids.append(delta_p)
+    components_force_mag_grids.append(force)
+
+vis.plot_3D.plot_results(aircraft_aero_mesh, components_gamma_grid)
+# print(components_gamma_vector)
+input("Press any key to quit...")

@@ -12,12 +12,12 @@ from src import visualization
 surface_identifier = "right_aileron"
 root_chord = 2
 root_section = "root_section"
-tip_chord = 1.2
+tip_chord = 2
 tip_section = "tip_section"
 length = 3
-leading_edge_sweep_angle_deg = 35
-dihedral_angle_deg = 10
-tip_torsion_angle_deg = -5
+leading_edge_sweep_angle_deg = 0
+dihedral_angle_deg = 0
+tip_torsion_angle_deg = 0
 control_surface_hinge_position = 0.75
 
 right_aileron = geometry.objects.Surface(
@@ -49,17 +49,17 @@ left_aileron = geometry.objects.Surface(
 )
 
 surface_list = [left_aileron, right_aileron]
-control_surface_deflection_dict = {"left_aileron": -15, "right_aileron": 0}
+control_surface_deflection_dict = {"left_aileron": -15, "right_aileron": 15}
 
-position = np.array([0.5, 0, 0.1])
-incidence = 5
+position = np.array([0.0, 0, 0.0])
+incidence = 0
 
 wing = geometry.objects.MacroSurface(
     position, incidence, surface_list, symmetry_plane="XZ"
 )
 
-n_chord_panels = 200
-n_span_panels_list = [200, 200]
+n_chord_panels = 5
+n_span_panels_list = [10, 10]
 chord_discretization = "linear"
 span_discretization_list = ["linear", "linear"]
 torsion_function_list = ["linear", "linear"]
@@ -79,9 +79,28 @@ panel_vector = aerodynamics.vlm.flatten(panel_grid)
 
 i, j = np.shape(panel_grid)
 
-print(panel_grid[i - 1][j - 1].induced_velocity(np.array([0, 0, 0]), 1))
-print(panel_vector[len(panel_vector) - 1].induced_velocity(np.array([0, 0, 0]), 1))
+true_airspeed = 100
+alpha = 5
+beta = 0
+gamma = 0
 
+flow_velocity_vector = geometry.functions.velocity_vector(true_airspeed, alpha, beta, gamma)
+
+gamma_vector = aerodynamics.vlm.gamma_solver(panel_vector, flow_velocity_vector)
+gamma_grid = np.reshape(gamma_vector, np.shape(panel_grid))
+
+j = 0
+results = []
+for mesh in wing_mesh:
+    n_chord, n_span = np.shape(mesh["xx"])
+    slic = gamma_grid[:,j:j+n_span-1]
+    results.append(slic)
+    j += n_span -1
+
+print()
+visualization.plot_3D.plot_results(wing_mesh, results)
+plt.show()
+    
 
 def test_create_panel_grid():
 
@@ -90,7 +109,7 @@ def test_create_panel_grid():
     for i in range(np.shape(panel_grid)[0]):
         print(f"# i = {i}")
         for j in range(np.shape(panel_grid)[1]):
-            print(panel_grid[i][j].col_point)
+            print(panel_grid[i][j].induced_velocity(np.array([0, 0, 0]), 1))
 
 
 def test_flatten():
@@ -98,11 +117,26 @@ def test_flatten():
     panel_vector = aerodynamics.vlm.flatten(panel_grid)
 
     for panel in panel_vector:
-        print(panel.col_point)
+        print(panel.induced_velocity(np.array([0, 0, 0]), 1))
+
+    re_panel_grid = np.reshape(panel_vector, np.shape(panel_grid))
+
+    for i in range(np.shape(re_panel_grid)[0]):
+        print(f"# i = {i}")
+        for j in range(np.shape(re_panel_grid)[1]):
+            print(re_panel_grid[i][j].induced_velocity(np.array([0, 0, 0]), 1))
 
 
-    #visualization.plot_3D.plot_mesh(wing_mesh)
-    #plt.show()
+def test_gamma_solver():
+
+    gamma_vector = aerodynamics.vlm.gamma_solver(panel_vector, flow_velocity_vector)
+    print("Gamma Vector:")
+    for i, gamma in enumerate(gamma_vector):
+        print(f"{i} : {gamma}")
+        
+    gamma_grid = np.reshape(gamma_vector, np.shape(panel_grid))
+    visualization.plot_3D.plot_results(wing_mesh, gamma_grid)
+    plt.show()
 
 
 # ==================================================================================================
@@ -115,8 +149,15 @@ if __name__ == "__main__":
     print("= Testing aerodynamics.vlm =")
     print("============================")
     print()
-    print("- Testing create_panel_grid")
+
+    #print("- Testing create_panel_grid")
     #test_create_panel_grid()
-    print()
-    print("- Testing flatten")
+    #print()
+
+    #print("- Testing flatten")
     #test_flatten()
+    #print()
+
+    #print("- Testing gamma_solver")
+    #test_gamma_solver()
+    #print()

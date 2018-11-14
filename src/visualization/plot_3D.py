@@ -111,37 +111,60 @@ def plot_mesh(meshs):
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_results(meshs, color_variable_vector):
+def plot_results(aircraft_aero_mesh, results_grids):
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d", proj_type="persp")
+    ax = fig.add_subplot(111, projection="3d", proj_type="ortho")
 
-    minn, maxx = (
-        np.array(color_variable_vector).min(),
-        np.array(color_variable_vector).max(),
-    )
-    norm = matplotlib.colors.Normalize(minn, maxx)
-    m = plt.cm.ScalarMappable(norm=norm, cmap="viridis")
+    min_result_value = 0
+    max_result_value = 0
+
+    for grid in results_grids:
+        
+        grid_min = grid.min()
+        grid_max = grid.max()
+
+        if grid_min < min_result_value:
+            min_result_value = grid_min
+
+        if grid_max > max_result_value:
+            max_result_value = grid_max
+
+    norm = matplotlib.colors.Normalize(min_result_value, max_result_value)
+    m = plt.cm.ScalarMappable(norm=norm, cmap="coolwarm")
     m.set_array([])
 
     fig.colorbar(m, shrink=0.5, aspect=5)
 
-    for i, mesh in enumerate(meshs):
-        xx = mesh["xx"]
-        yy = mesh["yy"]
-        zz = mesh["zz"]
-        fcolors = m.to_rgba(color_variable_vector[i])
-        surf = ax.plot_surface(
+    for i, component_mesh in enumerate(aircraft_aero_mesh):
+        results = results_grids[i]
+
+        index = 0
+
+        for surface in component_mesh:
+            n_chord_panels = np.shape(surface["xx"])[0] - 1
+            n_span_panels = np.shape(surface["xx"])[1] - 1
+
+            results_slice = results[:,index:(index + n_span_panels)]
+            index += n_span_panels
+            
+            xx = surface["xx"]
+            yy = surface["yy"]
+            zz = surface["zz"]
+            fcolors = m.to_rgba(results_slice)
+            surf = ax.plot_surface(
             xx,
             yy,
             zz,
             facecolors=fcolors,
-            vmin=minn,
-            vmax=maxx,
+            vmin=min_result_value,
+            vmax=max_result_value,
             shade=False,
             linewidth=0.5,
             antialiased=False,
         )
+
+        
 
     # Plot coordinate system
     ax.quiver(

@@ -17,6 +17,13 @@ class PanelHorseShoe(geo.objects.Panel):
         )
 
         return hs_induced_velocity
+    
+    def aero_force(self, circulation, flow_vector, air_density):
+        hs_aero_force = functions.horse_shoe_aero_force(
+            self.horse_shoe_point_a, self.horse_shoe_point_b, circulation, flow_vector, air_density
+        )
+
+        return hs_aero_force
 
 # ==================================================================================================
 

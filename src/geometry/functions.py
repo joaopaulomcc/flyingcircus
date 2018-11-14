@@ -213,20 +213,18 @@ def rotate_grid(grid_xx, grid_yy, grid_zz, rot_axis, rot_center, rot_angle):
 
 def connect_surface_grid(
     surface_list,
-    surface_incidence,
-    surface_position,
+    marco_surface_incidence,
+    macro_surface_position,
     n_chord_panels,
     n_span_panels_list,
     chord_discretization,
     span_discretization_list,
     torsion_function_list,
+    torsion_center,
     control_surface_dictionary,
 ):
 
     connected_grids = []
-    surface_x = surface_position[0]
-    surface_y = surface_position[1]
-    surface_z = surface_position[2]
 
     for i, surface in enumerate(surface_list):
 
@@ -239,6 +237,7 @@ def connect_surface_grid(
         else:
             control_surface_deflection = 0
 
+        # Generates surface mesh, with torsion and dihedral
         surface_mesh_xx, surface_mesh_yy, surface_mesh_zz = surface.generate_aero_mesh(
             n_span_panels,
             n_chord_panels,
@@ -246,43 +245,160 @@ def connect_surface_grid(
             chord_discretization,
             span_discretization,
             torsion_function,
+            torsion_center,
         )
 
+        # When the surface is not at the root
         if i != 0:
-            surface_incidence += surface_list[i - 1].tip_torsion_angle_rad
-            surface_x += (
-                tan(surface_list[i - 1].leading_edge_sweep_angle_rad)
-                * surface_list[i - 1].length
-            )
-            surface_y += (
-                cos(surface_list[i - 1].dihedral_angle_rad) * surface_list[i - 1].length
-            )
-            surface_z += (
-                sin(surface_list[i - 1].dihedral_angle_rad) * surface_list[i - 1].length
+
+            last_surface = connected_grids[i - 1]
+            shape = np.shape(last_surface["xx"])
+
+            # Get tip line segment from last surface
+            tip_xx = last_surface["xx"][:, shape[1] - 1]
+            tip_yy = last_surface["yy"][:, shape[1] - 1]
+            tip_zz = last_surface["zz"][:, shape[1] - 1]
+
+            tip_lead_edge = np.array([tip_xx[0], tip_yy[0], tip_zz[0]])
+            tip_trai_edge = np.array([tip_xx[1], tip_yy[1], tip_zz[1]])
+
+            tip_vector = tip_trai_edge - tip_lead_edge
+
+            # Translate surface so it's root leading edge contacts the tip leading edge of the last 
+            # surface
+            final_point = tip_lead_edge
+            surface_mesh_xx, surface_mesh_yy, surface_mesh_zz = translate_grid(
+                surface_mesh_xx, surface_mesh_yy, surface_mesh_zz, final_point
             )
 
-        # Rotate grid around 1/4 root chord to apply incidence
-        rot_axis = np.array([0, 1, 0])  # Y axis
-        rot_center = np.array([0.25 * surface.root_chord, 0, 0])
-        rot_angle = surface_incidence
+            # Get root line segment from current surface
+            root_xx = surface_mesh_xx[:, 0]
+            root_yy = surface_mesh_yy[:, 0]
+            root_zz = surface_mesh_zz[:, 0]
 
-        surface_mesh_xx, surface_mesh_yy, surface_mesh_zz = rotate_grid(
-            surface_mesh_xx,
-            surface_mesh_yy,
-            surface_mesh_zz,
-            rot_axis,
-            rot_center,
-            rot_angle,
-        )
+            root_lead_edge = np.array([root_xx[0], root_yy[0], root_zz[0]])
+            root_trai_edge = np.array([root_xx[1], root_yy[1], root_zz[1]])
 
-        # Translate grid to correct position
-        final_point = np.array([surface_x, surface_y, surface_z])
-        surface_mesh_xx, surface_mesh_yy, surface_mesh_zz = translate_grid(
-            surface_mesh_xx, surface_mesh_yy, surface_mesh_zz, final_point
-        )
+            root_vector = root_trai_edge - root_lead_edge
+
+            # use cross vector to find rot axis
+            rot_axis = m.cross(root_vector, tip_vector)
+
+            # find by wich angle the surcafe needs to be rotates
+            rot_angle = angle_between(root_vector, tip_vector)
+
+            # Rotates surface around tip_lead_edge so tip_vector and root_vector match
+            rot_center = tip_lead_edge
+
+            surface_mesh_xx, surface_mesh_yy, surface_mesh_zz = rotate_grid(
+                surface_mesh_xx,
+                surface_mesh_yy,
+                surface_mesh_zz,
+                rot_axis,
+                rot_center,
+                rot_angle,
+            ) 
+
+        else:
+            # Translates grid to correct position
+            final_point = macro_surface_position
+            surface_mesh_xx, surface_mesh_yy, surface_mesh_zz = translate_grid(
+                surface_mesh_xx, surface_mesh_yy, surface_mesh_zz, final_point
+            )
+
+            # Apply macro surface incidence angle, other surfaces will automatically have this incidence
+            rot_axis = np.array([0, 1, 0])  # Y axis
+            rot_center = macro_surface_position
+            rot_angle = marco_surface_incidence
+            surface_mesh_xx, surface_mesh_yy, surface_mesh_zz = rotate_grid(
+                surface_mesh_xx,
+                surface_mesh_yy,
+                surface_mesh_zz,
+                rot_axis,
+                rot_center,
+                rot_angle,
+            )
 
         connected_grids.append(
             {"xx": surface_mesh_xx, "yy": surface_mesh_yy, "zz": surface_mesh_zz}
         )
 
     return connected_grids
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def velocity_field_function_generator(
+    velocity_vector, rotation_vector, attitude_vector, center
+):
+
+    # This is a horrible hack
+
+    v_x = velocity_vector[0]
+    v_y = velocity_vector[0]
+    v_z = velocity_vector[0]
+
+    r_x = rotation_vector[0]
+    r_y = rotation_vector[1]
+    r_z = rotation_vector[2]
+
+    alpha = attitude_vector[0]
+    beta = attitude_vector[1]
+    gamma = attitude_vector[2]
+
+    x_axis = np.array([1.0, 0.0, 0.0])
+    y_axis = np.array([0.0, 1.0, 0.0])
+    z_axis = np.array([0.0, 0.0, 1.0])
+    origin = np.array([0.0, 0.0, 0.0])
+
+    true_airspeed = velocity_vector[0]
+
+    cg_velocity = np.array([true_airspeed, 0, 0])[np.newaxis].transpose()
+
+    # Rotate around y for alfa
+    cg_velocity = rotate_point(cg_velocity, y_axis, origin, -alpha, degrees=True)
+
+    # Rotate around z for beta
+    cg_velocity = rotate_point(cg_velocity, z_axis, origin, -beta, degrees=True)
+
+    # Rotate around x for gamma
+    cg_velocity = rotate_point(cg_velocity, x_axis, origin, -gamma, degrees=True)
+
+    cg_velocity = cg_velocity.transpose()[0]
+
+    def velocity_field_function(point_location):
+
+        r = point_location - center
+        tangential_velocity = -m.cross(rotation_vector, r)
+
+        flow_velocity = cg_velocity + tangential_velocity
+
+        return flow_velocity
+
+    return velocity_field_function
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def angle_between(vector_1, vector_2):
+
+    cos_theta = m.dot(vector_1, vector_2) / (m.norm(vector_1) * m.norm(vector_2))
+    theta = np.arccos(cos_theta)
+
+    return theta
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def cos_between(vector_1, vector_2):
+
+    cos_theta = m.dot(vector_1, vector_2) / (m.norm(vector_1) * m.norm(vector_2))
+
+    return cos_theta
+
+
+# --------------------------------------------------------------------------------------------------
+

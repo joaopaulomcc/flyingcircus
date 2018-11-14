@@ -35,6 +35,7 @@ def horse_shoe_ind_vel(point_a, point_b, target_point, circulation, vortex_radiu
         <= vortex_radius
     ):
         wake_a_vel = np.zeros(3)
+
     else:
         wake_a_vel = (m.cross(a, X) / (m.norm(a) - m.dot(a, X))) * (1 / m.norm(a))
 
@@ -43,6 +44,7 @@ def horse_shoe_ind_vel(point_a, point_b, target_point, circulation, vortex_radiu
         <= vortex_radius
     ):
         wake_b_vel = np.zeros(3)
+
     else:
         wake_b_vel = (m.cross(b, X) / (m.norm(b) - m.dot(b, X))) * (1 / m.norm(b))
 
@@ -53,6 +55,20 @@ def horse_shoe_ind_vel(point_a, point_b, target_point, circulation, vortex_radiu
 
 # ==================================================================================================
 
+@jit(nopython=True)
+def horse_shoe_aero_force(point_a, point_b, circulation, flow_vector, air_density):
+    """
+    reference: Flight Vehicle Aerodynamics - Mark Drela
+    """
+    ra = point_a
+    rb = point_b
+    l = rb - ra
+
+    aero_force = air_density * m.cross(flow_vector, l) * circulation
+
+    return aero_force
+
+# ==================================================================================================
 """
 atmosphere.py
 

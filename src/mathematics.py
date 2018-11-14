@@ -132,6 +132,7 @@ def cross3(vec1, vec2, result):
     result[1] = a3 * b1 - a1 * b3
     result[2] = a1 * b2 - a2 * b1
 
+
 @jit(nopython=True)
 def dot(vec1, vec2):
     """ Calculate the dot product of two 3d vectors. """
