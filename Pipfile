@@ -16,6 +16,7 @@ numba = "*"
 "pep8" = "*"
 pytest = "*"
 black = "*"
+rope = "*"
 
 [requires]
 python_version = "3.6"

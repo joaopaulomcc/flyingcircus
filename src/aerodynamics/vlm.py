@@ -93,33 +93,11 @@ def gamma_solver(influence_coef_matrix, right_hand_side_vector):
     Returns:
 
     """
-
-    #    n_panels = len(panel_vector)
-    #    influence_coef_matrix = np.zeros((n_panels, n_panels))
-    #    right_hand_side_vector = np.zeros((n_panels, 1))
-    #
-    #    # For each colocation point i calculate the influence of panel j with a cirulation of 1
-    #
-    #    for i in range(n_panels):
-    #
-    #        right_hand_side_vector[i][0] = m.dot(-flow_velocity_vector, panel_vector[i].n)
-    #
-    #        right_hand_side_vector[i][0] = m.dot(-flow_velocity_vector, panel_vector[i].n)
-    #
-    #        for j in range(n_panels):
-    #
-    #            ind_vel = panel_vector[j].induced_velocity(panel_vector[i].col_point, 1)
-    #
-    #            influence_coef_matrix[i][j] = m.dot(ind_vel, panel_vector[i].n)
-    #
-    #    # Solve linear system using scipy library
+    # Solve linear system using scipy library
 
     gamma, info = spla.gmres(influence_coef_matrix, right_hand_side_vector)
 
-    # np.savetxt("influence.csv", influence_coef_matrix, delimiter=",")
-    # np.savetxt("RHS.csv", right_hand_side_vector, delimiter=",")
-    # np.savetxt("gamma.csv", gamma, delimiter=",")
-
+    # Warn user if the solver can not find a solution for the system
     if info != 0:
 
         print("aerodynamics.vlm.gamma_solver : ERROR: Solver did not converge!")
@@ -131,62 +109,6 @@ def gamma_solver(influence_coef_matrix, right_hand_side_vector):
 
 # --------------------------------------------------------------------------------------------------
 
-
-@jit
-def downwash_solver(panel_vector, gamma):
-    """Receives a vector of panel objects and the cirulation.
-    Returns a vector with the downwash for each one of the panels.
-
-    Args:
-
-    Returns:
-
-    """
-
-    n_panels = len(panel_vector)
-
-    downwash_influence_coef_matrix = np.zeros((n_panels, n_panels))
-
-    # For each colocation point i calculate the influence of panel j with a cirulation of 1
-
-    for i in range(n_panels):
-
-        for j in range(n_panels):
-
-            ind_vel, wake_ind_velocity = panel_vector[j].hs_induced_velocity(
-                panel_vector[i].col_point, 1
-            )
-
-            downwash_influence_coef_matrix[i][j] = m.dot(
-                wake_ind_velocity, panel_vector[i].n
-            )
-
-    # Solve linear system using scipy library
-
-    downwash = downwash_influence_coef_matrix @ gamma
-
-    return downwash
-
-
-# --------------------------------------------------------------------------------------------------
-
-
-@jit
-def lift_drag(panel_vector, gamma, downwash, free_stream_vel, air_density):
-
-    n_panels = len(panel_vector)
-    lift = np.zeros(n_panels)
-    drag = np.zeros(n_panels)
-
-    for i, panel in enumerate(panel_vector):
-
-        lift[i] = air_density * free_stream_vel * gamma[i] * panel.span
-        drag[i] = -air_density * downwash[i] * gamma[i] * panel.span
-
-    return lift, drag
-
-
-# --------------------------------------------------------------------------------------------------
 
 @jit
 def aero_loads(
@@ -205,8 +127,8 @@ def aero_loads(
 
     aircraft_panel_vector = np.array([], dtype="object")
     shapes = []
-    components_panel_grids = []
-    components_panel_vectors = []
+    components_panel_grid = []
+    components_panel_vector = []
 
     print("Generating Panel Grid")
     for component_mesh in aircraft_aero_mesh:
@@ -225,8 +147,8 @@ def aero_loads(
         shapes.append(np.shape(component_panel_grid))
 
         # Save panel vector and grid
-        components_panel_grids.append(component_panel_grid)
-        components_panel_vectors.append(component_panel_vector)
+        components_panel_grid.append(component_panel_grid)
+        components_panel_vector.append(component_panel_vector)
 
     # Calculate Influence Coefficient Matrix
     print("Calculating Influence Coefficient Matrix")
@@ -293,12 +215,13 @@ def aero_loads(
         components_gamma_grid.append(np.reshape(gamma_vector_slice, shape))
 
         first_index += n_itens
+
     return (
         components_force_vector,
-        components_panel_vectors,
-        components_force_grid,
-        components_panel_grids,
+        components_panel_vector,
         components_gamma_vector,
+        components_force_grid,
+        components_panel_grid,
         components_gamma_grid,
     )
 
