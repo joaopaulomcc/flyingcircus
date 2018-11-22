@@ -29,7 +29,7 @@ class Engine(object):
         self.thrust_function = thrust_function
 
     def thrust(self, throttle, parameters):
-        
+
         thrust_force = self.thrust_function(throttle, parameters) * self.thrust_vector
 
         return thrust_force
@@ -365,8 +365,8 @@ class Surface(object):
             t_mesh_points_yy[:, i] = rot_section_points_y[:, 0]
             t_mesh_points_zz[:, i] = rot_section_points_z[:, 0]
 
-
         return t_mesh_points_xx, t_mesh_points_yy, t_mesh_points_zz
+
 
 
 # ==================================================================================================

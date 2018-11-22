@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+
 from context import src
 from src import geometry as geo
 from src import visualization as vis
@@ -318,7 +320,7 @@ wing_chord_discretization = "linear"
 wing_span_discretization_list = ["linear", "linear", "linear", "linear"]
 wing_torsion_function_list = ["linear", "linear", "linear", "linear"]
 
-wing_control_surface_deflection_dict = {"left_aileron": 0, "right_aileron": 0}
+wing_control_surface_deflection_dict = {"left_aileron": 10, "right_aileron": 0}
 
 wing_mesh = wing.create_mesh(
     wing_n_chord_panels,
@@ -437,4 +439,5 @@ print("# Engine CG Loads")
 print(f"- Force: {engine_force}")
 print(f"- Moment: {engine_moment}")
 print()
+plt.show()
 input("Press any key to quit...")
