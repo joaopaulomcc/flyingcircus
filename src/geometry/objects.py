@@ -52,6 +52,42 @@ class MaterialPoint(object):
 # ==================================================================================================
 
 
+class Node(object):
+    """Node object, defines a node in the FEM mesh.
+
+    Args:
+        x (float): node x position in the 3D space.
+        y (float): node y position in the 3D space.
+        z (float): node z position in the 3D space.
+        rx (float): node rotation around the x axis.
+        ry (float): node rotation around the y axis.
+        rz (float): node rotation around the z axis.
+
+    Attributes:
+        x (float): node x position in the 3D space.
+        y (float): node y position in the 3D space.
+        z (float): node z position in the 3D space.
+        rx (float): node rotation around the x axis.
+        ry (float): node rotation around the y axis.
+        rz (float): node rotation around the z axis.
+        xyz (np.array(dtype=float)): numpy array with x, y, z coordinates
+        rxyz (np.array(dtype=float)): numpy array with rx, ry, rz rotations
+    """
+
+    def __init__(self, x, y, z, rx=0, ry=0, rz=0):
+
+        self.x = x
+        self.y = y
+        self.z = z
+        self.rx = rx
+        self.ry = ry
+        self.rz = rz
+        self.xyz = np.array([x, y, z])
+        self.rxyz = np.array([rx, ry, ry])
+
+
+# ==================================================================================================
+
 class Airfoil(object):
     def __init__(self, upper_spline, lower_spline, cl_alpha, cd_alpha, cm_alpha):
         self.upper_spline = upper_spline
@@ -480,3 +516,20 @@ class MacroSurface(object):
             )
 
         return macro_surface_mesh
+
+
+    def create_struct_mesh(self, n_elements_list):
+
+        rotation = self.incidence_rad
+
+        for i, surface in enumerate(self.surface_list):
+
+            if i == 0:
+                pass
+
+
+
+
+
+
+

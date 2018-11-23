@@ -10,43 +10,6 @@ from .. import geometry as geo
 # Objects
 
 
-class Node(object):
-    """Node object, defines a node in the FEM mesh.
-
-    Args:
-        x (float): node x position in the 3D space.
-        y (float): node y position in the 3D space.
-        z (float): node z position in the 3D space.
-        rx (float): node rotation around the x axis.
-        ry (float): node rotation around the y axis.
-        rz (float): node rotation around the z axis.
-
-    Attributes:
-        x (float): node x position in the 3D space.
-        y (float): node y position in the 3D space.
-        z (float): node z position in the 3D space.
-        rx (float): node rotation around the x axis.
-        ry (float): node rotation around the y axis.
-        rz (float): node rotation around the z axis.
-        xyz (np.array(dtype=float)): numpy array with x, y, z coordinates
-        rxyz (np.array(dtype=float)): numpy array with rx, ry, rz rotations
-    """
-
-    def __init__(self, x, y, z, rx=0, ry=0, rz=0):
-
-        self.x = x
-        self.y = y
-        self.z = z
-        self.rx = rx
-        self.ry = ry
-        self.rz = rz
-        self.xyz = np.array([x, y, z])
-        self.rxyz = np.array([rx, ry, ry])
-
-
-# --------------------------------------------------------------------------------------------------
-
-
 class Material:
     """Defines a material and it's properties
 
@@ -204,12 +167,20 @@ class BeamElement(object):
         origin = np.zeros(3)
 
         # Calculates the element local coordinate system before rotation
-        point_A = grid[self.point_A_index]
-        point_B = grid[self.point_B_index]
+        point_A = grid[self.point_A_index].xyz
+        point_B = grid[self.point_B_index].xyz
 
         x_local = m.normalize(point_B - point_A)
-        y_local = np.array([0, -1, 0])
-        z_local = m.cross(x_local, y_local)
+        z_local = m.cross(x_global, x_local)
+
+        # When element is aligned with the x axis it's coordinate system is equal to the global
+        # coordinate system, before the rotation.
+        if np.array_equal(z_local, np.zeros(3)):
+            z_local = z_global
+            y_local = y_global
+
+        else:
+            y_local = m.cross(z_local, x_local)
 
         # Apply rotation to the local coordinate system
         y_local = geo.functions.rotate_point(y_local, x_local, origin, self.rotation)
