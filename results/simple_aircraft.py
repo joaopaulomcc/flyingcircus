@@ -384,6 +384,7 @@ attitude_vector = np.array([5, 0, 0])
 center = simple_aircraft.inertial_properties.cg_position
 altitude = 0
 
+"""
 print()
 print("# Running VLM:")
 (
@@ -441,3 +442,9 @@ print(f"- Moment: {engine_moment}")
 print()
 plt.show()
 input("Press any key to quit...")
+"""
+
+plt.show()
+
+def generate_structure(component):
+    pass

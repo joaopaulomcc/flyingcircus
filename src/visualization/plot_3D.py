@@ -80,6 +80,8 @@ def plot_surface(meshs):
     set_axes_equal(ax)
     plt.show(block=False)
 
+    return ax, fig
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -87,7 +89,7 @@ def plot_surface(meshs):
 def plot_mesh(meshs):
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d", proj_type="persp")
+    ax = fig.add_subplot(111, projection="3d", proj_type="ortho")
 
     for mesh in meshs:
         xx = mesh["xx"]
@@ -107,6 +109,8 @@ def plot_mesh(meshs):
     set_axes_equal(ax)
     plt.show(block=False)
 
+    return ax, fig
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -120,7 +124,7 @@ def plot_results(aircraft_aero_mesh, results_grids):
     max_result_value = 0
 
     for grid in results_grids:
-        
+
         grid_min = grid.min()
         grid_max = grid.max()
 
@@ -145,26 +149,24 @@ def plot_results(aircraft_aero_mesh, results_grids):
             n_chord_panels = np.shape(surface["xx"])[0] - 1
             n_span_panels = np.shape(surface["xx"])[1] - 1
 
-            results_slice = results[:,index:(index + n_span_panels)]
+            results_slice = results[:, index : (index + n_span_panels)]
             index += n_span_panels
-            
+
             xx = surface["xx"]
             yy = surface["yy"]
             zz = surface["zz"]
             fcolors = m.to_rgba(results_slice)
             surf = ax.plot_surface(
-            xx,
-            yy,
-            zz,
-            facecolors=fcolors,
-            vmin=min_result_value,
-            vmax=max_result_value,
-            shade=False,
-            linewidth=0.5,
-            antialiased=False,
-        )
-
-        
+                xx,
+                yy,
+                zz,
+                facecolors=fcolors,
+                vmin=min_result_value,
+                vmax=max_result_value,
+                shade=False,
+                linewidth=0.5,
+                antialiased=False,
+            )
 
     # Plot coordinate system
     ax.quiver(
@@ -177,6 +179,29 @@ def plot_results(aircraft_aero_mesh, results_grids):
     ax.set_zlabel("Z axis")
     set_axes_equal(ax)
     plt.show(block=False)
+
+    return ax, fig
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_node(Node, plot_axis):
+
+    x = Node.x
+    y = Node.y
+    z = Node.z
+    x_axis = Node.x_axis
+    y_axis = Node.y_axis
+    z_axis = Node.z_axis
+
+    plot_axis.quiver([x], [y], [z], [x_axis[0]], [x_axis[1]], [x_axis[2]], color="red")
+    plot_axis.quiver(
+        [x], [y], [z], [y_axis[0]], [y_axis[1]], [y_axis[2]], color="green"
+    )
+    plot_axis.quiver([x], [y], [z], [z_axis[0]], [z_axis[1]], [z_axis[2]], color="blue")
+
+    plot_axis.scatter([x], [y], [z], color="black")
 
 
 # --------------------------------------------------------------------------------------------------
@@ -207,6 +232,7 @@ def plot_structure(structure):
     set_axes_equal(ax)
     plt.show(block=False)
 
+    return ax, fig
 
 # --------------------------------------------------------------------------------------------------
 
@@ -226,7 +252,7 @@ def plot_aircraft(aircraft):
     # Define color map to be used. With this is possible to plot each component in a different color
     n_colors = len(aircraft.components)
     color_map = plt.get_cmap("tab20c")
-    color_norm = matplotlib.colors.Normalize(vmin=0, vmax=n_colors-1)
+    color_norm = matplotlib.colors.Normalize(vmin=0, vmax=n_colors - 1)
     scalar_map = matplotlib.cm.ScalarMappable(norm=color_norm, cmap=color_map)
 
     # Plot coordinate system
@@ -253,7 +279,9 @@ def plot_aircraft(aircraft):
         eng_t_z = engine.thrust_vector[2]
 
         ax.scatter([eng_x], [eng_y], [eng_z], marker="P", color="red", s=50)
-        ax.quiver([eng_x], [eng_y], [eng_z], [eng_t_x], [eng_t_y], [eng_t_z], color="red")
+        ax.quiver(
+            [eng_x], [eng_y], [eng_z], [eng_t_x], [eng_t_y], [eng_t_z], color="red"
+        )
 
     # Plot Aircraf Components
     for i, component in enumerate(aircraft.components):
@@ -287,6 +315,7 @@ def plot_aircraft(aircraft):
     # Generate Plot
     plt.show(block=False)
 
+    return ax, fig
 
 # --------------------------------------------------------------------------------------------------
 
@@ -329,3 +358,4 @@ def plot_deformation(elements, nodes, deformations, scale=1):
     set_axes_equal(ax)
     plt.show(block=False)
 
+    return ax, fig

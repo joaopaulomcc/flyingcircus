@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import sin, cos, tan, arccos, arcsin, arctan
+from pyquaternion import Quaternion
 
 from .. import mathematics as m
 from numba import jit
@@ -264,7 +265,7 @@ def connect_surface_grid(
 
             tip_vector = tip_trai_edge - tip_lead_edge
 
-            # Translate surface so it's root leading edge contacts the tip leading edge of the last 
+            # Translate surface so it's root leading edge contacts the tip leading edge of the last
             # surface
             final_point = tip_lead_edge
             surface_mesh_xx, surface_mesh_yy, surface_mesh_zz = translate_grid(
@@ -297,7 +298,7 @@ def connect_surface_grid(
                 rot_axis,
                 rot_center,
                 rot_angle,
-            ) 
+            )
 
         else:
             # Translates grid to correct position
@@ -402,3 +403,48 @@ def cos_between(vector_1, vector_2):
 
 # --------------------------------------------------------------------------------------------------
 
+
+def interpolate_nodes(node_1, node_2, n_nodes):
+
+    node_list = []
+
+    for i, quaternion in enumerate(Quaternion.intermediates(
+        node_1.quaternion, node_2.quaternion, n_nodes, include_endpoints=True
+    )):
+
+        vector = node_2.xyz - node_1.xyz
+
+        node_xyz = node_1.xyz + i * vector / n_nodes
+        node_quaternion = quaternion
+
+        node_list.append([node_xyz, node_quaternion])
+
+    return node_list
+
+# --------------------------------------------------------------------------------------------------
+
+
+def change_coord_sys(vector, X, Y, Z):
+
+    base_matrix = np.array([[X[0], Y[0], Z[0]],
+                            [X[1], Y[1], Z[1]],
+                            [X[2], Y[2], Z[2]]])
+
+    transformation_matrix = np.linalg.inv(base_matrix)
+
+    new_vector = transformation_matrix @ vector
+
+    return new_vector
+
+# --------------------------------------------------------------------------------------------------
+
+
+def decompose_rotation(rotation_axis, rotation_angle, axis_1, axis_2, axis_3):
+
+    transformed_rotation_axis = change_coord_sys(rotation_axis, axis_1, axis_2, axis_3)
+
+    rotation_quaternion = Quaternion(axis=transformed_rotation_axis, angle=rotation_angle)
+
+    yaw_pitch_roll = rotation_quaternion.yaw_pitch_roll
+
+    return yaw_pitch_roll
