@@ -330,6 +330,11 @@ def connect_surface_grid(
 # --------------------------------------------------------------------------------------------------
 
 
+def connect_surface_nodes(surface_list, n_elements, position, incidence_angle, mirror=False):
+    pass
+
+# --------------------------------------------------------------------------------------------------
+
 def velocity_field_function_generator(
     velocity_vector, rotation_vector, attitude_vector, center
 ):
@@ -409,7 +414,7 @@ def interpolate_nodes(node_1, node_2, n_nodes):
     node_list = []
 
     for i, quaternion in enumerate(Quaternion.intermediates(
-        node_1.quaternion, node_2.quaternion, n_nodes, include_endpoints=True
+        node_1.quaternion, node_2.quaternion, (n_nodes - 1), include_endpoints=True
     )):
 
         vector = node_2.xyz - node_1.xyz
@@ -448,3 +453,17 @@ def decompose_rotation(rotation_axis, rotation_angle, axis_1, axis_2, axis_3):
     yaw_pitch_roll = rotation_quaternion.yaw_pitch_roll
 
     return yaw_pitch_roll
+
+# --------------------------------------------------------------------------------------------------
+
+"""
+def mirror_node_xz(node):
+
+    mirror_xyz = np.array([node.xyz[0], -node.xyz[1], node.xyz[2]])
+
+    mirror_rotation_angle = node.quaternion.angle + np.pi
+    mirror_rotation_axis = node.quaternion.axis
+    mirror_quaternion = Quaternion(axis=mirror_rotation_axis, angle=mirror_rotation_angle)
+
+    return [mirror_xyz, mirror_quaternion]
+"""

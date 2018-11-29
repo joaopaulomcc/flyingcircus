@@ -444,7 +444,9 @@ class Surface(object):
             section_point_1 = section_points[:, 0]
             section_point_2 = section_points[:, 1]
             section_vector = m.normalize(section_point_2 - section_point_1)
-            rot_center = section_point_1 + torsion_center * section_vector * self.tip_chord
+            rot_center = (
+                section_point_1 + torsion_center * section_vector * self.tip_chord
+            )
 
             # rot_center = section_points_x.min() + torsion_center * (
             #    section_points_x.max() - section_points_x.min()
@@ -469,7 +471,7 @@ class Surface(object):
 
     # ----------------------------------------------------------------------------------------------
 
-    def generate_structure_nodes(self, torsion_center=0.0):
+    def generate_structure_nodes(self, n_nodes, torsion_center=0.0, mirror=False):
 
         # Find the positions of the root and tip nodes n the planform
         root_node_xyz = np.array(
@@ -479,11 +481,23 @@ class Surface(object):
         tip_x_position = self.length * tan(self.leading_edge_sweep_angle_rad)
 
         tip_node_xyz = np.array(
-            [tip_x_position + self.tip_chord * self.tip_section.shear_center, self.length, 0]
+            [
+                tip_x_position + self.tip_chord * self.tip_section.shear_center,
+                self.length,
+                0,
+            ]
         )
 
+        if mirror:
+            tip_node_xyz[1] = -tip_node_xyz[1]
+
         # Calculate rotation due to wing sweep
-        z_rotation = 0.5 * np.pi - np.arctan((tip_node_xyz - root_node_xyz)[0] / self.length)
+        z_rotation = 0.5 * np.pi - np.arctan(
+            (tip_node_xyz - root_node_xyz)[0] / self.length
+        )
+
+        if mirror:
+            z_rotation = np.pi - z_rotation
 
         root_quaternion = Quaternion(axis=[0, 0, 1], angle=z_rotation)
         tip_quaternion = Quaternion(axis=[0, 0, 1], angle=z_rotation)
@@ -494,7 +508,12 @@ class Surface(object):
 
         # Apply dihedral angle, rotate around wing root in the x axis
         rotation_center = np.array([0, 0, 0])
-        rotation_quaternion = Quaternion(axis=[1, 0, 0], angle=self.dihedral_angle_rad)
+        x_rotation = self.dihedral_angle_rad
+
+        if mirror:
+            x_rotation = -x_rotation
+
+        rotation_quaternion = Quaternion(axis=[1, 0, 0], angle=x_rotation)
 
         root_node = root_node.rotate(
             rotation_quaternion=rotation_quaternion, rotation_center=rotation_center
@@ -505,20 +524,30 @@ class Surface(object):
 
         # Apply torsion to the wing tip
         # The locatio
-        tip_x_position = tip_node.xyz[0] - self.tip_section.shear_center * self.tip_chord
+        tip_x_position = (
+            tip_node.xyz[0] - self.tip_section.shear_center * self.tip_chord
+        )
         tip_torsion_center = np.array(
             [tip_x_position + self.tip_chord * torsion_center, tip_node.y, tip_node.z]
         )
 
         rotation_center = tip_torsion_center
         rotation_axis = np.array([0, 1, 0])
-        rotation_quaternion = Quaternion(axis=[0, 1, 0], angle=self.tip_torsion_angle_rad)
+        rotation_quaternion = Quaternion(
+            axis=[0, 1, 0], angle=self.tip_torsion_angle_rad
+        )
 
         tip_node_location = tip_node.rotate(
             rotation_quaternion=rotation_quaternion, rotation_center=rotation_center
         )
 
-        yaw_pitch_row = f.decompose_rotation(rotation_axis, rotation_quaternion.angle, tip_node.x_axis, tip_node.y_axis, tip_node.z_axis)
+        yaw_pitch_row = f.decompose_rotation(
+            rotation_axis,
+            rotation_quaternion.angle,
+            tip_node.x_axis,
+            tip_node.y_axis,
+            tip_node.z_axis,
+        )
 
         rotation_quaternion = Quaternion(axis=tip_node.x_axis, angle=yaw_pitch_row[2])
         rotation_center = tip_node.xyz
@@ -529,7 +558,15 @@ class Surface(object):
 
         tip_node = Node(tip_node_location.xyz, tip_node_rotation.quaternion)
 
-        return [root_node, tip_node]
+        structure_nodes_props = f.interpolate_nodes(root_node, tip_node, n_nodes)
+
+        structure_nodes = []
+
+        for node_prop in structure_nodes_props:
+
+            structure_nodes.append(Node(node_prop[0], node_prop[1]))
+
+        return structure_nodes
 
 
 # ==================================================================================================
@@ -656,6 +693,36 @@ class MacroSurface(object):
         return macro_surface_mesh
 
     def create_struct_mesh(self, n_elements_list):
+
+        if self.symmetry_plane == "XZ" or self.symmetry_plane == "xz":
+
+            middle_index = int(len(self.surface_list) / 2)
+
+            left_side = self.surface_list[:middle_index]
+            left_side_n_elements_list = n_elements_list[:middle_index]
+
+            right_side = self.surface_list[middle_index:]
+            right_side_n_elements_list = n_elements_list[:middle_index]
+
+            # Flip left side so the first surface is the one at the root
+            left_side = np.flip(left_side)
+            left_side_n_elements_list = np.flip(left_side_n_elements_list)
+
+            left_side_nodes = f.connect_beam_nodes(
+                left_side,
+                left_side_n_elements_list,
+                self.position,
+                self.incidence_rad,
+                mirror=True,
+            )
+
+            right_side_nodes = f.connect_beam_nodes(
+                right_side,
+                right_side_n_elements_list,
+                self.position,
+                self.incidence_rad,
+                mirror=False,
+            )
 
         rotation = self.incidence_rad
 

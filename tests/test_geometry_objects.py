@@ -14,13 +14,17 @@ shear_center = 0.5
 
 surface_identifier = "right_aileron"
 root_chord = 2
-root_section = geometry.objects.Section(airfoil, material, area, Iyy, Izz, J, shear_center)
-tip_chord = 1.2
-tip_section = geometry.objects.Section(airfoil, material, area, Iyy, Izz, J, shear_center)
+root_section = geometry.objects.Section(
+    airfoil, material, area, Iyy, Izz, J, shear_center
+)
+tip_chord = 2
+tip_section = geometry.objects.Section(
+    airfoil, material, area, Iyy, Izz, J, shear_center
+)
 length = 5
 leading_edge_sweep_angle_deg = 30
 dihedral_angle_deg = 10
-tip_torsion_angle_deg = -5
+tip_torsion_angle_deg = 15
 control_surface_hinge_position = 0.75
 torsion_center = 0.25
 
@@ -59,11 +63,15 @@ position = np.array([0, 0, 0])
 incidence = 0
 
 wing = geometry.objects.MacroSurface(
-    position, incidence, surface_list, symmetry_plane="XZ", torsion_center=torsion_center,
+    position,
+    incidence,
+    surface_list,
+    symmetry_plane="XZ",
+    torsion_center=torsion_center,
 )
 
-n_span_panels_list = [20, 20]
-n_chord_panels = 20
+n_span_panels_list = [5, 5]
+n_chord_panels = 5
 control_surface_deflection = 45
 chord_discretization = "cos_sim"
 span_discretization = "cos_sim"
@@ -81,10 +89,20 @@ wing_mesh = wing.create_mesh(
     control_surface_deflection_dict,
 )
 
-node_list = right_aileron.generate_structure_nodes(torsion_center=torsion_center)
+n_nodes = n_span_panels_list[0]
+node_list_right = right_aileron.generate_structure_nodes(
+    n_nodes, torsion_center=torsion_center
+)
+node_list_left = left_aileron.generate_structure_nodes(
+    n_nodes, torsion_center=torsion_center, mirror=True
+)
+
 ax, fig = visualization.plot_3D.plot_mesh(wing_mesh)
+node_list = node_list_left + node_list_right
 
 for node in node_list:
     visualization.plot_3D.plot_node(node, ax)
+
+    # mirror_node_prop = geometry.functions.mirror_node_xz(node)
 
 plt.show()
