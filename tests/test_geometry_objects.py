@@ -56,7 +56,7 @@ left_aileron = geometry.objects.Surface(
     control_surface_hinge_position,
 )
 
-surface_list = [left_aileron, right_aileron]
+surface_list = [left_aileron, left_aileron, right_aileron, right_aileron]
 control_surface_deflection_dict = {"left_aileron": 0, "right_aileron": 0}
 
 position = np.array([0, 0, 0])
@@ -89,19 +89,22 @@ wing_mesh = wing.create_mesh(
     control_surface_deflection_dict,
 )
 
-n_nodes = n_span_panels_list[0]
-node_list_right = right_aileron.generate_structure_nodes(
-    n_nodes, torsion_center=torsion_center
-)
-node_list_left = left_aileron.generate_structure_nodes(
-    n_nodes, torsion_center=torsion_center, mirror=True
-)
+n_elements_list = [n_span_panels_list[0], n_span_panels_list[0], n_span_panels_list[0], n_span_panels_list[0]]
+
+#n_nodes = n_span_panels_list[0]
+#node_list_right = right_aileron.generate_structure_nodes(
+#    n_nodes, torsion_center=torsion_center
+#)
+#node_list_left = left_aileron.generate_structure_nodes(
+#    n_nodes, torsion_center=torsion_center, mirror=True
+#)
 
 ax, fig = visualization.plot_3D.plot_mesh(wing_mesh)
-node_list = node_list_left + node_list_right
+node_list = wing.create_struct_mesh(n_elements_list)
 
-for node in node_list:
-    visualization.plot_3D.plot_node(node, ax)
+for surface in node_list:
+    for node in surface:
+        visualization.plot_3D.plot_node(node, ax)
 
     # mirror_node_prop = geometry.functions.mirror_node_xz(node)
 

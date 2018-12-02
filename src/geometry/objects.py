@@ -708,26 +708,38 @@ class MacroSurface(object):
             left_side = np.flip(left_side)
             left_side_n_elements_list = np.flip(left_side_n_elements_list)
 
-            left_side_nodes = f.connect_beam_nodes(
+            left_side_nodes = f.connect_surface_nodes(
                 left_side,
                 left_side_n_elements_list,
                 self.position,
                 self.incidence_rad,
+                self.torsion_center,
                 mirror=True,
             )
 
-            right_side_nodes = f.connect_beam_nodes(
+            right_side_nodes = f.connect_surface_nodes(
                 right_side,
                 right_side_n_elements_list,
                 self.position,
                 self.incidence_rad,
+                self.torsion_center,
                 mirror=False,
             )
 
-        rotation = self.incidence_rad
+            left_side_nodes = list(np.flip(left_side_nodes))
 
-        for i, surface in enumerate(self.surface_list):
+            macro_surface_nodes = left_side_nodes + right_side_nodes
 
-            if i == 0:
-                pass
+        else:
+
+            macro_surface_nodes = f.connect_surface_nodes(
+                self.surface_list,
+                n_elements_list,
+                self.position,
+                self.incidence_rad,
+                self.torsion_center,
+                mirror=False,
+            )
+
+        return macro_surface_nodes
 

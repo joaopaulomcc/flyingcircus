@@ -330,8 +330,66 @@ def connect_surface_grid(
 # --------------------------------------------------------------------------------------------------
 
 
-def connect_surface_nodes(surface_list, n_elements, position, incidence_angle, mirror=False):
-    pass
+def connect_surface_nodes(surface_list, n_elements_list, position, incidence_angle, torsion_center, mirror=False):
+
+    connected_nodes = []
+
+    for i, surface in enumerate(surface_list):
+
+        n_elements = n_elements_list[i]
+        n_nodes = n_elements + 1
+
+        # Generates surface mesh, with torsion and dihedral
+        surface_nodes = surface.generate_structure_nodes(n_nodes, torsion_center, mirror)
+
+        # When the surface is not at the root
+        if i != 0:
+
+            last_surface_nodes = connected_nodes[i - 1]
+            tip_node = last_surface_nodes[len(last_surface_nodes) - 1]
+ 
+            # Translate nodes so it's root leading edge contacts the tip leading edge of the last surface
+            translation_vector = tip_node.xyz - surface_nodes[0].xyz
+
+            for j, node in enumerate(surface_nodes):
+
+                surface_nodes[j] = node.translate(translation_vector)
+
+            # use cross vector to find rot axis between tip node and root node z axis
+            rot_axis = m.cross(surface_nodes[0].z_axis, tip_node.z_axis)
+
+            # find by wich angle the nodes needs to be rotates
+            rot_angle = angle_between(surface_nodes[0].z_axis, tip_node.z_axis)
+
+            # Rotates surface around tip_lead_edge so tip z vector and root z vector match
+
+            rot_center = tip_node.xyz
+            rot_quaternion = Quaternion(axis=rot_axis, angle=rot_angle)
+
+            for j, node in enumerate(surface_nodes):
+
+                surface_nodes[j] = node.rotate(rot_quaternion, rot_center)
+
+        else:
+            # Translates grid to correct position
+            final_point = position
+
+            for j, node in enumerate(surface_nodes):
+
+                surface_nodes[j] = node.translate(position)
+
+            # Apply macro surface incidence angle, other surfaces will automatically have this incidence
+            rot_axis = np.array([0, 1, 0])  # Y axis
+            rot_center = position
+            rot_angle = incidence_angle
+            rot_quaternion = Quaternion(axis=rot_axis, angle=rot_angle)
+
+            for j, node in enumerate(surface_nodes):
+                surface_nodes[j] = node.rotate(rot_quaternion, rot_center)
+
+        connected_nodes.append(surface_nodes)
+
+    return connected_nodes
 
 # --------------------------------------------------------------------------------------------------
 
