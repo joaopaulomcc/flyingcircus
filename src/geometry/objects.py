@@ -289,6 +289,7 @@ class Surface(object):
         control_surface_deflection=0,
         chord_discretization="linear",
         span_discretization="linear",
+        apply_torsion=True,
         torsion_function="linear",
         torsion_center=0.0,
     ):
@@ -422,50 +423,56 @@ class Surface(object):
         t_mesh_points_yy = np.zeros(np.shape(planar_mesh_points_yy))
         t_mesh_points_zz = np.zeros(np.shape(planar_mesh_points_zz))
 
-        # Applying wing torsion
-        for i in range(n_span_points):
-            # Extract section points from grid
-            section_points_x = mesh_points_xx[:, i]
-            section_points_y = mesh_points_yy[:, i]
-            section_points_z = mesh_points_zz[:, i]
+        if apply_torsion:
+            # Applying wing torsion
+            for i in range(n_span_points):
+                # Extract section points from grid
+                section_points_x = mesh_points_xx[:, i]
+                section_points_y = mesh_points_yy[:, i]
+                section_points_z = mesh_points_zz[:, i]
 
-            # Convert points from grid to list
-            section_points = f.grid_to_vector(
-                section_points_x, section_points_y, section_points_z
-            )
+                # Convert points from grid to list
+                section_points = f.grid_to_vector(
+                    section_points_x, section_points_y, section_points_z
+                )
 
-            # Calculate rotation characteristics and apply rotation
-            rot_angle = torsion_function(
-                section_points_y[0] / (self.length * np.cos(self.dihedral_angle_rad))
-            )
-            rot_axis = np.array([0, 1, 0])  # Y axis
+                # Calculate rotation characteristics and apply rotation
+                rot_angle = torsion_function(
+                    section_points_y[0] / (self.length * np.cos(self.dihedral_angle_rad))
+                )
+                rot_axis = np.array([0, 1, 0])  # Y axis
 
-            # Calculate Rotation center
-            section_point_1 = section_points[:, 0]
-            section_point_2 = section_points[:, 1]
-            section_vector = m.normalize(section_point_2 - section_point_1)
-            rot_center = (
-                section_point_1 + torsion_center * section_vector * self.tip_chord
-            )
+                # Calculate Rotation center
+                section_point_1 = section_points[:, 0]
+                section_point_2 = section_points[:, 1]
+                section_vector = m.normalize(section_point_2 - section_point_1)
+                rot_center = (
+                    section_point_1 + torsion_center * section_vector * self.tip_chord
+                )
 
-            # rot_center = section_points_x.min() + torsion_center * (
-            #    section_points_x.max() - section_points_x.min()
-            # )
+                # rot_center = section_points_x.min() + torsion_center * (
+                #    section_points_x.max() - section_points_x.min()
+                # )
 
-            rot_section_points = f.rotate_point(
-                section_points, rot_axis, rot_center, rot_angle
-            )
+                rot_section_points = f.rotate_point(
+                    section_points, rot_axis, rot_center, rot_angle
+                )
 
-            # Convert section points from list to grid
-            shape = (n_chord_points, 1)
-            rot_section_points_x, rot_section_points_y, rot_section_points_z = f.vector_to_grid(
-                rot_section_points, shape
-            )
+                # Convert section points from list to grid
+                shape = (n_chord_points, 1)
+                rot_section_points_x, rot_section_points_y, rot_section_points_z = f.vector_to_grid(
+                    rot_section_points, shape
+                )
 
-            # Paste rotated section into grid
-            t_mesh_points_xx[:, i] = rot_section_points_x[:, 0]
-            t_mesh_points_yy[:, i] = rot_section_points_y[:, 0]
-            t_mesh_points_zz[:, i] = rot_section_points_z[:, 0]
+                # Paste rotated section into grid
+                t_mesh_points_xx[:, i] = rot_section_points_x[:, 0]
+                t_mesh_points_yy[:, i] = rot_section_points_y[:, 0]
+                t_mesh_points_zz[:, i] = rot_section_points_z[:, 0]
+
+        else:
+            t_mesh_points_xx = mesh_points_xx
+            t_mesh_points_yy = mesh_points_yy
+            t_mesh_points_zz = mesh_points_zz
 
         return t_mesh_points_xx, t_mesh_points_yy, t_mesh_points_zz
 

@@ -23,10 +23,10 @@ tip_section = geometry.objects.Section(
 )
 length = 5
 leading_edge_sweep_angle_deg = 30
-dihedral_angle_deg = 10
-tip_torsion_angle_deg = 15
+dihedral_angle_deg = 30
+tip_torsion_angle_deg = 45
 control_surface_hinge_position = 0.75
-torsion_center = 0.25
+torsion_center = 0
 
 right_aileron = geometry.objects.Surface(
     surface_identifier,
@@ -57,6 +57,7 @@ left_aileron = geometry.objects.Surface(
 )
 
 surface_list = [left_aileron, left_aileron, right_aileron, right_aileron]
+#surface_list = [left_aileron, right_aileron]
 control_surface_deflection_dict = {"left_aileron": 0, "right_aileron": 0}
 
 position = np.array([0, 0, 0])
@@ -70,8 +71,8 @@ wing = geometry.objects.MacroSurface(
     torsion_center=torsion_center,
 )
 
-n_span_panels_list = [5, 5]
-n_chord_panels = 5
+n_span_panels_list = [20, 20, 20, 20]
+n_chord_panels = 10
 control_surface_deflection = 45
 chord_discretization = "cos_sim"
 span_discretization = "cos_sim"
@@ -79,6 +80,8 @@ span_discretization = "cos_sim"
 chord_discretization = "linear"
 span_discretization_list = ["linear", "linear"]
 torsion_function_list = ["linear", "linear"]
+
+
 
 wing_mesh = wing.create_mesh(
     n_chord_panels,
@@ -89,8 +92,8 @@ wing_mesh = wing.create_mesh(
     control_surface_deflection_dict,
 )
 
-n_elements_list = [n_span_panels_list[0], n_span_panels_list[0], n_span_panels_list[0], n_span_panels_list[0]]
-
+#n_elements_list = [n_span_panels_list[0], n_span_panels_list[0], n_span_panels_list[0], n_span_panels_list[0]]
+n_elements_list = [2, 2, 2, 2]
 #n_nodes = n_span_panels_list[0]
 #node_list_right = right_aileron.generate_structure_nodes(
 #    n_nodes, torsion_center=torsion_center

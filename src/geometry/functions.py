@@ -238,6 +238,8 @@ def connect_surface_grid(
         else:
             control_surface_deflection = 0
 
+        apply_torsion = False
+
         # Generates surface mesh, with torsion and dihedral
         surface_mesh_xx, surface_mesh_yy, surface_mesh_zz = surface.generate_aero_mesh(
             n_span_panels,
@@ -245,6 +247,7 @@ def connect_surface_grid(
             control_surface_deflection,
             chord_discretization,
             span_discretization,
+            apply_torsion,
             torsion_function,
             torsion_center,
         )
@@ -281,6 +284,7 @@ def connect_surface_grid(
             root_trai_edge = np.array([root_xx[1], root_yy[1], root_zz[1]])
 
             root_vector = root_trai_edge - root_lead_edge
+
 
             # use cross vector to find rot axis
             rot_axis = m.cross(root_vector, tip_vector)
@@ -347,7 +351,7 @@ def connect_surface_nodes(surface_list, n_elements_list, position, incidence_ang
 
             last_surface_nodes = connected_nodes[i - 1]
             tip_node = last_surface_nodes[len(last_surface_nodes) - 1]
- 
+
             # Translate nodes so it's root leading edge contacts the tip leading edge of the last surface
             translation_vector = tip_node.xyz - surface_nodes[0].xyz
 
