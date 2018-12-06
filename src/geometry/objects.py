@@ -297,18 +297,16 @@ class Surface(object):
         n_chord_points = n_chord_panels + 1
         n_span_points = n_span_panels + 1
 
-        chord_points = f.discretization(chord_discretization, n_chord_points)
+        chord_points, hinge_index = f.discretization(
+            chord_discretization,
+            n_chord_points,
+            control_surface_hinge_position=self.control_surface_hinge_position,
+        )
 
         # Generate a torsion linear torsion function when not supplied with one
         if torsion_function == "linear":
             torsion_function = (
                 lambda span_position: span_position * self.tip_torsion_angle_rad
-            )
-
-        # Change discretization in order to put panel division at control surface hinge line
-        if self.control_surface_hinge_position is not None:
-            chord_points, hinge_index = f.replace_closest(
-                chord_points, self.control_surface_hinge_position
             )
 
         # Find root points by simple scaling
@@ -438,7 +436,8 @@ class Surface(object):
 
                 # Calculate rotation characteristics and apply rotation
                 rot_angle = torsion_function(
-                    section_points_y[0] / (self.length * np.cos(self.dihedral_angle_rad))
+                    section_points_y[0]
+                    / (self.length * np.cos(self.dihedral_angle_rad))
                 )
                 rot_axis = np.array([0, 1, 0])  # Y axis
 
@@ -750,3 +749,647 @@ class MacroSurface(object):
 
         return macro_surface_nodes
 
+
+# ==================================================================================================
+
+
+class Surface2(object):
+    """The surface object is a wing (or similar structure) section.
+
+    Args:
+        identifier (string): Name of the surface
+        root_chord (float): length of the root chord of the surface [m]
+        root_section (geometry.Section): the section object that describes the root section of the
+                                         surface
+        tip_chord (float): length of the tip chord of the surface [m]
+        tip_section (geometry.Section): the section object that describes the root section of the
+                                        surface
+        length (float): the length of the surface [m]
+        leading_edge_sweep_angle_deg (float): the sweep angle of the leading edge of the surface [º]
+        dihedral_angle_deg (float): the surface dihedral angle [º]
+        tip_torsion_angle_deg (float): the tip torsion angle in relation to the root [º]
+        control_surface_hinge_position (float): relative position of control surface in the chord,
+                                                must be between 0 and 1.
+
+    Attributes:
+        identifier (string): Name of the surface
+        root_chord (float): length of the root chord of the surface [m]
+        root_section (geometry.Section): the section object that describes the root section of the
+                                         surface
+        tip_chord (float): length of the tip chord of the surface [m]
+        tip_section (geometry.Section): the section object that describes the root section of the
+                                        surface
+        length (float): the length of the surface [m]
+        leading_edge_sweep_angle_deg (float): the sweep angle of the leading edge of the surface [º]
+        leading_edge_sweep_angle_rad (float): the sweep angle of the leading edge of the surface
+                                              [rad]
+        quarter_chord_sweep_angle_deg (float): the sweep angle of the surface at quarter chord [º]
+        quarter_chord_sweep_angle_rad (float): the sweep angle of the surface at quarter chord [rad]
+        dihedral_angle_deg (float): the surface dihedral angle [º]
+        dihedral_angle_rad (float): the surface dihedral angle [rad]
+        tip_torsion_angle_deg (float): the tip torsion angle in relation to the root [º]
+        tip_torsion_angle_rad (float): the tip torsion angle in relation to the root [rad]
+        control_surface_hinge_position (float): relative position of control surface in the chord,
+                                                must be between 0 and 1.
+        span (float): projection of the surface length in the XY plane [m]
+        ref_area (float): area of the surface projection in the XY plane [m^2]
+        true_area (float): real area of the surface [m^2]
+        taper_ratio (float): surface's taper ration
+        aspect_ratio (float): surface's aspect ratio
+    """
+
+    def __init__(
+        self,
+        identifier,
+        root_chord,
+        root_section,
+        tip_chord,
+        tip_section,
+        length,
+        leading_edge_sweep_angle_deg,
+        dihedral_angle_deg,
+        tip_torsion_angle_deg,
+        control_surface_hinge_position=None,
+    ):
+
+        self.identifier = identifier
+        self.root_section = root_section
+        self.root_chord = float(root_chord)
+        self.tip_section = tip_section
+        self.tip_chord = float(tip_chord)
+        self.tip_section = tip_section
+        self.length = float(length)
+        self.leading_edge_sweep_angle_deg = float(leading_edge_sweep_angle_deg)
+        self.dihedral_angle_deg = float(dihedral_angle_deg)
+        self.tip_torsion_angle_deg = float(tip_torsion_angle_deg)
+        self.control_surface_hinge_position = control_surface_hinge_position
+
+        self.leading_edge_sweep_angle_rad = np.radians(leading_edge_sweep_angle_deg)
+        self.dihedral_angle_rad = np.radians(dihedral_angle_deg)
+        self.tip_torsion_angle_rad = np.radians(tip_torsion_angle_deg)
+
+        # Calculation of the sweep angle at the surface's quarter chord, the formula fails if the
+        # wing's taper ratio is equal to 1 so an if clause is used
+        if root_chord == tip_chord:
+            # the wing is a paralelogram, so the sweep is the same for the whole chord
+            self.quarter_chord_sweep_ang_rad = self.leading_edge_sweep_angle_rad
+
+        else:
+            self.quarter_chord_sweep_ang_rad = np.arctan(
+                length
+                / (
+                    length * tan(self.leading_edge_sweep_angle_rad)
+                    + 0.25 * tip_chord
+                    - 0.25 * root_chord
+                )
+            )
+
+        self.quarter_chord_sweep_ang_deg = np.degrees(self.quarter_chord_sweep_ang_rad)
+
+        self.span = length * cos(self.dihedral_angle_rad)
+        self.ref_area = self.span * (root_chord + tip_chord) / 2
+        self.true_area = length * (root_chord + tip_chord) / 2
+        self.taper_ratio = tip_chord / root_chord
+        self.aspect_ratio = (self.span ** 2) / self.ref_area
+
+    # ----------------------------------------------------------------------------------------------
+
+    def generate_aero_grid(
+        self,
+        n_span_panels,
+        n_chord_panels,
+        apply_torsion=True,
+        torsion_center=0.0,
+        torsion_function="linear",
+        mirror=False,
+        control_surface_deflection=0,
+        chord_discretization="linear",
+        span_discretization="linear",
+    ):
+        """Generates the surface's aerodynamic and structural grids.
+
+            The aerodynamic grid is returned as a dictionary with with three keywords: xx, yy and zz
+            they each contais a 2 dimensional array with the x, y or z coordinates of each of the
+            grid points arranged in space, for example, the upper right element in the xx matrix
+            contains the x coordinate of the leading edge of the wing tip. The easiest way to think
+            about this is: as if you are looking at the surface from above imagine that the a
+            propertie of each point in the grid is written in the surface, than copy this
+            information column by column in a matrix.
+
+            The structure grid is returned as a list of node objects, with the first node being
+            the node at the root of the surface and so on. The difference between a node and a point
+            in space is that the node has an orientation, this is needed for the contruction of
+            the beam finite element.
+
+            The surface is defined as if the root leading edge is located in the origin of the
+            coordinate system and the wing tip is located in the POSITIVE side of the y axis. If the
+            mirror option is set to TRUE the wing tip will be located at the NEGATIVE side of the
+            y axis.
+
+            The structure nodes are oriented so that its x axis points from the root of the surface
+            to the tip and its y axis is parallel to the section chord.
+
+        Args:
+            n_span_panels (int): number of panels to be created in the surface span direction
+            n_chord_panels (int): number of panels to be created in the surface chord direction,
+                                  must be equal or greater than 2 if a control surface is present
+            n_beam_elements (int): number of beam elements to be created in the surface
+            apply_torsion (bool): if True geometrical torsion will be applied to the surface, if
+                                  False only the dihedral will be applied
+            torsion_center (float): position relative to the chord around wich the section will be
+                                    rotated, must be a number between 0 and 1
+            torsion_function (function): a function that receives a span position, between 0 and 1,
+                                         and returns a number between 0 and 1 that will be
+                                         multiplied by the tip rotation to calculate the section
+                                         rotation, if "linear" is suplied a linear function will be
+                                         created and applied.
+            mirror (bool): If false wing tip will be in the positive side of the y axis, if True
+                           wing tip will be in the negative side of the y axis.
+            control_surface_deflection (float): deflection of the control surface, positive in the
+                                                root->tip direction, negative if Mirro is True [º]
+            chord_discretization (string): type of chord discretization, available types are
+                                           linear, cos, sin e cos_sim
+            span_discretization (string): type of span discretization, available types are
+                                          linear, cos, sin e cos_sim
+        """
+        # Corrects input types
+        n_span_panels = int(n_span_panels)
+        n_chord_panels = int(n_chord_panels)
+        apply_torsion = bool(apply_torsion)
+        torsion_center = float(torsion_center)
+        mirror = bool(mirror)
+        control_surface_deflection = float(control_surface_deflection)
+
+        # Checks if the number of chord panels is valid, if it isn't fix it
+        if (self.control_surface_hinge_position is not None) and (n_chord_panels < 2):
+            n_chord_panels = 2
+            print(
+                "WARINING: Invalid number of chord panels, number of chord panels set to 2."
+            )
+
+        # Caculate number of grid points
+        n_chord_points = n_chord_panels + 1
+        n_span_points = n_span_panels + 1
+
+        # Generate discretization of chord, a list of numbers from 0 to 1
+        chord_points, hinge_index = f.discretization(
+            chord_discretization, n_chord_points, self.control_surface_hinge_position
+        )
+
+        # Generate a torsion linear torsion function when not supplied with one
+        if torsion_function == "linear":
+            torsion_function = (
+                lambda span_position: span_position * self.tip_torsion_angle_rad
+            )
+
+        # Find root points by scaling by the root chord
+        root_chord_points_x = chord_points * self.root_chord
+        root_chord_points_y = np.repeat(0, n_chord_points)
+
+        # Find tip points by scaling and translation
+        tip_chord_points_x = chord_points * self.tip_chord + self.length * tan(
+            self.leading_edge_sweep_angle_rad
+        )
+        tip_chord_points_y = np.repeat(self.length, n_chord_points)
+
+        # Find span points by scaling by the surface's length
+        span_points, _ = f.discretization(span_discretization, n_span_points)
+        span_points_y = self.length * span_points
+
+        # Generate root and tip grids for simple calculation of the planar mesh points
+        root_points_xx = np.repeat(
+            root_chord_points_x[np.newaxis].transpose(), n_span_points, axis=1
+        )
+        root_points_yy = np.repeat(
+            root_chord_points_y[np.newaxis].transpose(), n_span_points, axis=1
+        )
+        tip_points_xx = np.repeat(
+            tip_chord_points_x[np.newaxis].transpose(), n_span_points, axis=1
+        )
+        tip_points_yy = np.repeat(
+            tip_chord_points_y[np.newaxis].transpose(), n_span_points, axis=1
+        )
+
+        # Calculate planar mesh points
+        planar_mesh_points_yy = np.repeat(
+            span_points_y[np.newaxis], n_chord_points, axis=0
+        )
+        planar_mesh_points_xx = root_points_xx + (tip_points_xx - root_points_xx) * (
+            planar_mesh_points_yy - root_points_yy
+        ) / (tip_points_yy - root_points_yy)
+        planar_mesh_points_zz = np.zeros((n_chord_points, n_span_points))
+
+        # Apply control surface rotation
+        if self.control_surface_hinge_position is not None:
+
+            # Hinge Vector and point
+            control_surface_hinge_axis = m.normalize(
+                np.array(
+                    [
+                        tip_chord_points_x[hinge_index]
+                        - root_chord_points_x[hinge_index],
+                        self.length,
+                        0,
+                    ]
+                )
+            )
+            # Hinge Point
+            hinge_point = np.array([root_chord_points_x[hinge_index], 0, 0])
+
+            # Slicing control surface grid
+            control_surface_points_xx = planar_mesh_points_xx[(hinge_index + 1) :, :]
+            control_surface_points_yy = planar_mesh_points_yy[(hinge_index + 1) :, :]
+            control_surface_points_zz = planar_mesh_points_zz[(hinge_index + 1) :, :]
+
+            # Converting grid to points list
+            control_surface_points = f.grid_to_vector(
+                control_surface_points_xx,
+                control_surface_points_yy,
+                control_surface_points_zz,
+            )
+
+            # Rotate control surface points around hinge axis
+            rot_control_surface_points = f.rotate_point(
+                control_surface_points,
+                control_surface_hinge_axis,
+                hinge_point,
+                control_surface_deflection,
+                degrees=True,
+            )
+
+            # Converting points list do grid
+            shape = np.shape(control_surface_points_xx)
+            control_surface_points_xx, control_surface_points_yy, control_surface_points_zz = f.vector_to_grid(
+                rot_control_surface_points, shape
+            )
+
+            # Replacing planar points by rotate control surface points
+            planar_mesh_points_xx[(hinge_index + 1) :, :] = control_surface_points_xx
+            planar_mesh_points_yy[(hinge_index + 1) :, :] = control_surface_points_yy
+            planar_mesh_points_zz[(hinge_index + 1) :, :] = control_surface_points_zz
+
+        # Apply wing dihedral
+
+        # Convert grid to list
+        mesh_points = f.grid_to_vector(
+            planar_mesh_points_xx, planar_mesh_points_yy, planar_mesh_points_zz
+        )
+
+        # Calculate rotation characteristics and apply rotation
+        rot_angle = self.dihedral_angle_rad
+        rot_axis = np.array([1, 0, 0])  # X axis
+        rot_center = np.array([0, 0, 0])
+
+        rot_mesh_points = f.rotate_point(mesh_points, rot_axis, rot_center, rot_angle)
+
+        # Convert mesh_points from list to grid
+        shape = (n_chord_points, n_span_points)
+        mesh_points_xx, mesh_points_yy, mesh_points_zz = f.vector_to_grid(
+            rot_mesh_points, shape
+        )
+
+        grid_dict = {"xx": mesh_points_xx, "yy": mesh_points_yy, "zz": mesh_points_zz}
+
+        # Apply torsion to surface grid
+        if apply_torsion:
+
+            grid_dict = f.apply_torsion_to_grid(
+                grid_dict, torsion_center, torsion_function, self
+            )
+
+        # Mirror grid if needed
+        if mirror:
+
+            xx, yy, zz = f.mirror_grid(
+                grid_dict["xx"], grid_dict["yy"], grid_dict["zz"], "XZ"
+            )
+            grid_dict = {"xx": xx, "yy": yy, "zz": zz}
+
+        return grid_dict
+
+    # ----------------------------------------------------------------------------------------------
+
+    def generate_structure_nodes(
+        self,
+        n_beam_elements,
+        apply_torsion=True,
+        torsion_center=0.0,
+        torsion_function="linear",
+        mirror=False,
+    ):
+        """Generates the surface's structural grids.
+
+        The structure grid is returned as a list of node objects, with the first node being
+        the node at the root of the surface and so on. The difference between a node and a point
+        in space is that the node has an orientation, this is needed for the contruction of
+        the beam finite element.
+
+        The surface is defined as if the root leading edge is located in the origin of the
+        coordinate system and the wing tip is located in the POSITIVE side of the y axis. If the
+        mirror option is set to TRUE the wing tip will be located at the NEGATIVE side of the
+        y axis.
+
+        The structure nodes are oriented so that its x axis points from the root of the surface
+        to the tip and its y axis is parallel to the section chord.
+
+        Args:
+            n_beam_elements (int): number of beam elements to be created in the surface
+            apply_torsion (bool): if True geometrical torsion will be applied to the surface, if
+                                    False only the dihedral will be applied
+            torsion_center (float): position relative to the chord around wich the section will be
+                                    rotated, must be a number between 0 and 1
+            torsion_function (function): a function that receives a span position, between 0 and 1,
+                                            and returns a rotation angle in radians
+            mirror (bool): If false wing tip will be in the positive side of the y axis, if True
+                           wing tip will be in the negative side of the y axis.
+        """
+
+        n_nodes = n_beam_elements + 1
+
+        if torsion_function == "linear":
+            torsion_function = (
+                lambda span_position: span_position * self.tip_torsion_angle_rad
+            )
+
+        # Find the positions of the root and tip nodes n the planform
+        root_node_xyz = np.array(
+            [self.root_chord * self.root_section.shear_center, 0, 0]
+        )
+
+        tip_x_position = self.length * tan(self.leading_edge_sweep_angle_rad)
+
+        tip_node_xyz = np.array(
+            [
+                tip_x_position + self.tip_chord * self.tip_section.shear_center,
+                self.length,
+                0,
+            ]
+        )
+
+        if mirror:
+            tip_node_xyz[1] = -tip_node_xyz[1]
+
+        # Calculate rotation due to wing sweep
+        z_rotation = 0.5 * np.pi - np.arctan(
+            (tip_node_xyz - root_node_xyz)[0] / self.length
+        )
+
+        if mirror:
+            z_rotation = np.pi - z_rotation
+
+        root_quaternion = Quaternion(axis=[0, 0, 1], angle=z_rotation)
+        tip_quaternion = Quaternion(axis=[0, 0, 1], angle=z_rotation)
+
+        # Create nodes in the planform
+        root_node = Node(root_node_xyz, root_quaternion)
+        tip_node = Node(tip_node_xyz, tip_quaternion)
+
+        # Apply dihedral angle, rotate around wing root in the x axis
+        rotation_center = np.array([0, 0, 0])
+        x_rotation = self.dihedral_angle_rad
+
+        if mirror:
+            x_rotation = -x_rotation
+
+        rotation_quaternion = Quaternion(axis=[1, 0, 0], angle=x_rotation)
+
+        root_node = root_node.rotate(
+            rotation_quaternion=rotation_quaternion, rotation_center=rotation_center
+        )
+        tip_node = tip_node.rotate(
+            rotation_quaternion=rotation_quaternion, rotation_center=rotation_center
+        )
+
+        # Interpolate root and tip nodes to create grid
+        structure_nodes_props = f.interpolate_nodes(root_node, tip_node, n_nodes)
+
+        structure_nodes = []
+
+        for node_prop in structure_nodes_props:
+            structure_nodes.append(Node(node_prop[0], node_prop[1]))
+
+        # Apply Node Rotation
+        if apply_torsion:
+            structure_nodes_props = f.apply_torsion_to_nodes(
+                structure_nodes, torsion_center, torsion_function, self
+            )
+
+            structure_nodes = []
+
+            for node_prop in structure_nodes_props:
+                structure_nodes.append(Node(node_prop[0], node_prop[1]))
+
+        return structure_nodes
+
+
+# ==================================================================================================
+
+
+class MacroSurface2(object):
+    """Defines a macrosurface composed of surfaces, is used to create wings, horizontal and vertical
+    stabilizers.
+
+    Args:
+        position (float): position of the leading edge of the macrosurface root [m]
+        incidence (float): angle of incidence of the macrosurface [º]
+        surface_list (list[surface]): list of surface objects tha compose the macrosurface, ordered
+                                      from left to right
+        symetry_plane (string): plane of symmetry of the surface, for example XZ for a wing, none if
+                                the surface is not symmetrical
+        torsion_center (float): position in the chord around wich geometric torsion is applyed
+
+    Attributes:
+        position (np.array(3)): x, y, z position of the leading edge of the macrosurface root [m]
+        incidence_degrees (float): angle of incidence of the macrosurface [º]
+        incidence_rad (float): angle of incidence of the macrosurface [rad]
+        surface_list (list[surface]): list of surface objects tha compose the macrosurface, ordered
+                                      from left to right
+        symetry_plane (string): plane of symmetry of the surface, for example XZ for a wing, none if
+                                the surface is not symmetrical
+        torsion_center (float): position in the chord around wich geometric torsion is applyed
+        control_surfaces (list[string]): list with the identifiers of all control surfaces present
+                                         in the macro surface.
+    """
+
+    def __init__(
+        self,
+        position,
+        incidence,
+        surface_list,
+        symmetry_plane=None,
+        torsion_center=0.25,
+    ):
+
+        self.position = position
+        self.incidence_degrees = float(incidence)
+        self.incidence_rad = np.radians(incidence)
+        self.surface_list = surface_list
+        self.symmetry_plane = symmetry_plane
+        self.torsion_center = float(torsion_center)
+
+        control_surfaces = []
+
+        for surface in surface_list:
+            if surface.control_surface_hinge_position is not None:
+                control_surfaces.append(surface.identifier)
+
+        self.control_surfaces = control_surfaces
+
+    # ----------------------------------------------------------------------------------------------
+    def create_aero_grid(
+        self,
+        n_chord_panels,
+        n_span_panels_list,
+        chord_discretization,
+        span_discretization_list,
+        torsion_function_list,
+        control_surface_deflection_dict=dict(),
+    ):
+
+        macro_surface_mesh = []
+
+        if self.symmetry_plane == "XZ" or self.symmetry_plane == "xz":
+
+            middle_index = int(len(self.surface_list) / 2)
+
+        else:
+            middle_index = 0
+
+        right_side = self.surface_list[middle_index:]
+
+        translation_vector_list = [self.position]
+        incidence_angle_list = [self.incidence_rad]
+
+        for i, surface in enumerate(right_side):
+
+            leading_edge_x = surface.length * tan(surface.leading_edge_sweep_angle_rad)
+            leading_edge_y = surface.span
+            leading_edge_z = surface.span * tan(surface.dihedral_angle_rad)
+
+            position = translation_vector_list[i] + np.array(
+                [leading_edge_x, leading_edge_y, leading_edge_z]
+            )
+
+            incidence = incidence_angle_list[i] + surface.tip_torsion_angle_rad
+
+            if i < len(right_side) - 1:
+                translation_vector_list.append(position)
+                incidence_angle_list.append(incidence)
+
+        if self.symmetry_plane == "XZ" or self.symmetry_plane == "xz":
+
+            # Create a mirror image of the translation_vector_list
+            mirror_translation_vector_list = np.flip(translation_vector_list, axis=0)
+
+            for vector in mirror_translation_vector_list:
+                vector[1] = -vector[1]
+
+            translation_vector_list = np.concatenate([
+                mirror_translation_vector_list, translation_vector_list]
+            )
+            incidence_angle_list = np.concatenate([
+                np.flip(incidence_angle_list), incidence_angle_list]
+            )
+
+        for i, surface in enumerate(self.surface_list):
+
+            if i < middle_index:
+                mirror = True
+            else:
+                mirror = False
+
+            if surface.identifier in control_surface_deflection_dict:
+                control_surface_deflection = control_surface_deflection_dict[
+                    surface.identifier
+                ]
+            else:
+                control_surface_deflection = 0
+
+            # Generate planar mesh
+            aero_grid_dict = surface.generate_aero_grid(
+                n_span_panels=n_span_panels_list[i],
+                n_chord_panels=n_chord_panels,
+                apply_torsion=False,
+                mirror=mirror,
+                control_surface_deflection=control_surface_deflection,
+                chord_discretization=chord_discretization,
+                span_discretization=span_discretization_list[i],
+            )
+
+            # Create torsion function
+            torsion_function = (
+                lambda span_position: incidence_angle_list[i]
+                + span_position * surface.tip_torsion_angle_rad
+            )
+
+            # Apply torsion
+            aero_grid_dict = f.apply_torsion_to_grid(
+                aero_grid_dict, self.torsion_center, torsion_function, surface
+            )
+
+            # Translate grid
+            xx, yy, zz = f.translate_grid(
+                aero_grid_dict["xx"],
+                aero_grid_dict["yy"],
+                aero_grid_dict["zz"],
+                translation_vector_list[i],
+                start_point=np.array([0, 0, 0]),
+            )
+            aero_grid_dict = {"xx": xx, "yy": yy, "zz": zz}
+
+            macro_surface_mesh.append(aero_grid_dict)
+
+        # Rotate macro surface around leading edge to apply
+
+        return macro_surface_mesh
+
+    def create_struct_grid(self, n_elements_list):
+
+        if self.symmetry_plane == "XZ" or self.symmetry_plane == "xz":
+
+            middle_index = int(len(self.surface_list) / 2)
+
+            left_side = self.surface_list[:middle_index]
+            left_side_n_elements_list = n_elements_list[:middle_index]
+
+            right_side = self.surface_list[middle_index:]
+            right_side_n_elements_list = n_elements_list[:middle_index]
+
+            # Flip left side so the first surface is the one at the root
+            left_side = np.flip(left_side)
+            left_side_n_elements_list = np.flip(left_side_n_elements_list)
+
+            left_side_nodes = f.connect_surface_nodes(
+                left_side,
+                left_side_n_elements_list,
+                self.position,
+                self.incidence_rad,
+                self.torsion_center,
+                mirror=True,
+            )
+
+            right_side_nodes = f.connect_surface_nodes(
+                right_side,
+                right_side_n_elements_list,
+                self.position,
+                self.incidence_rad,
+                self.torsion_center,
+                mirror=False,
+            )
+
+            left_side_nodes = list(np.flip(left_side_nodes))
+
+            macro_surface_nodes = left_side_nodes + right_side_nodes
+
+        else:
+
+            macro_surface_nodes = f.connect_surface_nodes(
+                self.surface_list,
+                n_elements_list,
+                self.position,
+                self.incidence_rad,
+                self.torsion_center,
+                mirror=False,
+            )
+
+        return macro_surface_nodes

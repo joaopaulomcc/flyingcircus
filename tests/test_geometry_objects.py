@@ -24,11 +24,11 @@ tip_section = geometry.objects.Section(
 length = 5
 leading_edge_sweep_angle_deg = 30
 dihedral_angle_deg = 30
-tip_torsion_angle_deg = 45
+tip_torsion_angle_deg = 30
 control_surface_hinge_position = 0.75
 torsion_center = 0
 
-right_aileron = geometry.objects.Surface(
+right_aileron = geometry.objects.Surface2(
     surface_identifier,
     root_chord,
     root_section,
@@ -40,10 +40,65 @@ right_aileron = geometry.objects.Surface(
     tip_torsion_angle_deg,
     control_surface_hinge_position,
 )
+
+surface_identifier = "right_stub"
+root_chord = 5
+tip_chord = 2
+length = 5
+leading_edge_sweep_angle_deg = 45
+dihedral_angle_deg = 30
+tip_torsion_angle_deg = 30
+control_surface_hinge_position = None
+torsion_center = 0
+
+right_stub = geometry.objects.Surface2(
+    surface_identifier,
+    root_chord,
+    root_section,
+    tip_chord,
+    tip_section,
+    length,
+    leading_edge_sweep_angle_deg,
+    dihedral_angle_deg,
+    tip_torsion_angle_deg,
+    control_surface_hinge_position,
+)
+
+surface_identifier = "left_stub"
+root_chord = 5
+tip_chord = 2
+length = 5
+leading_edge_sweep_angle_deg = 45
+dihedral_angle_deg = 30
+tip_torsion_angle_deg = 30
+control_surface_hinge_position = None
+torsion_center = 0
+
+left_stub = geometry.objects.Surface2(
+    surface_identifier,
+    root_chord,
+    root_section,
+    tip_chord,
+    tip_section,
+    length,
+    leading_edge_sweep_angle_deg,
+    dihedral_angle_deg,
+    tip_torsion_angle_deg,
+    control_surface_hinge_position,
+)
+
 
 surface_identifier = "left_aileron"
+root_chord = 2
+tip_chord = 2
+length = 5
+leading_edge_sweep_angle_deg = 30
+dihedral_angle_deg = 30
+tip_torsion_angle_deg = 30
+control_surface_hinge_position = 0.75
+torsion_center = 0
 
-left_aileron = geometry.objects.Surface(
+left_aileron = geometry.objects.Surface2(
     surface_identifier,
     root_chord,
     root_section,
@@ -56,34 +111,32 @@ left_aileron = geometry.objects.Surface(
     control_surface_hinge_position,
 )
 
-surface_list = [left_aileron, left_aileron, right_aileron, right_aileron]
+surface_list = [left_aileron, left_aileron, left_stub, right_stub, right_aileron, right_aileron]
 #surface_list = [left_aileron, right_aileron]
-control_surface_deflection_dict = {"left_aileron": 0, "right_aileron": 0}
+control_surface_deflection_dict = {"left_aileron": -45, "right_aileron": 45}
 
-position = np.array([0, 0, 0])
-incidence = 0
+position = np.array([10, 0, 3])
+incidence = 45
 
-wing = geometry.objects.MacroSurface(
+wing = geometry.objects.MacroSurface2(
     position,
     incidence,
     surface_list,
     symmetry_plane="XZ",
-    torsion_center=torsion_center,
+    torsion_center=0.5,
 )
 
-n_span_panels_list = [20, 20, 20, 20]
+n_span_panels_list = [20, 20, 20, 20, 20, 20]
 n_chord_panels = 10
-control_surface_deflection = 45
-chord_discretization = "cos_sim"
-span_discretization = "cos_sim"
 
 chord_discretization = "linear"
-span_discretization_list = ["linear", "linear"]
-torsion_function_list = ["linear", "linear"]
+#span_discretization_list = ["linear", "linear"]
+#torsion_function_list = ["linear", "linear"]
 
+span_discretization_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
+torsion_function_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
 
-
-wing_mesh = wing.create_mesh(
+wing_mesh = wing.create_aero_grid(
     n_chord_panels,
     n_span_panels_list,
     chord_discretization,
@@ -91,6 +144,7 @@ wing_mesh = wing.create_mesh(
     torsion_function_list,
     control_surface_deflection_dict,
 )
+
 
 #n_elements_list = [n_span_panels_list[0], n_span_panels_list[0], n_span_panels_list[0], n_span_panels_list[0]]
 n_elements_list = [2, 2, 2, 2]
@@ -103,7 +157,7 @@ n_elements_list = [2, 2, 2, 2]
 #)
 
 ax, fig = visualization.plot_3D.plot_mesh(wing_mesh)
-node_list = wing.create_struct_mesh(n_elements_list)
+node_list = wing.create_struct_grid(n_elements_list)
 
 for surface in node_list:
     for node in surface:

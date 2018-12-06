@@ -25,24 +25,32 @@ def distance_point_to_line(line_point_1, line_point_2, point):
 # --------------------------------------------------------------------------------------------------
 
 
-def discretization(discretization_type, n_points):
+def discretization(discretization_type, n_points, control_surface_hinge_position=None):
 
     if discretization_type == "linear":
-        points = np.linspace(0, 1, n_points)
+        chord_points = np.linspace(0, 1, n_points)
 
     elif discretization_type == "cos":
         angles = np.linspace(np.pi, np.pi / 2, n_points)
-        points = cos(angles) + 1
+        chord_points = cos(angles) + 1
 
     elif discretization_type == "sin":
         angles = np.linspace(0, np.pi / 2, n_points)
-        points = sin(angles)
+        chord_points = sin(angles)
 
     elif discretization_type == "cos_sim":
         angles = np.linspace(np.pi, 0, n_points)
-        points = cos(angles) / 2 + 0.5
+        chord_points = cos(angles) / 2 + 0.5
 
-    return points
+    # Change discretization in order to put panel division at control surface hinge line
+    if control_surface_hinge_position is not None:
+        chord_points, hinge_index = replace_closest(
+            chord_points, control_surface_hinge_position
+        )
+    else:
+        hinge_index = None
+
+    return chord_points, hinge_index
 
 
 # --------------------------------------------------------------------------------------------------
@@ -285,7 +293,6 @@ def connect_surface_grid(
 
             root_vector = root_trai_edge - root_lead_edge
 
-
             # use cross vector to find rot axis
             rot_axis = m.cross(root_vector, tip_vector)
 
@@ -334,7 +341,14 @@ def connect_surface_grid(
 # --------------------------------------------------------------------------------------------------
 
 
-def connect_surface_nodes(surface_list, n_elements_list, position, incidence_angle, torsion_center, mirror=False):
+def connect_surface_nodes(
+    surface_list,
+    n_elements_list,
+    position,
+    incidence_angle,
+    torsion_center,
+    mirror=False,
+):
 
     connected_nodes = []
 
@@ -344,7 +358,9 @@ def connect_surface_nodes(surface_list, n_elements_list, position, incidence_ang
         n_nodes = n_elements + 1
 
         # Generates surface mesh, with torsion and dihedral
-        surface_nodes = surface.generate_structure_nodes(n_nodes, torsion_center, mirror)
+        surface_nodes = surface.generate_structure_nodes(
+            n_nodes, torsion_center, mirror
+        )
 
         # When the surface is not at the root
         if i != 0:
@@ -395,7 +411,9 @@ def connect_surface_nodes(surface_list, n_elements_list, position, incidence_ang
 
     return connected_nodes
 
+
 # --------------------------------------------------------------------------------------------------
+
 
 def velocity_field_function_generator(
     velocity_vector, rotation_vector, attitude_vector, center
@@ -475,9 +493,11 @@ def interpolate_nodes(node_1, node_2, n_nodes):
 
     node_list = []
 
-    for i, quaternion in enumerate(Quaternion.intermediates(
-        node_1.quaternion, node_2.quaternion, (n_nodes - 1), include_endpoints=True
-    )):
+    for i, quaternion in enumerate(
+        Quaternion.intermediates(
+            node_1.quaternion, node_2.quaternion, (n_nodes - 1), include_endpoints=True
+        )
+    ):
 
         vector = node_2.xyz - node_1.xyz
 
@@ -488,20 +508,20 @@ def interpolate_nodes(node_1, node_2, n_nodes):
 
     return node_list
 
+
 # --------------------------------------------------------------------------------------------------
 
 
 def change_coord_sys(vector, X, Y, Z):
 
-    base_matrix = np.array([[X[0], Y[0], Z[0]],
-                            [X[1], Y[1], Z[1]],
-                            [X[2], Y[2], Z[2]]])
+    base_matrix = np.array([[X[0], Y[0], Z[0]], [X[1], Y[1], Z[1]], [X[2], Y[2], Z[2]]])
 
     transformation_matrix = np.linalg.inv(base_matrix)
 
     new_vector = transformation_matrix @ vector
 
     return new_vector
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -510,14 +530,144 @@ def decompose_rotation(rotation_axis, rotation_angle, axis_1, axis_2, axis_3):
 
     transformed_rotation_axis = change_coord_sys(rotation_axis, axis_1, axis_2, axis_3)
 
-    rotation_quaternion = Quaternion(axis=transformed_rotation_axis, angle=rotation_angle)
+    rotation_quaternion = Quaternion(
+        axis=transformed_rotation_axis, angle=rotation_angle
+    )
 
     yaw_pitch_roll = rotation_quaternion.yaw_pitch_roll
 
     return yaw_pitch_roll
 
+
 # --------------------------------------------------------------------------------------------------
 
+
+def apply_torsion_to_grid(grid_dict, torsion_center, torsion_function, surface):
+
+    xx = grid_dict["xx"]
+    yy = grid_dict["yy"]
+    zz = grid_dict["zz"]
+
+    n_span_points = len(xx[0, :])
+    n_chord_points = len(xx[:, 0])
+
+    grid_points_xx = np.zeros(np.shape(xx))
+    grid_points_yy = np.zeros(np.shape(yy))
+    grid_points_zz = np.zeros(np.shape(zz))
+
+    for i in range(n_span_points):
+        # Extract section points from grid
+        section_points_x = xx[:, i]
+        section_points_y = yy[:, i]
+        section_points_z = zz[:, i]
+
+        # Convert points from grid to list
+        section_points = grid_to_vector(
+            section_points_x, section_points_y, section_points_z
+        )
+
+        # Calculate rotation characteristics and apply rotation
+        span_position = abs(section_points_y[0]) / (
+            surface.length * np.cos(surface.dihedral_angle_rad)
+        )
+        rot_angle = torsion_function(span_position)
+        rot_axis = np.array([0, 1, 0])  # Y axis
+
+        # Calculate Rotation center
+        section_point_1 = section_points[:, 0]
+        section_point_2 = section_points[:, 1]
+        local_chord = surface.root_chord + span_position * (
+            surface.tip_chord - surface.root_chord
+        )
+
+        section_vector = m.normalize(section_point_2 - section_point_1)
+        rot_center = section_point_1 + torsion_center * section_vector * local_chord
+
+        rot_section_points = rotate_point(
+            section_points, rot_axis, rot_center, rot_angle
+        )
+
+        # Convert section points from list to grid
+        shape = (n_chord_points, 1)
+        rot_section_points_x, rot_section_points_y, rot_section_points_z = vector_to_grid(
+            rot_section_points, shape
+        )
+
+        # Paste rotated section into grid
+        grid_points_xx[:, i] = rot_section_points_x[:, 0]
+        grid_points_yy[:, i] = rot_section_points_y[:, 0]
+        grid_points_zz[:, i] = rot_section_points_z[:, 0]
+
+    return {"xx": grid_points_xx, "yy": grid_points_yy, "zz": grid_points_zz}
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def apply_torsion_to_nodes(nodes_list, torsion_center, torsion_function, surface):
+
+    n_span_points = len(nodes_list)
+
+    rot_nodes_prop_list = []
+
+    for i, node in enumerate(nodes_list):
+
+        # Calculate wing properties at node location
+        span_position = node.xyz[1] / (
+            surface.length * np.cos(surface.dihedral_angle_rad)
+        )
+
+        local_chord = surface.root_chord + span_position * (
+            surface.tip_chord - surface.root_chord
+        )
+
+        # Calculate position of the torsion center and rotation properties
+        leading_edge_x = (
+            span_position * surface.span * tan(surface.leading_edge_sweep_angle_rad)
+        )
+        leading_edge_y = span_position * surface.span
+        leading_edge_z = span_position * surface.span * tan(surface.dihedral_angle_rad)
+
+        rot_angle = torsion_function(span_position)
+        rot_axis = np.array([0, 1, 0])  # Y axis
+        rot_center = np.array(
+            [
+                leading_edge_x + local_chord * torsion_center,
+                leading_edge_y,
+                leading_edge_z,
+            ]
+        )
+        rot_quaternion = Quaternion(axis=rot_axis, angle=rot_angle)
+
+        # Rotate Node around torsion center
+
+        node_location = node.rotate(
+                rotation_quaternion=rot_quaternion, rotation_center=rot_center
+            )
+
+        yaw_pitch_row = decompose_rotation(
+                rot_axis,
+                rot_angle,
+                node.x_axis,
+                node.y_axis,
+                node.z_axis,
+            )
+
+        rot_quaternion = Quaternion(axis=node.x_axis, angle=yaw_pitch_row[2])
+        rot_center = node.xyz
+
+        node_rotation = node.rotate(
+                rotation_quaternion=rot_quaternion, rotation_center=rot_center
+            )
+
+        rot_node_prop = [node_location.xyz, node_rotation.quaternion]
+
+        rot_nodes_prop_list.append(rot_node_prop)
+
+    return rot_nodes_prop_list
+
+
+# --------------------------------------------------------------------------------------------------
 """
 def mirror_node_xz(node):
 
