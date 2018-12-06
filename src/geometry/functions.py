@@ -613,7 +613,7 @@ def apply_torsion_to_nodes(nodes_list, torsion_center, torsion_function, surface
     for i, node in enumerate(nodes_list):
 
         # Calculate wing properties at node location
-        span_position = node.xyz[1] / (
+        span_position = abs(node.xyz[1]) / (
             surface.length * np.cos(surface.dihedral_angle_rad)
         )
 
@@ -623,7 +623,7 @@ def apply_torsion_to_nodes(nodes_list, torsion_center, torsion_function, surface
 
         # Calculate position of the torsion center and rotation properties
         leading_edge_x = (
-            span_position * surface.span * tan(surface.leading_edge_sweep_angle_rad)
+            span_position * surface.length * tan(surface.leading_edge_sweep_angle_rad)
         )
         leading_edge_y = span_position * surface.span
         leading_edge_z = span_position * surface.span * tan(surface.dihedral_angle_rad)

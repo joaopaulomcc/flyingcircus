@@ -1240,13 +1240,15 @@ class MacroSurface2(object):
         self,
         n_chord_panels,
         n_span_panels_list,
+        n_beam_elements_list,
         chord_discretization,
         span_discretization_list,
         torsion_function_list,
         control_surface_deflection_dict=dict(),
     ):
 
-        macro_surface_mesh = []
+        macro_surface_aero_grid = []
+        macro_surface_nodes_list = []
 
         if self.symmetry_plane == "XZ" or self.symmetry_plane == "xz":
 
@@ -1282,13 +1284,13 @@ class MacroSurface2(object):
             mirror_translation_vector_list = np.flip(translation_vector_list, axis=0)
 
             for vector in mirror_translation_vector_list:
-                vector[1] = -vector[1]
+                vector[1] = -abs(vector[1] - self.position[1]) + self.position[1]
 
-            translation_vector_list = np.concatenate([
-                mirror_translation_vector_list, translation_vector_list]
+            translation_vector_list = np.concatenate(
+                [mirror_translation_vector_list, translation_vector_list]
             )
-            incidence_angle_list = np.concatenate([
-                np.flip(incidence_angle_list), incidence_angle_list]
+            incidence_angle_list = np.concatenate(
+                [np.flip(incidence_angle_list), incidence_angle_list]
             )
 
         for i, surface in enumerate(self.surface_list):
@@ -1316,16 +1318,32 @@ class MacroSurface2(object):
                 span_discretization=span_discretization_list[i],
             )
 
+            # Generate planar nodes
+            surface_nodes_list = surface.generate_structure_nodes(
+                n_beam_elements=n_beam_elements_list[i],
+                apply_torsion=False,
+                mirror=mirror,
+            )
+
             # Create torsion function
             torsion_function = (
                 lambda span_position: incidence_angle_list[i]
                 + span_position * surface.tip_torsion_angle_rad
             )
 
-            # Apply torsion
+            # Apply torsion to aero grid and nodes
             aero_grid_dict = f.apply_torsion_to_grid(
                 aero_grid_dict, self.torsion_center, torsion_function, surface
             )
+
+            surface_nodes_list_prop = f.apply_torsion_to_nodes(
+                surface_nodes_list, self.torsion_center, torsion_function, surface
+            )
+
+            surface_nodes_list = []
+
+            for node_prop in surface_nodes_list_prop:
+                surface_nodes_list.append(Node(node_prop[0], node_prop[1]))
 
             # Translate grid
             xx, yy, zz = f.translate_grid(
@@ -1337,13 +1355,21 @@ class MacroSurface2(object):
             )
             aero_grid_dict = {"xx": xx, "yy": yy, "zz": zz}
 
-            macro_surface_mesh.append(aero_grid_dict)
+            for j, node in enumerate(surface_nodes_list):
+                surface_nodes_list[j] = node.translate(translation_vector_list[i])
+
+            macro_surface_aero_grid.append(aero_grid_dict)
+            macro_surface_nodes_list.append(surface_nodes_list)
 
         # Rotate macro surface around leading edge to apply
 
-        return macro_surface_mesh
+        return macro_surface_aero_grid, macro_surface_nodes_list
+
+    # ----------------------------------------------------------------------------------------------
 
     def create_struct_grid(self, n_elements_list):
+
+        apply_torsion_to_nodes(nodes_list, torsion_center, torsion_function, surface)
 
         if self.symmetry_plane == "XZ" or self.symmetry_plane == "xz":
 
