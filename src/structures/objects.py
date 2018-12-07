@@ -2,6 +2,8 @@ import numpy as np
 import scipy as sc
 
 from numpy import sin, cos, tan, pi
+from pyquaternion import Quaternion
+
 from . import functions as f
 from .. import mathematics as m
 from .. import geometry as geo
@@ -60,10 +62,10 @@ class Material:
         self.ultimate_shear_stress = ultimate_shear_stress
 
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 
 
-class Property(object):
+class ElementProperty(object):
     """ Property stores the properties of a beam finite element
 
     Args:
@@ -92,8 +94,36 @@ class Property(object):
         self.E = material.elasticity_modulus
         self.G = material.rigidity_modulus
 
+# ==================================================================================================
 
-# --------------------------------------------------------------------------------------------------
+
+class RigidConnection(object):
+    """ Property stores the properties of a rigid connection element
+
+    Attributes:
+        section (object): A Section object from the Geometry module.
+        material (object): A Material object
+        A (float): Area of the section
+        J (float): Polar moment of inertia of the section
+        Iyy (float): Moment of inertia of the section in the Y axis
+        Izz (float): Moment of inertia of the section in the Z axis
+        E (float): Elastic modulus of the material
+        G (float): Shear modulus of the material
+    """
+
+    def __init__(self, section, material):
+
+        self.section = "singularity"
+        self.material = "adamantium"
+        self.A = 1
+        self.J = 1
+        self.Iyy = 1
+        self.Izz = 1
+        self.E = 1e100
+        self.G = 1e100
+
+
+# ==================================================================================================
 
 
 class BeamElement(object):
@@ -194,10 +224,14 @@ class BeamElement(object):
             for j, global_axis in [x_global, y_global, z_global]:
                 r[i][j] = geo.functions.cos_between(local_axis, global_axis)
 
-        rotation_matrix = np.block([[r, zero, zero, zero],
-                                    [zero, r, zero, zero],
-                                    [zero, zero, r, zero],
-                                    [zero, zero, zero, r]])
+        rotation_matrix = np.block(
+            [
+                [r, zero, zero, zero],
+                [zero, r, zero, zero],
+                [zero, zero, r, zero],
+                [zero, zero, zero, r],
+            ]
+        )
 
         return rotation_matrix
 
@@ -219,9 +253,7 @@ class BeamElement(object):
         L = m.norm(N)
 
         # Calculate Local Stiffness Matrix
-        K_local = f.beam_3D_stiff(
-            self.E, self.A, L, self.G, self.J, self.Iy, self.Iz
-        )
+        K_local = f.beam_3D_stiff(self.E, self.A, L, self.G, self.J, self.Iy, self.Iz)
 
         return K_local
 
@@ -245,7 +277,7 @@ class BeamElement(object):
         return K_global
 
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 
 
 class Structure:
@@ -255,46 +287,12 @@ class Structure:
         self.beams = beams
 
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 
 
-class Beam:
-    def __init__(
-        self,
-        structure_points,
-        point_A_index,
-        point_B_index,
-        section,
-        material,
-        n_elements,
-    ):
-
-        self.structure_points = structure_points
-        self.point_A_index = point_A_index
-        self.point_B_index = point_B_index
-        self.point_A = structure_points[point_A_index]
-        self.point_B = structure_points[point_B_index]
-        self.section = section
-        self.material = material
-        self.n_elements = n_elements
-        self.vector = self.point_B - self.point_A
-        self.L = norm(self.vector)
-
-    def mesh(self, n_elements):
-
-        delta = self.vector / n_elements
-
-        mesh_points = []
-
-        for i in range(n_elements + 1):
-
-            mesh_points.append(self.point_A + i * delta)
-
-        mesh_points = np.array(mesh_points)
-        return mesh_points
 
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 
 
 class Section:
@@ -307,7 +305,7 @@ class Section:
         self.polar_moment = polar_moment
 
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 
 
 class Load:
@@ -317,7 +315,7 @@ class Load:
         self.components = components
 
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 
 
 class Constraint:
@@ -325,3 +323,36 @@ class Constraint:
 
         self.application_point_index = application_point_index
         self.dof_constraints = dof_constraints
+
+
+# ==================================================================================================
+
+
+class Connection(object):
+    """Describes a connection between two components, in other words, set their connecting node
+    as a single node in the global matrix.
+
+    Args:
+        component1 (object): an object able to generate nodes
+        component1_node (string): "ROOT" or "TIP"
+        component2 (object): an object able to generate nodes
+        component2_node (string): "ROOT" or "TIP"
+
+    Attibutes:
+        descriptor (list(string)): a list with two strings describing the conection, the strings are
+                                   composed by concatenating the component identifier with the node
+                                   string with an hifen between
+    """
+
+    def __init__(self, component1, component1_node, component2, component2_node):
+
+        self.component1 = component1
+        self.component1_node = component1_node
+        self.component2 = component2
+        self.component2_node = component2_node
+
+        self.descriptor = [
+            component1.identifier + "-" + component1_node,
+            component2.identifier + "-" + component2_node,
+        ]
+

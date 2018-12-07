@@ -250,7 +250,7 @@ def plot_aircraft(aircraft):
     ax.set_title(aircraft.name)
 
     # Define color map to be used. With this is possible to plot each component in a different color
-    n_colors = len(aircraft.components)
+    n_colors = len(aircraft.macro_surfaces)
     color_map = plt.get_cmap("tab20c")
     color_norm = matplotlib.colors.Normalize(vmin=0, vmax=n_colors - 1)
     scalar_map = matplotlib.cm.ScalarMappable(norm=color_norm, cmap=color_map)
@@ -284,30 +284,44 @@ def plot_aircraft(aircraft):
         )
 
     # Plot Aircraf Components
-    for i, component in enumerate(aircraft.components):
+    for i, macro_surface in enumerate(aircraft.macro_surfaces):
 
         # Generate component mesh
         n_chord_panels = 5
-        n_span_panels_list = [3 for i in range(len(component.surface_list))]
+        n_span_panels_list = [3 for i in range(len(macro_surface.surface_list))]
+        n_beam_elements_list = [3 for i in range(len(macro_surface.surface_list))]
         chord_discretization = "linear"
         span_discretization_list = [
-            "linear" for i in range(len(component.surface_list))
+            "linear" for i in range(len(macro_surface.surface_list))
         ]
-        torsion_function_list = ["linear" for i in range(len(component.surface_list))]
+        torsion_function_list = ["linear" for i in range(len(macro_surface.surface_list))]
 
-        component_mesh = component.create_mesh(
+        macro_surface_aero_grid, macro_surface_nodes_list = macro_surface.create_grids(
             n_chord_panels,
             n_span_panels_list,
+            n_beam_elements_list,
             chord_discretization,
             span_discretization_list,
             torsion_function_list,
         )
 
-        for mesh in component_mesh:
+        for mesh in macro_surface_aero_grid:
             xx = mesh["xx"]
             yy = mesh["yy"]
             zz = mesh["zz"]
-            ax.plot_surface(xx, yy, zz, color=scalar_map.to_rgba(i), shade=False)
+            ax.plot_surface(xx, yy, zz, color=scalar_map.to_rgba(i), shade=False, alpha=0.85)
+
+        for surface_node_list in macro_surface_nodes_list:
+            x = []
+            y = []
+            z = []
+
+            for node in surface_node_list:
+                x.append(node.xyz[0])
+                y.append(node.xyz[1])
+                z.append(node.xyz[2])
+
+            ax.plot(x, y, z, c="black")
 
     # Fix axes scale
     set_axes_equal(ax)

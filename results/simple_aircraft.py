@@ -6,6 +6,7 @@ from src import geometry as geo
 from src import visualization as vis
 from src import aerodynamics as aero
 from src import loads
+from src import structures as struct
 
 # ==================================================================================================
 # ==================================================================================================
@@ -13,11 +14,29 @@ from src import loads
 
 # WING
 
+airfoil = "NACA 0012"
+
+material = struct.objects.Material(
+    name="Aluminum 7075-T6",
+    density=2810,
+    elasticity_modulus=7.170547e10,
+    rigidity_modulus=2.69e10,
+    poisson_ratio=0.33,
+    yield_tensile_stress=5.033172e08,
+    ultimate_tensile_stress=5.722648e08,
+    yield_shear_stress=3.309484e08,
+    ultimate_shear_stress=0,
+)
+
+section = geo.objects.Section(
+    airfoil=airfoil, material=material, area=1, Iyy=1, Izz=1, J=1, shear_center=0.5
+)
+
 # Stub
 root_chord = 2
-root_section = "stub_root_section"
+root_section = section
 tip_chord = 1.5
-tip_section = "stub_tip_section"
+tip_section = section
 length = 2
 leading_edge_sweep_angle_deg = 30
 dihedral_angle_deg = 5
@@ -56,9 +75,9 @@ left_stub = geo.objects.Surface(
 # Aileron
 
 root_chord = 1.5
-root_section = "aileron_root_section"
+root_section = section
 tip_chord = 1
-tip_section = "aileron_tip_section"
+tip_section = section
 length = 2
 leading_edge_sweep_angle_deg = 30
 dihedral_angle_deg = 5
@@ -97,9 +116,9 @@ left_aileron = geo.objects.Surface(
 # Winglet
 
 root_chord = 1
-root_section = "aileron_root_section"
+root_section = section
 tip_chord = 0.3
-tip_section = "aileron_tip_section"
+tip_section = section
 length = 1
 leading_edge_sweep_angle_deg = 45
 dihedral_angle_deg = 90
@@ -156,9 +175,9 @@ wing = geo.objects.MacroSurface(
 # ==================================================================================================
 # Horizontal Tail
 root_chord = 1
-root_section = "elevator_root_section"
+root_section = section
 tip_chord = 0.6
-tip_section = "elevator_tip_section"
+tip_section = section
 length = 2
 leading_edge_sweep_angle_deg = 25
 dihedral_angle_deg = 0
@@ -208,9 +227,9 @@ h_tail = geo.objects.MacroSurface(
 # ==================================================================================================
 # Vertical Tail
 root_chord = 1
-root_section = "right_aileron_root_section"
+root_section = section
 tip_chord = 0.5
-tip_section = "right_aileron_tip_section"
+tip_section = section
 length = 1.5
 leading_edge_sweep_angle_deg = 45
 dihedral_angle_deg = 90
@@ -294,13 +313,17 @@ aircraft_inertia = geo.objects.MaterialPoint(
 
 name = "Simple Aircraft"
 
-components = [wing, h_tail, v_tail]
+surfaces = [wing, h_tail, v_tail]
+
+beams = []
 
 engines = [aircraft_engine_1, aircraft_engine_2]
 
 inertial_properties = aircraft_inertia
 
-simple_aircraft = geo.objects.Aircraft(name, components, engines, inertial_properties)
+simple_aircraft = geo.objects.Aircraft(
+    name, surfaces, beams, engines, inertial_properties
+)
 
 
 vis.plot_3D.plot_aircraft(simple_aircraft)
@@ -315,16 +338,32 @@ n_span_panels = 10
 
 # Wing
 wing_n_chord_panels = n_chord_panels
-wing_n_span_panels_list = [n_span_panels, n_span_panels, n_span_panels, n_span_panels]
+wing_n_span_panels_list = [
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+]
+wing_n_beam_elements_list = [
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+    n_span_panels,
+]
 wing_chord_discretization = "linear"
-wing_span_discretization_list = ["linear", "linear", "linear", "linear"]
-wing_torsion_function_list = ["linear", "linear", "linear", "linear"]
+wing_span_discretization_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
+wing_torsion_function_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
 
 wing_control_surface_deflection_dict = {"left_aileron": 10, "right_aileron": 0}
 
-wing_mesh = wing.create_mesh(
+wing_aero_grid, wing_struct_grid = wing.create_grids(
     wing_n_chord_panels,
     wing_n_span_panels_list,
+    wing_n_beam_elements_list,
     wing_chord_discretization,
     wing_span_discretization_list,
     wing_torsion_function_list,
@@ -335,15 +374,17 @@ wing_mesh = wing.create_mesh(
 # Horizontal Tail
 h_tail_n_chord_panels = n_chord_panels
 h_tail_n_span_panels_list = [n_span_panels, n_span_panels]
+h_tail_n_beam_elements_list = [n_span_panels, n_span_panels]
 h_tail_chord_discretization = "linear"
 h_tail_span_discretization_list = ["linear", "linear"]
 h_tail_torsion_function_list = ["linear", "linear"]
 
 h_tail_control_surface_deflection_dict = {"left_elevator": 9.65, "right_elevator": 9.65}
 
-h_tail_mesh = h_tail.create_mesh(
+h_tail_aero_grid, h_tail_struct_grid = h_tail.create_grids(
     h_tail_n_chord_panels,
     h_tail_n_span_panels_list,
+    h_tail_n_beam_elements_list,
     h_tail_chord_discretization,
     h_tail_span_discretization_list,
     h_tail_torsion_function_list,
@@ -354,15 +395,17 @@ h_tail_mesh = h_tail.create_mesh(
 # Vertical Tail
 v_tail_n_chord_panels = n_chord_panels
 v_tail_n_span_panels_list = [n_span_panels]
+v_tail_n_beam_elements_list = [n_span_panels]
 v_tail_chord_discretization = "linear"
 v_tail_span_discretization_list = ["linear"]
 v_tail_torsion_function_list = ["linear"]
 
 v_tail_control_surface_deflection_dict = {"rudder": 0}
 
-v_tail_mesh = v_tail.create_mesh(
+v_tail_aero_grid, v_tail_struct_grid = v_tail.create_grids(
     v_tail_n_chord_panels,
     v_tail_n_span_panels_list,
+    v_tail_n_beam_elements_list,
     v_tail_chord_discretization,
     v_tail_span_discretization_list,
     v_tail_torsion_function_list,
@@ -371,7 +414,7 @@ v_tail_mesh = v_tail.create_mesh(
 
 # ==================================================================================================
 # Aircraft Mesh
-simple_aircraft_aero_mesh = [wing_mesh, h_tail_mesh, v_tail_mesh]
+simple_aircraft_aero_mesh = [wing_aero_grid, h_tail_aero_grid, v_tail_aero_grid]
 # simple_aircraft_aero_mesh = [wing_mesh, h_tail_mesh]
 
 # vis.plot_3D.plot_mesh(simple_aircraft_aero_mesh)
@@ -445,6 +488,7 @@ input("Press any key to quit...")
 """
 
 plt.show()
+
 
 def generate_structure(component):
     pass

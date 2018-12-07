@@ -29,7 +29,7 @@ dihedral_angle_deg = 20
 tip_torsion_angle_deg = 30
 control_surface_hinge_position = 0.75
 
-right_aileron = geometry.objects.Surface2(
+right_aileron = geometry.objects.Surface(
     surface_identifier,
     root_chord,
     root_section,
@@ -51,7 +51,7 @@ dihedral_angle_deg = 20
 tip_torsion_angle_deg = 30
 control_surface_hinge_position = 0.75
 
-left_aileron = geometry.objects.Surface2(
+left_aileron = geometry.objects.Surface(
     surface_identifier,
     root_chord,
     root_section,
@@ -73,7 +73,7 @@ dihedral_angle_deg = 30
 tip_torsion_angle_deg = 30
 control_surface_hinge_position = None
 
-right_stub = geometry.objects.Surface2(
+right_stub = geometry.objects.Surface(
     surface_identifier,
     root_chord,
     root_section,
@@ -95,7 +95,7 @@ dihedral_angle_deg = 30
 tip_torsion_angle_deg = 30
 control_surface_hinge_position = None
 
-left_stub = geometry.objects.Surface2(
+left_stub = geometry.objects.Surface(
     surface_identifier,
     root_chord,
     root_section,
@@ -122,7 +122,7 @@ control_surface_deflection_dict = {"left_aileron": 0, "right_aileron": 0}
 position = np.array([10, 5, 2])
 incidence = 0
 
-wing = geometry.objects.MacroSurface2(
+wing = geometry.objects.MacroSurface(
     position, incidence, surface_list, symmetry_plane="XZ", torsion_center=0.5
 )
 
@@ -144,7 +144,7 @@ n_beam_elements_list = [
     n_beam_elements,
     n_beam_elements,
 ]
-wing_aero_grid, wing_nodes_list = mesh = wing.create_aero_grid(
+wing_aero_grid, wing_nodes_list = mesh = wing.create_grids(
     n_chord_panels,
     n_span_panels_list,
     n_beam_elements_list,
