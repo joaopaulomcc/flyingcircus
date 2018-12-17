@@ -1,7 +1,20 @@
+"""
+"""
+
 import numpy as np
+import scipy as sc
+
+from numpy import sin, cos, tan, pi
+from pyquaternion import Quaternion
+
+from . import functions as f
+from .. import mathematics as m
 
 
-def beam_3D_stiff(E, A, L, G, J, Iyy, Izz):
+# --------------------------------------------------------------------------------------------------
+
+
+def euler_beam_stiff(E, A, L, G, J, Iyy, Izz):
     """ Calculates the local stiffness matrix of a beam finite element.
 
     Args:

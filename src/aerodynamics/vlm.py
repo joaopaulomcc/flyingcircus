@@ -130,7 +130,7 @@ def aero_loads(
     components_panel_grid = []
     components_panel_vector = []
 
-    print("Generating Panel Grid")
+    #print("Generating Panel Grid")
     for component_mesh in aircraft_aero_mesh:
 
         # Generates components panel vector
@@ -151,18 +151,18 @@ def aero_loads(
         components_panel_vector.append(component_panel_vector)
 
     # Calculate Influence Coefficient Matrix
-    print("Calculating Influence Coefficient Matrix")
+    #print("Calculating Influence Coefficient Matrix")
     if influence_coef_matrix is None:
         influence_coef_matrix = calc_influence_matrix(aircraft_panel_vector)
 
     # Calculate right hand side vector
-    print("Calculating Right Hand Side Vector")
+    #print("Calculating Right Hand Side Vector")
     right_hand_side_vector = calc_rhs_vector(
         aircraft_panel_vector, velocity_field_function
     )
 
     # Calculate vortex circulation intensity
-    print("Solving system to find gamma")
+    #print("Solving system to find gamma")
     gamma_vector = gamma_solver(influence_coef_matrix, right_hand_side_vector)
 
     if gamma_vector is None:
@@ -186,7 +186,7 @@ def aero_loads(
 
     force_vector = np.empty(len(gamma_vector), dtype="object")
 
-    print("Calculating Aerodynamic Forces")
+    #print("Calculating Aerodynamic Forces")
     for i, panel_info in enumerate(zip(gamma_vector, aircraft_panel_vector)):
 
         panel_gamma = panel_info[0]

@@ -4,6 +4,7 @@ from context import src
 from src import geometry
 from src import visualization as vis
 from src import aerodynamics as aero
+from src import structures as struct
 
 # ==================================================================================================
 # ==================================================================================================
@@ -11,11 +12,29 @@ from src import aerodynamics as aero
 
 # WING
 
+airfoil = "NACA 0012"
+
+material = struct.objects.Material(
+    name="Aluminum 7075-T6",
+    density=2810,
+    elasticity_modulus=7.170547e10,
+    rigidity_modulus=2.69e10,
+    poisson_ratio=0.33,
+    yield_tensile_stress=5.033172e08,
+    ultimate_tensile_stress=5.722648e08,
+    yield_shear_stress=3.309484e08,
+    ultimate_shear_stress=0,
+)
+
+section = geometry.objects.Section(
+    airfoil=airfoil, material=material, area=1, Iyy=1, Izz=1, J=1, shear_center=0.5
+)
+
 # Stub
 root_chord = 2.24
-root_section = "stub_root_section"
+root_section = section
 tip_chord = 2.24
-tip_section = "stub_tip_section"
+tip_section = section
 length = 0.615
 leading_edge_sweep_angle_deg = 0
 dihedral_angle_deg = 0
@@ -53,9 +72,9 @@ left_stub = geometry.objects.Surface(
 # --------------------------------------------------------------------------------------------------
 # Flap
 root_chord = 2.24
-root_section = "flap_root_section"
+root_section = section
 tip_chord = 1.6
-tip_section = "flap_tip_section"
+tip_section = section
 length = 2.582
 leading_edge_sweep_angle_deg = 4.04
 dihedral_angle_deg = 5.59
@@ -93,9 +112,9 @@ left_flap = geometry.objects.Surface(
 # --------------------------------------------------------------------------------------------------
 # Aileron
 root_chord = 1.6
-root_section = "aileron_root_section"
+root_section = section
 tip_chord = 1.04
-tip_section = "aileron_tip_section"
+tip_section = section
 length = 2.361
 leading_edge_sweep_angle_deg = 4.04
 dihedral_angle_deg = 5.59
@@ -151,9 +170,9 @@ wing = geometry.objects.MacroSurface(
 # ==================================================================================================
 # Horizontal Tail
 root_chord = 1.29
-root_section = "elevator_root_section"
+root_section = section
 tip_chord = 0.72
-tip_section = "elevator_tip_section"
+tip_section = section
 length = 2.24
 leading_edge_sweep_angle_deg = 9.88
 dihedral_angle_deg = 0
@@ -203,9 +222,9 @@ h_tail = geometry.objects.MacroSurface(
 # ==================================================================================================
 # Vertical Tail
 root_chord = 1.33
-root_section = "right_aileron_root_section"
+root_section = section
 tip_chord = 0.68
-tip_section = "right_aileron_tip_section"
+tip_section = section
 length = 2.53
 leading_edge_sweep_angle_deg = 24.66
 dihedral_angle_deg = 90
@@ -279,9 +298,12 @@ wing_control_surface_deflection_dict = {
     "right_aileron": -35,
 }
 
-wing_mesh = wing.create_mesh(
+wing_n_beam_elements_list = [10, 10, 10, 10, 10, 10]
+
+wing_mesh, _ = wing.create_grids(
     wing_n_chord_panels,
     wing_n_span_panels_list,
+    wing_n_beam_elements_list,
     wing_chord_discretization,
     wing_span_discretization_list,
     wing_torsion_function_list,
@@ -298,9 +320,12 @@ h_tail_torsion_function_list = ["linear", "linear"]
 
 h_tail_control_surface_deflection_dict = {"left_elevator": 30, "right_elevator": 30}
 
-h_tail_mesh = h_tail.create_mesh(
+h_tail_n_beam_elements_list = [10, 10]
+
+h_tail_mesh, _ = h_tail.create_grids(
     h_tail_n_chord_panels,
     h_tail_n_span_panels_list,
+    h_tail_n_beam_elements_list,
     h_tail_chord_discretization,
     h_tail_span_discretization_list,
     h_tail_torsion_function_list,
@@ -317,9 +342,12 @@ v_tail_torsion_function_list = ["linear"]
 
 v_tail_control_surface_deflection_dict = {"rudder": 30}
 
-v_tail_mesh = v_tail.create_mesh(
+h_tail_n_beam_elements_list = [10]
+
+v_tail_mesh, _ = v_tail.create_grids(
     v_tail_n_chord_panels,
     v_tail_n_span_panels_list,
+    h_tail_n_beam_elements_list,
     v_tail_chord_discretization,
     v_tail_span_discretization_list,
     v_tail_torsion_function_list,
@@ -340,12 +368,14 @@ attitude_vector = np.array([5, 0, 0])
 center = np.array([0, 0, 0])
 altitude = 0
 
+print()
+print("# Running VLM:")
 (
     components_force_vector,
-    components_panel_vectors,
-    components_force_grids,
-    components_panel_grids,
+    components_panel_vector,
     components_gamma_vector,
+    components_force_grid,
+    components_panel_grid,
     components_gamma_grid,
 ) = aero.vlm.aero_loads(
     aircraft_aero_mesh,
@@ -359,12 +389,13 @@ altitude = 0
 components_delta_p_grids = []
 components_force_mag_grids = []
 
-for panels, forces in zip(components_panel_grids, components_force_grids):
+for panels, forces in zip(components_panel_grid, components_force_grid):
 
     delta_p, force = aero.vlm.calc_panels_delta_pressure(panels, forces)
     components_delta_p_grids.append(delta_p)
     components_force_mag_grids.append(force)
 
-vis.plot_3D.plot_results(aircraft_aero_mesh, components_gamma_grid)
+vis.plot_3D.plot_results(aircraft_aero_mesh, components_force_mag_grids)
+plt.show()
 # print(components_gamma_vector)
 input("Press any key to quit...")

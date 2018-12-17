@@ -115,7 +115,9 @@ def plot_mesh(meshs):
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_results(aircraft_aero_mesh, results_grids):
+def plot_results(
+    aircraft_aero_mesh, results_grids, title=None, label=None, colormap="coolwarm"
+):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d", proj_type="ortho")
@@ -135,10 +137,10 @@ def plot_results(aircraft_aero_mesh, results_grids):
             max_result_value = grid_max
 
     norm = matplotlib.colors.Normalize(min_result_value, max_result_value)
-    m = plt.cm.ScalarMappable(norm=norm, cmap="coolwarm")
+    m = plt.cm.ScalarMappable(norm=norm, cmap=colormap)
     m.set_array([])
 
-    fig.colorbar(m, shrink=0.5, aspect=5)
+    fig.colorbar(m, shrink=0.5, aspect=5, label=label)
 
     for i, component_mesh in enumerate(aircraft_aero_mesh):
         results = results_grids[i]
@@ -169,14 +171,26 @@ def plot_results(aircraft_aero_mesh, results_grids):
             )
 
     # Plot coordinate system
+    x_limits = ax.get_xlim3d()
+    y_limits = ax.get_ylim3d()
+    z_limits = ax.get_zlim3d()
+    maximum = np.array([x_limits, y_limits, z_limits]).max()
+    quiver_length = maximum / 10
     ax.quiver(
-        [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black"
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [quiver_length, 0, 0],
+        [0, quiver_length, 0],
+        [0, 0, quiver_length],
+        color="black",
     )
     ax.scatter([0], [0], [0], color="red")
 
     ax.set_xlabel("X axis")
     ax.set_ylabel("Y axis")
     ax.set_zlabel("Z axis")
+    ax.set_title(title)
     set_axes_equal(ax)
     plt.show(block=False)
 
@@ -234,6 +248,7 @@ def plot_structure(structure):
 
     return ax, fig
 
+
 # --------------------------------------------------------------------------------------------------
 
 
@@ -262,26 +277,28 @@ def plot_aircraft(aircraft):
     ax.scatter([0], [0], [0], color="red")
 
     # Plot CG
-    cg_x = aircraft.inertial_properties.cg_position[0]
-    cg_y = aircraft.inertial_properties.cg_position[1]
-    cg_z = aircraft.inertial_properties.cg_position[2]
+    if aircraft.inertial_properties is not None:
+        cg_x = aircraft.inertial_properties.position[0]
+        cg_y = aircraft.inertial_properties.position[1]
+        cg_z = aircraft.inertial_properties.position[2]
 
-    ax.scatter([cg_x], [cg_y], [cg_z], marker="D", color="black", s=50)
+        ax.scatter([cg_x], [cg_y], [cg_z], marker="D", color="black", s=50)
 
     # Plot Engine and Thrust Vector
-    for engine in aircraft.engines:
-        eng_x = engine.position[0]
-        eng_y = engine.position[1]
-        eng_z = engine.position[2]
+    if aircraft.engines is not None:
+        for engine in aircraft.engines:
+            eng_x = engine.position[0]
+            eng_y = engine.position[1]
+            eng_z = engine.position[2]
 
-        eng_t_x = engine.thrust_vector[0]
-        eng_t_y = engine.thrust_vector[1]
-        eng_t_z = engine.thrust_vector[2]
+            eng_t_x = engine.thrust_vector[0]
+            eng_t_y = engine.thrust_vector[1]
+            eng_t_z = engine.thrust_vector[2]
 
-        ax.scatter([eng_x], [eng_y], [eng_z], marker="P", color="red", s=50)
-        ax.quiver(
-            [eng_x], [eng_y], [eng_z], [eng_t_x], [eng_t_y], [eng_t_z], color="red"
-        )
+            ax.scatter([eng_x], [eng_y], [eng_z], marker="P", color="red", s=50)
+            ax.quiver(
+                [eng_x], [eng_y], [eng_z], [eng_t_x], [eng_t_y], [eng_t_z], color="red"
+            )
 
     # Plot Aircraf Components
     for i, macro_surface in enumerate(aircraft.macro_surfaces):
@@ -294,7 +311,9 @@ def plot_aircraft(aircraft):
         span_discretization_list = [
             "linear" for i in range(len(macro_surface.surface_list))
         ]
-        torsion_function_list = ["linear" for i in range(len(macro_surface.surface_list))]
+        torsion_function_list = [
+            "linear" for i in range(len(macro_surface.surface_list))
+        ]
 
         macro_surface_aero_grid, macro_surface_nodes_list = macro_surface.create_grids(
             n_chord_panels,
@@ -309,7 +328,9 @@ def plot_aircraft(aircraft):
             xx = mesh["xx"]
             yy = mesh["yy"]
             zz = mesh["zz"]
-            ax.plot_surface(xx, yy, zz, color=scalar_map.to_rgba(i), shade=False, alpha=0.85)
+            ax.plot_surface(
+                xx, yy, zz, color=scalar_map.to_rgba(i), shade=False, alpha=0.85
+            )
 
         for surface_node_list in macro_surface_nodes_list:
             x = []
@@ -323,13 +344,25 @@ def plot_aircraft(aircraft):
 
             ax.plot(x, y, z, c="black")
 
+    # Plot aircraft beams
+        for beam in aircraft.beams:
+            x = np.array([beam.root_point[0], beam.tip_point[0]])
+            y = np.array([beam.root_point[1], beam.tip_point[1]])
+            z = np.array([beam.root_point[2], beam.tip_point[2]])
+
+            if beam.ElementProperty.material == "rigid_connection":
+                ax.plot(x, y, z, c="blue", ls="--")
+            else:
+                ax.plot(x, y, z, c="black")
+
     # Fix axes scale
     set_axes_equal(ax)
 
     # Generate Plot
-    plt.show(block=False)
+    plt.show()
 
     return ax, fig
+
 
 # --------------------------------------------------------------------------------------------------
 

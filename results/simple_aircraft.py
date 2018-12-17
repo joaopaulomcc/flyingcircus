@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from context import src
+from pyquaternion import Quaternion
 from src import geometry as geo
 from src import visualization as vis
 from src import aerodynamics as aero
@@ -19,24 +20,30 @@ airfoil = "NACA 0012"
 material = struct.objects.Material(
     name="Aluminum 7075-T6",
     density=2810,
-    elasticity_modulus=7.170547e10,
+    elasticity_modulus=7.170_547e10,
     rigidity_modulus=2.69e10,
     poisson_ratio=0.33,
-    yield_tensile_stress=5.033172e08,
-    ultimate_tensile_stress=5.722648e08,
-    yield_shear_stress=3.309484e08,
+    yield_tensile_stress=5.033_172e08,
+    ultimate_tensile_stress=5.722_648e08,
+    yield_shear_stress=3.309_484e08,
     ultimate_shear_stress=0,
 )
 
-section = geo.objects.Section(
-    airfoil=airfoil, material=material, area=1, Iyy=1, Izz=1, J=1, shear_center=0.5
+wing_section = geo.objects.Section(
+    airfoil=airfoil,
+    material=material,
+    area=0.15,
+    Iyy=0.000_281_25,
+    Izz=0.0125,
+    J=0.001_018_692,
+    shear_center=0.5,
 )
 
 # Stub
 root_chord = 2
-root_section = section
+root_section = wing_section
 tip_chord = 1.5
-tip_section = section
+tip_section = wing_section
 length = 2
 leading_edge_sweep_angle_deg = 30
 dihedral_angle_deg = 5
@@ -75,9 +82,9 @@ left_stub = geo.objects.Surface(
 # Aileron
 
 root_chord = 1.5
-root_section = section
+root_section = wing_section
 tip_chord = 1
-tip_section = section
+tip_section = wing_section
 length = 2
 leading_edge_sweep_angle_deg = 30
 dihedral_angle_deg = 5
@@ -116,9 +123,9 @@ left_aileron = geo.objects.Surface(
 # Winglet
 
 root_chord = 1
-root_section = section
+root_section = wing_section
 tip_chord = 0.3
-tip_section = section
+tip_section = wing_section
 length = 1
 leading_edge_sweep_angle_deg = 45
 dihedral_angle_deg = 90
@@ -175,9 +182,9 @@ wing = geo.objects.MacroSurface(
 # ==================================================================================================
 # Horizontal Tail
 root_chord = 1
-root_section = section
+root_section = wing_section
 tip_chord = 0.6
-tip_section = section
+tip_section = wing_section
 length = 2
 leading_edge_sweep_angle_deg = 25
 dihedral_angle_deg = 0
@@ -227,9 +234,9 @@ h_tail = geo.objects.MacroSurface(
 # ==================================================================================================
 # Vertical Tail
 root_chord = 1
-root_section = section
+root_section = wing_section
 tip_chord = 0.5
-tip_section = section
+tip_section = wing_section
 length = 1.5
 leading_edge_sweep_angle_deg = 45
 dihedral_angle_deg = 90
@@ -263,6 +270,45 @@ v_tail = geo.objects.MacroSurface(
 
 # ==================================================================================================
 # ==================================================================================================
+# Fuselage Definition
+
+front_root_point = np.array([1, 0, 0])
+front_tip_point = np.array([3, 0, 0])
+
+back_root_point = np.array([3, 0, 0])
+back_tip_point = np.array([7.5, 0, 0.5])
+
+fuselage_material = material
+
+fuselage_section = geo.objects.Section(
+    airfoil="Circle",
+    material=fuselage_material,
+    area=0.282_743_338_8,
+    Iyy=0.028_981_192_2,
+    Izz=0.028_981_192_2,
+    J=0.057_962_384_5,
+    shear_center=0.5,
+)
+
+fuselage_property = struct.objects.ElementProperty(fuselage_section, fuselage_material)
+
+front_fuselage = geo.objects.Beam(
+    identifier="front_fuselage",
+    root_point=front_root_point,
+    tip_point=front_tip_point,
+    ElementProperty=fuselage_property,
+)
+
+back_fuselage = geo.objects.Beam(
+    identifier="back_fuselage",
+    root_point=back_root_point,
+    tip_point=back_tip_point,
+    ElementProperty=fuselage_property,
+)
+
+
+# ==================================================================================================
+# ==================================================================================================
 # Engine Definition
 
 
@@ -271,23 +317,41 @@ def engine_thrust_function(throtle, parameters):
     return 4000 * throtle
 
 
-engine_position = np.array([0, -2.5, 0])
+left_engine_position = np.array([0, -2.5, 0])
 engine_inertial_properties = "engine inertial properties"
 engine_thrust_vector = np.array([-1, 0, 0])
+orientation_quaternion = Quaternion(axis=np.array([0, 0, 1]), angle=np.pi)
 
-aircraft_engine_1 = geo.objects.Engine(
-    engine_position,
-    engine_inertial_properties,
-    engine_thrust_vector,
-    engine_thrust_function,
+left_engine = geo.objects.Engine(
+    identifier="left_engine",
+    position=left_engine_position,
+    orientation_quaternion=orientation_quaternion,
+    inertial_properties=engine_inertial_properties,
+    thrust_function=engine_thrust_function,
 )
 
-engine_position = np.array([0, 2.5, 0])
-aircraft_engine_2 = geo.objects.Engine(
-    engine_position,
-    engine_inertial_properties,
-    engine_thrust_vector,
-    engine_thrust_function,
+right_engine_position = np.array([0, 2.5, 0])
+right_engine = geo.objects.Engine(
+    identifier="right_engine",
+    position=right_engine_position,
+    orientation_quaternion=orientation_quaternion,
+    inertial_properties=engine_inertial_properties,
+    thrust_function=engine_thrust_function,
+)
+
+# Engines pylons
+left_engine_pylon = geo.objects.Beam(
+    identifier="right_engine_pylon",
+    root_point=left_engine.position,
+    tip_point=wing.tip_nodes[2].xyz,
+    ElementProperty=struct.objects.RigidConnection(),
+)
+
+right_engine_pylon = geo.objects.Beam(
+    identifier="right_engine_pylon",
+    root_point=right_engine.position,
+    tip_point=wing.tip_nodes[3].xyz,
+    ElementProperty=struct.objects.RigidConnection(),
 )
 
 # ==================================================================================================
@@ -304,8 +368,68 @@ Ixz = 1
 Iyz = 1
 
 aircraft_inertia = geo.objects.MaterialPoint(
-    mass, cg_position, Ixx, Iyy, Izz, Ixy, Ixz, Iyz
+    identifier="aircraft_cg",
+    orientation_quaternion=Quaternion(),
+    mass=mass,
+    position=cg_position,
+    Ixx=Ixx,
+    Iyy=Iyy,
+    Izz=Izz,
+    Ixy=Ixy,
+    Ixz=Ixz,
+    Iyz=Iyz,
 )
+
+# ==================================================================================================
+# ==================================================================================================
+# Aircraft Structure Conncetions
+
+
+front_fuselage_to_wing = struct.objects.Connection(
+    right_stub, "ROOT", front_fuselage, "ROOT"
+)
+
+front_fuselage_to_cg = struct.objects.Connection(
+    front_fuselage, "TIP", aircraft_inertia, "ROOT"
+)
+
+front_fuselage_to_back_fuselage = struct.objects.Connection(
+    front_fuselage, "TIP", back_fuselage, "ROOT"
+)
+
+back_fuselage_to_h_tail = struct.objects.Connection(
+    back_fuselage, "TIP", right_elevator, "ROOT"
+)
+
+h_tail_to_v_tail = struct.objects.Connection(right_elevator, "ROOT", rudder, "ROOT")
+
+left_engine_to_left_pylon = struct.objects.Connection(
+    left_engine, "ROOT", left_engine_pylon, "ROOT"
+)
+
+left_pylon_to_wing = struct.objects.Connection(
+    left_engine_pylon, "TIP", left_stub, "ROOT"
+)
+
+right_engine_to_right_pylon = struct.objects.Connection(
+    right_engine, "ROOT", right_engine_pylon, "ROOT"
+)
+
+right_pylon_to_wing = struct.objects.Connection(
+    right_engine_pylon, "TIP", right_stub, "ROOT"
+)
+
+aircraft_struct_connections = [
+    front_fuselage_to_wing,
+    front_fuselage_to_cg,
+    front_fuselage_to_back_fuselage,
+    back_fuselage_to_h_tail,
+    h_tail_to_v_tail,
+    left_engine_to_left_pylon,
+    left_pylon_to_wing,
+    right_engine_to_right_pylon,
+    right_pylon_to_wing,
+]
 
 # ==================================================================================================
 # ==================================================================================================
@@ -313,20 +437,47 @@ aircraft_inertia = geo.objects.MaterialPoint(
 
 name = "Simple Aircraft"
 
-surfaces = [wing, h_tail, v_tail]
+macro_surfaces = [wing, h_tail, v_tail]
 
-beams = []
+beams = [front_fuselage, back_fuselage, left_engine_pylon, right_engine_pylon]
 
-engines = [aircraft_engine_1, aircraft_engine_2]
+engines = [left_engine, right_engine]
 
 inertial_properties = aircraft_inertia
 
+connections = [
+    front_fuselage_to_wing,
+    front_fuselage_to_cg,
+    front_fuselage_to_back_fuselage,
+    back_fuselage_to_h_tail,
+    h_tail_to_v_tail,
+    left_engine_to_left_pylon,
+    left_pylon_to_wing,
+    right_engine_to_right_pylon,
+    right_pylon_to_wing,
+]
+
 simple_aircraft = geo.objects.Aircraft(
-    name, surfaces, beams, engines, inertial_properties
+    name="Simple Aircraft",
+    macro_surfaces=macro_surfaces,
+    beams=beams,
+    engines=engines,
+    inertial_properties=inertial_properties,
+    connections=connections,
 )
 
+print("# Plotting Geometry...")
 
 vis.plot_3D.plot_aircraft(simple_aircraft)
+
+
+print()
+user_input = input("# Proceed with calculation? [Y/N]\n")
+
+if user_input == "N" or user_input == "n":
+    print("# Stopping execution...")
+    raise SystemExit(...)
+
 
 # ==================================================================================================
 # ==================================================================================================
@@ -355,8 +506,22 @@ wing_n_beam_elements_list = [
     n_span_panels,
 ]
 wing_chord_discretization = "linear"
-wing_span_discretization_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
-wing_torsion_function_list = ["linear", "linear", "linear", "linear", "linear", "linear"]
+wing_span_discretization_list = [
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+]
+wing_torsion_function_list = [
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+]
 
 wing_control_surface_deflection_dict = {"left_aileron": 10, "right_aileron": 0}
 
@@ -413,6 +578,72 @@ v_tail_aero_grid, v_tail_struct_grid = v_tail.create_grids(
 )
 
 # ==================================================================================================
+# Fuselage and pylons
+
+front_fuselage_struct_grid = front_fuselage.create_grid(n_elements=5)
+back_fuselage_struct_grid = back_fuselage.create_grid(n_elements=5)
+left_engine_pylon_struct_grid = left_engine_pylon.create_grid(n_elements=1)
+right_engine_pylon_struct_grid = right_engine_pylon.create_grid(n_elements=1)
+
+# ==================================================================================================
+# Create FEM elements
+
+# Create connections
+
+wing_struct_connections = struct.fem.create_macrosurface_connections(wing)
+v_tail_struct_connections = struct.fem.create_macrosurface_connections(v_tail)
+h_tail_struct_connections = struct.fem.create_macrosurface_connections(h_tail)
+
+aircraft_struct_connections = (
+    aircraft_struct_connections
+    + wing_struct_connections
+    + v_tail_struct_connections
+    + h_tail_struct_connections
+)
+
+# Number nodes
+# Aircraft Components:
+# - left winglet
+# - left aileron
+# - left stub
+# - right stub
+# - right aileron
+# - right winglet
+# - left elevator
+# - right elevator
+# - rudder
+# - left engine
+# - left pylon
+# - right engine
+# - right pylon
+# - front fuselage
+# - back fuselage
+# - CG
+
+components_list = (
+    wing.surface_list
+    + h_tail.surface_list
+    + v_tail.surface_list
+    + [left_engine]
+    + [left_engine_pylon]
+    + [right_engine]
+    + [right_engine_pylon]
+    + [front_fuselage]
+    + [back_fuselage]
+    + [aircraft_inertia]
+)
+
+components_nodes_list = (
+    wing_struct_grid
+    + h_tail_struct_grid
+    + v_tail_struct_grid
+    + [left_engine.node]
+    +
+)
+struct.fem.number_nodes(components_list, components_nodes_list, connections_list)
+
+
+# ==================================================================================================
 # Aircraft Mesh
 simple_aircraft_aero_mesh = [wing_aero_grid, h_tail_aero_grid, v_tail_aero_grid]
 # simple_aircraft_aero_mesh = [wing_mesh, h_tail_mesh]
@@ -424,10 +655,10 @@ aircraft_aero_mesh = simple_aircraft_aero_mesh
 velocity_vector = np.array([100, 0, 0])
 rotation_vector = np.array([0, 0, 0])
 attitude_vector = np.array([5, 0, 0])
-center = simple_aircraft.inertial_properties.cg_position
+center = simple_aircraft.inertial_properties.position
 altitude = 0
 
-"""
+
 print()
 print("# Running VLM:")
 (
@@ -483,9 +714,7 @@ print("# Engine CG Loads")
 print(f"- Force: {engine_force}")
 print(f"- Moment: {engine_moment}")
 print()
-plt.show()
-input("Press any key to quit...")
-"""
+
 
 plt.show()
 

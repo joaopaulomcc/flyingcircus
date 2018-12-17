@@ -1,3 +1,7 @@
+"""
+DOCSTRING
+"""
+
 import numpy as np
 import scipy as sc
 
@@ -94,6 +98,7 @@ class ElementProperty(object):
         self.E = material.elasticity_modulus
         self.G = material.rigidity_modulus
 
+
 # ==================================================================================================
 
 
@@ -111,10 +116,10 @@ class RigidConnection(object):
         G (float): Shear modulus of the material
     """
 
-    def __init__(self, section, material):
+    def __init__(self):
 
-        self.section = "singularity"
-        self.material = "adamantium"
+        self.section = "rigid_connection"
+        self.material = "rigid_connection"
         self.A = 1
         self.J = 1
         self.Iyy = 1
@@ -126,7 +131,7 @@ class RigidConnection(object):
 # ==================================================================================================
 
 
-class BeamElement(object):
+class EulerBeamElement(object):
     """ Defines a beam finite element, saves it's properties and calculates it's stiffness matrices
 
     Args:
@@ -148,20 +153,21 @@ class BeamElement(object):
                                        to the element local DOF
     """
 
-    def __init__(self, node_A_index, node_B_index, rotation, element_property):
+    def __init__(self, node_A, node_B, A, Iyy, Izz, J, E, G, prop_choice="MIDDLE"):
 
-        self.node_A_index = int(node_A_index)
-        self.node_B_index = int(node_B_index)
-        self.rotation = rotation
-        self.A = element_property.A
-        self.J = element_property.J
-        self.Iyy = element_property.Iyy
-        self.Izz = element_property.Izz
-        self.E = element_property.E
-        self.G = element_property.G
+        self.node_A = node_A
+        self.node_B = node_B
+        self.A = A
+        self.Iyy = Iyy
+        self.Izz = Izz
+        self.J = J
+        self.E = E
+        self.G = G
+        self.L = m.norm(node_B.xyz - node_A.xyz)
+        self.prop_choice = prop_choice
 
-        A_index = 6 * self.node_A_index
-        B_index = 6 * self.node_B_index
+        A_index = 6 * self.node_A.number
+        B_index = 6 * self.node_B.number
         self.correlation_vector = np.array(
             [
                 A_index,
@@ -179,7 +185,7 @@ class BeamElement(object):
             ]
         )
 
-    def calc_rotation_matrix(self, grid):
+    def calc_rotation_matrix(self):
         """ Calculates the rotation matrix of the element.
 
         Args:
@@ -190,37 +196,37 @@ class BeamElement(object):
                                         to the global coordinate system.
         """
 
+        if self.prop_choice == "ROOT":
+
+            orientation_node = self.node_A
+
+        elif self.prop_choice == "TIP":
+
+            orientation_node = self.node_B
+
+        elif self.prop_choice == "MIDDLE":
+
+            # Interpolate root and tip nodes to find a node in the middle
+            nodes_prop = geo.functions.interpolate_nodes(self.node_A, self.node_B, 3)
+            middle_node_prop = nodes_prop[1]
+            orientation_node = geo.objects.Node(
+                middle_node_prop[0], middle_node_prop[1]
+            )
+
         # Global Coordinate System
         x_global = np.array([1.0, 0.0, 0.0])
         y_global = np.array([0.0, 1.0, 0.0])
         z_global = np.array([0.0, 0.0, 1.0])
-        origin = np.zeros(3)
-
-        # Calculates the element local coordinate system before rotation
-        point_A = grid[self.point_A_index].xyz
-        point_B = grid[self.point_B_index].xyz
-
-        x_local = m.normalize(point_B - point_A)
-        z_local = m.cross(x_global, x_local)
-
-        # When element is aligned with the x axis it's coordinate system is equal to the global
-        # coordinate system, before the rotation.
-        if np.array_equal(z_local, np.zeros(3)):
-            z_local = z_global
-            y_local = y_global
-
-        else:
-            y_local = m.cross(z_local, x_local)
-
-        # Apply rotation to the local coordinate system
-        y_local = geo.functions.rotate_point(y_local, x_local, origin, self.rotation)
-        z_local = geo.functions.rotate_point(z_local, x_local, origin, self.rotation)
 
         # Calculate rotation matrix
         zero = np.zeros((3, 3))
         r = np.zeros((3, 3))
 
-        for i, local_axis in [x_local, y_local, z_local]:
+        for i, local_axis in [
+            orientation_node.x_axis,
+            orientation_node.y_axis,
+            orientation_node.z_axis,
+        ]:
             for j, global_axis in [x_global, y_global, z_global]:
                 r[i][j] = geo.functions.cos_between(local_axis, global_axis)
 
@@ -235,7 +241,7 @@ class BeamElement(object):
 
         return rotation_matrix
 
-    def calc_K_local(self, grid):
+    def calc_K_local(self):
         """ Calculates the local stiffness matrix of the element.
 
         Args:
@@ -245,15 +251,8 @@ class BeamElement(object):
             K_local (np.array(dtype=float)): element local stiffness matrix
         """
 
-        # Calculate element length
-        point_A = grid[self.point_A_index].xyz
-        point_B = grid[self.point_B_index].xyz
-
-        N = point_B - point_A
-        L = m.norm(N)
-
         # Calculate Local Stiffness Matrix
-        K_local = f.beam_3D_stiff(self.E, self.A, L, self.G, self.J, self.Iy, self.Iz)
+        K_local = f.euler_beam_stiff(self.E, self.A, self.L, self.G, self.J, self.Iyy, self.Izz)
 
         return K_local
 
@@ -268,7 +267,7 @@ class BeamElement(object):
             K_global (np.array(dtype=float)): element global stiffness matrix
         """
 
-        rotation_matrix = self.calc_rotation_matrix(grid)
+        rotation_matrix = self.calc_rotation_matrix()
         K_local = self.calc_K_local(grid)
 
         # Global Stiffness Matrix
@@ -288,8 +287,6 @@ class Structure:
 
 
 # ==================================================================================================
-
-
 
 
 # ==================================================================================================

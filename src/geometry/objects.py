@@ -12,26 +12,49 @@ from .. import mathematics as m
 
 
 class Aircraft(object):
-    def __init__(self, name, macro_surfaces, beams, engines, inertial_properties):
+
+    def __init__(
+        self,
+        name,
+        macro_surfaces,
+        beams=None,
+        engines=None,
+        inertial_properties=None,
+        connections=None,
+    ):
+
         self.name = name
         self.macro_surfaces = macro_surfaces
         self.beams = beams
         self.engines = engines
         self.inertial_properties = inertial_properties
+        self.connections = connections
+        self.ref_area = macro_surfaces[0].ref_area
+        self.mean_aero_chord = macro_surfaces[0].mean_aero_chord
 
 
 # ==================================================================================================
 
 
 class Engine(object):
-    def __init__(self, position, inertial_properties, thrust_vector, thrust_function):
+    def __init__(
+        self,
+        identifier,
+        position,
+        orientation_quaternion,
+        inertial_properties,
+        thrust_function,
+    ):
+        self.identifier = identifier
+        self.orientation_quaternion = orientation_quaternion
         self.position = position
+        self.orientation_quaternion = orientation_quaternion
+        self.node = Node(position, orientation_quaternion)
         self.inertial_properties = inertial_properties
-        self.thrust_vector = thrust_vector
         self.thrust_function = thrust_function
+        self.thrust_vector = self.orientation_quaternion.rotate(np.array([1, 0, 0]))
 
     def thrust(self, throttle, parameters):
-
         thrust_force = self.thrust_function(throttle, parameters) * self.thrust_vector
 
         return thrust_force
@@ -41,9 +64,24 @@ class Engine(object):
 
 
 class MaterialPoint(object):
-    def __init__(self, mass, cg_position, Ixx, Iyy, Izz, Ixy, Ixz, Iyz):
+    def __init__(
+        self,
+        identifier=None,
+        orientation_quaternion=Quaternion(),
+        mass=0,
+        position=np.array([0, 0, 0]),
+        Ixx=0,
+        Iyy=0,
+        Izz=0,
+        Ixy=0,
+        Ixz=0,
+        Iyz=0,
+    ):
+        self.identifier = identifier
+        self.orientation_quaternion = orientation_quaternion
         self.mass = mass
-        self.cg_position = cg_position
+        self.position = position
+        self.Node = Node(position, orientation_quaternion)
         self.Ixx = Ixx
         self.Iyy = Iyy
         self.Izz = Izz
@@ -149,13 +187,9 @@ class Node(object):
 
 
 class Beam:
-    def __init__(
-        self,
-        root_point,
-        tip_point,
-        ElementProperty,
-    ):
+    def __init__(self, identifier, root_point, tip_point, ElementProperty):
 
+        self.identifier = identifier
         self.root_point = root_point
         self.tip_point = tip_point
         self.ElementProperty = ElementProperty
@@ -181,7 +215,11 @@ class Beam:
 
         nodes_grid = []
 
+        for node_prop in nodes_prop:
+            nodes_grid.append(Node(node_prop[0], node_prop[1]))
+
         return nodes_grid
+
 
 # ==================================================================================================
 
@@ -752,6 +790,34 @@ class MacroSurface(object):
 
         self.control_surfaces = control_surfaces
 
+        self.ref_area = 0
+        self.true_area = 0
+
+        for surface in surface_list:
+            self.ref_area += surface.ref_area
+            self.true_area += surface.true_area
+
+        self.mean_aero_chord = surface_list[0].root_chord
+
+        macro_surface_aero_grid, macro_surface_nodes_list = self.create_grids(
+            n_chord_panels=3,
+            n_span_panels_list=[1 for surface in surface_list],
+            n_beam_elements_list=[1 for surface in surface_list],
+            chord_discretization="linear",
+            span_discretization_list=["linear" for surface in surface_list],
+            torsion_function_list=["linear" for surface in surface_list],
+        )
+
+        root_nodes = []
+        tip_nodes = []
+
+        for surface_nodes in macro_surface_nodes_list:
+            root_nodes.append(surface_nodes[0])
+            tip_nodes.append(surface_nodes[-1])
+
+        self.root_nodes = root_nodes
+        self.tip_nodes = tip_nodes
+
     # ----------------------------------------------------------------------------------------------
     def create_grids(
         self,
@@ -879,3 +945,5 @@ class MacroSurface(object):
             macro_surface_nodes_list.append(surface_nodes_list)
 
         return macro_surface_aero_grid, macro_surface_nodes_list
+
+    # ----------------------------------------------------------------------------------------------
