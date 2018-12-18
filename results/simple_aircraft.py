@@ -466,6 +466,7 @@ simple_aircraft = geo.objects.Aircraft(
     connections=connections,
 )
 
+"""
 print("# Plotting Geometry...")
 
 vis.plot_3D.plot_aircraft(simple_aircraft)
@@ -477,7 +478,7 @@ user_input = input("# Proceed with calculation? [Y/N]\n")
 if user_input == "N" or user_input == "n":
     print("# Stopping execution...")
     raise SystemExit(...)
-
+"""
 
 # ==================================================================================================
 # ==================================================================================================
@@ -594,12 +595,15 @@ wing_struct_connections = struct.fem.create_macrosurface_connections(wing)
 v_tail_struct_connections = struct.fem.create_macrosurface_connections(v_tail)
 h_tail_struct_connections = struct.fem.create_macrosurface_connections(h_tail)
 
-aircraft_struct_connections = (
-    aircraft_struct_connections
-    + wing_struct_connections
-    + v_tail_struct_connections
-    + h_tail_struct_connections
-)
+connections = [
+    wing_struct_connections,
+    v_tail_struct_connections,
+    h_tail_struct_connections,
+]
+
+for connect in connections:
+    if connect:
+        aircraft_struct_connections += connect
 
 # Number nodes
 # Aircraft Components:
@@ -637,12 +641,20 @@ components_nodes_list = (
     wing_struct_grid
     + h_tail_struct_grid
     + v_tail_struct_grid
-    + [left_engine.node]
-    +
+    + [[left_engine.node]]
+    + [left_engine_pylon_struct_grid]
+    + [[right_engine.node]]
+    + [right_engine_pylon_struct_grid]
+    + [front_fuselage_struct_grid]
+    + [back_fuselage_struct_grid]
+    + [[aircraft_inertia.node]]
 )
-struct.fem.number_nodes(components_list, components_nodes_list, connections_list)
 
+struct.fem.number_nodes(
+    components_list, components_nodes_list, aircraft_struct_connections
+)
 
+"""
 # ==================================================================================================
 # Aircraft Mesh
 simple_aircraft_aero_mesh = [wing_aero_grid, h_tail_aero_grid, v_tail_aero_grid]
@@ -717,7 +729,21 @@ print()
 
 
 plt.show()
+"""
+# ==================================================================================================
+# Aircraft FEM mesh
+wing_fem_elements = struct.fem.generate_macrosurface_fem_elements(
+    macrosurface=wing, macrosurface_nodes_list=wing_struct_grid, prop_choice="MIDDLE"
+)
+
+h_tail_fem_elements = struct.fem.generate_macrosurface_fem_elements(
+    macrosurface=h_tail, macrosurface_nodes_list=h_tail_struct_grid, prop_choice="MIDDLE"
+)
+
+v_tail_fem_elements = struct.fem.generate_macrosurface_fem_elements(
+    macrosurface=v_tail, macrosurface_nodes_list=v_tail_struct_grid, prop_choice="MIDDLE"
+)
 
 
-def generate_structure(component):
-    pass
+
+print()

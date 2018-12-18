@@ -127,8 +127,14 @@ def check_connections(connections_list, components_list, node_identifier):
             # component
             index = connection.index(node_identifier)
             connected_component_index = abs(index - 1)
-            connected_component = connections_list[i][connected_component_index * 2]
-            connected_node = connections_list[i][connected_component_index * 2 + 1]
+
+            if connected_component_index == 0:
+                connected_component = connections_list[i].component1
+                connected_node = connections_list[i].component1_node
+
+            elif connected_component_index == 1:
+                connected_component = connections_list[i].component2
+                connected_node = connections_list[i].component2_node
 
             connections.append([connected_component, connected_node])
 
@@ -151,7 +157,7 @@ def create_macrosurface_connections(macrosurface):
 
     if middle_index == 0:
 
-        for i in range(len(macrosurface.surface_list) - 1):
+       for i in range(len(macrosurface.surface_list) - 1):
 
             connection = o.Connection(
                 component1=macrosurface.surface_list[i],
@@ -191,6 +197,8 @@ def create_macrosurface_connections(macrosurface):
 
             connections_list.append(connection)
 
+    return connections_list
+
 
 # ==================================================================================================
 
@@ -205,7 +213,7 @@ def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, pr
 
     macrosurface_elements = []
 
-    for surface, surface_nodes_list in zip(macrosurface, macrosurface_nodes_list):
+    for surface, surface_nodes_list in zip(macrosurface.surface_list, macrosurface_nodes_list):
 
         n_nodes = len(surface_nodes_list)
 
@@ -215,7 +223,7 @@ def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, pr
         root_Izz = surface.root_section.Izz
         root_J = surface.root_section.J
         root_E = surface.root_section.material.elasticity_modulus
-        root_G = surface.root_section.materialrigidity_modulus
+        root_G = surface.root_section.material.rigidity_modulus
 
         root_A_sqside = np.sqrt(root_A)
         root_Iyy_sqside = (12 * root_Iyy) ** (1 / 4)
@@ -227,7 +235,7 @@ def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, pr
         tip_Izz = surface.tip_section.Izz
         tip_J = surface.tip_section.J
         tip_E = surface.root_section.material.elasticity_modulus
-        tip_G = surface.root_section.materialrigidity_modulus
+        tip_G = surface.root_section.material.rigidity_modulus
 
         tip_A_sqside = np.sqrt(tip_A)
         tip_Iyy_sqside = (12 * tip_Iyy) ** (1 / 4)
@@ -247,10 +255,8 @@ def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, pr
 
         interpolation = (
             lambda root_prop, tip_prop, node_y: (
-                (root_prop - tip_prop) / (root_y - tip_y)
+                np.interp([node_y], [root_y, tip_y], [root_prop, tip_prop])
             )
-            * (node_y - tip_y)
-            + tip_prop
         )
 
         # Calculation of the interpolated properties for each of the nodes
@@ -311,7 +317,7 @@ def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, pr
 
             element = o.EulerBeamElement(
                 node_A=surface_nodes_list[i],
-                node_B=surface_nodes_list[i],
+                node_B=surface_nodes_list[i + 1],
                 A=A,
                 Iyy=Iyy,
                 Izz=Izz,

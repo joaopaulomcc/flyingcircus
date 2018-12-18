@@ -81,7 +81,7 @@ class MaterialPoint(object):
         self.orientation_quaternion = orientation_quaternion
         self.mass = mass
         self.position = position
-        self.Node = Node(position, orientation_quaternion)
+        self.node = Node(position, orientation_quaternion)
         self.Ixx = Ixx
         self.Iyy = Iyy
         self.Izz = Izz
@@ -193,7 +193,7 @@ class Beam:
         self.root_point = root_point
         self.tip_point = tip_point
         self.ElementProperty = ElementProperty
-        self.vector = self.root_point - self.tip_point
+        self.vector = m.normalize(self.tip_point - self.root_point)
         self.L = m.norm(self.vector)
 
     def create_grid(self, n_elements):
@@ -202,8 +202,13 @@ class Beam:
 
         # Calculate rotation quarternion
         x_axis = np.array([1, 0, 0])
+
         rot_axis = m.cross(x_axis, self.vector)
-        rot_angle = f.cos_between(x_axis, self.vector)
+
+        if np.array_equal(rot_axis, np.zeros(3)):
+            rot_axis = x_axis
+
+        rot_angle = f.angle_between(x_axis, self.vector)
         rot_quaternion = Quaternion(axis=rot_axis, angle=rot_angle)
 
         # Calculate Root and Tip nodes

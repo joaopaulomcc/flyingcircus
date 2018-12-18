@@ -495,13 +495,13 @@ def interpolate_nodes(node_1, node_2, n_nodes):
 
     for i, quaternion in enumerate(
         Quaternion.intermediates(
-            node_1.quaternion, node_2.quaternion, (n_nodes - 1), include_endpoints=True
+            node_1.quaternion, node_2.quaternion, (n_nodes - 2), include_endpoints=True
         )
     ):
 
         vector = node_2.xyz - node_1.xyz
 
-        node_xyz = node_1.xyz + i * vector / n_nodes
+        node_xyz = node_1.xyz + i * vector / (n_nodes - 1)
         node_quaternion = quaternion
 
         node_list.append([node_xyz, node_quaternion])
