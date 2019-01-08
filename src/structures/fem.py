@@ -24,7 +24,7 @@ def number_nodes(components_list, components_nodes_list, connections_list):
 
         for j, node in enumerate(components_nodes_list[i]):
 
-            # If the node is the root of the component check if it is connected to a node tha has
+            # If the node is the root of the component check if it is connected to a node that has
             # already been numbered
             if j == 0:
                 # Check if node is part of a connection
@@ -63,7 +63,7 @@ def number_nodes(components_list, components_nodes_list, connections_list):
 
             # If the node is the tip of the component check if it is connected to a node tha has
             # already been numbered, same as the root
-            if j == len(components_nodes_list[i]) - 1:
+            elif j == len(components_nodes_list[i]) - 1:
                 # Check if node is part of a connection
                 node_identifier = component.identifier + "-TIP"
                 connections = check_connections(
@@ -157,7 +157,7 @@ def create_macrosurface_connections(macrosurface):
 
     if middle_index == 0:
 
-       for i in range(len(macrosurface.surface_list) - 1):
+        for i in range(len(macrosurface.surface_list) - 1):
 
             connection = o.Connection(
                 component1=macrosurface.surface_list[i],
@@ -203,7 +203,9 @@ def create_macrosurface_connections(macrosurface):
 # ==================================================================================================
 
 
-def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, prop_choice="MIDDLE"):
+def generate_macrosurface_fem_elements(
+    macrosurface, macrosurface_nodes_list, prop_choice="MIDDLE"
+):
     """Generates the beam finite elements of a macrosurface object.
 
     Args
@@ -213,7 +215,9 @@ def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, pr
 
     macrosurface_elements = []
 
-    for surface, surface_nodes_list in zip(macrosurface.surface_list, macrosurface_nodes_list):
+    for surface, surface_nodes_list in zip(
+        macrosurface.surface_list, macrosurface_nodes_list
+    ):
 
         n_nodes = len(surface_nodes_list)
 
@@ -253,10 +257,8 @@ def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, pr
         root_y = surface_nodes_list[0].y
         tip_y = surface_nodes_list[-1].y
 
-        interpolation = (
-            lambda root_prop, tip_prop, node_y: (
-                np.interp([node_y], [root_y, tip_y], [root_prop, tip_prop])
-            )
+        interpolation = lambda root_prop, tip_prop, node_y: (
+            np.interp([node_y], [root_y, tip_y], [root_prop, tip_prop])
         )
 
         # Calculation of the interpolated properties for each of the nodes
@@ -313,7 +315,9 @@ def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, pr
                 G = (Gs[i] + Gs[i + 1]) / 2
 
             else:
-                print("ERROR: Invalid prop_choice, options are 'ROOT', 'TIP' and 'MIDDLE'")
+                print(
+                    "ERROR: Invalid prop_choice, options are 'ROOT', 'TIP' and 'MIDDLE'"
+                )
 
             element = o.EulerBeamElement(
                 node_A=surface_nodes_list[i],
@@ -333,7 +337,37 @@ def generate_macrosurface_fem_elements(macrosurface, macrosurface_nodes_list, pr
 
     return macrosurface_elements
 
+
 # ==================================================================================================
 
-def generate_beam_fem_elements():
-    pass
+
+def generate_beam_fem_elements(beam, beam_nodes_list, prop_choice="MIDDLE"):
+
+    n_nodes = len(beam_nodes_list)
+
+    beam_elements = []
+
+    for i in range(n_nodes - 1):
+
+        A = beam.ElementProperty.A
+        Iyy = beam.ElementProperty.Iyy
+        Izz = beam.ElementProperty.Izz
+        J = beam.ElementProperty.J
+        E = beam.ElementProperty.E
+        G = beam.ElementProperty.G
+
+        element = o.EulerBeamElement(
+            node_A=beam_nodes_list[i],
+            node_B=beam_nodes_list[i + 1],
+            A=A,
+            Iyy=Iyy,
+            Izz=Izz,
+            J=J,
+            E=E,
+            G=G,
+            prop_choice=prop_choice,
+        )
+
+        beam_elements.append(element)
+
+    return beam_elements
