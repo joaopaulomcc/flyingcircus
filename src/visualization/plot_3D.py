@@ -221,18 +221,28 @@ def plot_node(Node, plot_axis):
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_structure(structure):
+def plot_structure(struct_elements):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d", proj_type="persp")
 
-    for beam in structure.beams:
-        point_A = structure.points[beam.point_A_index]
-        point_B = structure.points[beam.point_B_index]
-        x = [point_A[0], point_B[0]]
-        y = [point_A[1], point_B[1]]
-        z = [point_A[2], point_B[2]]
-        ax.plot(x, y, z, "-ko", markersize=2)
+    for component_elements in struct_elements:
+        for beam_element in component_elements:
+
+            point_A = [
+                beam_element.node_A.x,
+                beam_element.node_A.y,
+                beam_element.node_A.z,
+            ]
+            point_B = [
+                beam_element.node_B.x,
+                beam_element.node_B.y,
+                beam_element.node_B.z,
+            ]
+            x = [point_A[0], point_B[0]]
+            y = [point_A[1], point_B[1]]
+            z = [point_A[2], point_B[2]]
+            ax.plot(x, y, z, "-ko", markersize=2)
 
     # Plot coordinate system
     ax.quiver(
@@ -243,6 +253,52 @@ def plot_structure(structure):
     ax.set_xlabel("X axis")
     ax.set_ylabel("Y axis")
     ax.set_zlabel("Z axis")
+    set_axes_equal(ax)
+    plt.show(block=False)
+
+    return ax, fig
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=1):
+
+    ax, fig = plot_structure(struct_elements)
+
+    deformed_grid = []
+    for i, node in enumerate(node_vector):
+        deformed_grid.append(
+            [
+                node.x + scale_factor * deformations[i][0],
+                node.y + scale_factor * deformations[i][1],
+                node.z + scale_factor * deformations[i][2],
+                deformations[i][3],
+                deformations[i][4],
+                deformations[i][5],
+            ]
+        )
+
+    for component_elements in struct_elements:
+        for beam_element in component_elements:
+
+            point_A = [
+                deformed_grid[beam_element.node_A.number][0],
+                deformed_grid[beam_element.node_A.number][1],
+                deformed_grid[beam_element.node_A.number][2],
+            ]
+
+            point_B = [
+                deformed_grid[beam_element.node_B.number][0],
+                deformed_grid[beam_element.node_B.number][1],
+                deformed_grid[beam_element.node_B.number][2],
+            ]
+
+            x = [point_A[0], point_B[0]]
+            y = [point_A[1], point_B[1]]
+            z = [point_A[2], point_B[2]]
+            ax.plot(x, y, z, "-ro", markersize=2)
+
     set_axes_equal(ax)
     plt.show(block=False)
 
@@ -270,11 +326,13 @@ def plot_aircraft(aircraft):
     color_norm = matplotlib.colors.Normalize(vmin=0, vmax=n_colors - 1)
     scalar_map = matplotlib.cm.ScalarMappable(norm=color_norm, cmap=color_map)
 
+    """
     # Plot coordinate system
     ax.quiver(
         [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black"
     )
     ax.scatter([0], [0], [0], color="red")
+    """
 
     # Plot CG
     if aircraft.inertial_properties is not None:
@@ -344,7 +402,7 @@ def plot_aircraft(aircraft):
 
             ax.plot(x, y, z, c="black")
 
-    # Plot aircraft beams
+        # Plot aircraft beams
         for beam in aircraft.beams:
             x = np.array([beam.root_point[0], beam.tip_point[0]])
             y = np.array([beam.root_point[1], beam.tip_point[1]])

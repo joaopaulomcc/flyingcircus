@@ -371,3 +371,156 @@ def generate_beam_fem_elements(beam, beam_nodes_list, prop_choice="MIDDLE"):
         beam_elements.append(element)
 
     return beam_elements
+
+
+# ==================================================================================================
+
+
+def structural_solver(struct_grid, struct_elements, struct_loads, struct_constraints):
+
+    node_vector = []
+    elements_vector = []
+
+    # Add all nodes to a vector and sort then by node number and remove duplicates
+
+    for component_grid in struct_grid:
+        node_vector += component_grid
+
+    # Sort the vector
+    node_vector.sort(key=lambda x: x.number)
+
+    last_node_number = None
+    remove_queue = []
+
+    # Find nodes with the same node number
+    for i, node in enumerate(node_vector):
+
+        if node.number == last_node_number:
+            remove_queue.append(i)
+        else:
+            last_node_number = node.number
+
+    # Delete duplicate nodes
+    # Iterate backwards so indice number don't change
+    for i in reversed(remove_queue):
+        del node_vector[i]
+
+    # Add all elements to a vector
+    for component_elements in struct_elements:
+        elements_vector += component_elements
+
+    K_global, F_global = create_global_FEM_matrices(node_vector, elements_vector, struct_loads)
+
+    X_global = FEM_solver(K_global, F_global, struct_constraints)
+
+    # Find support reactions
+    force_vector = K_global @ X_global
+
+    # Deformed grid
+    deformations = np.reshape(X_global, (len(node_vector), 6))
+
+    deformed_grid = []
+    for i, node in enumerate(node_vector):
+        deformed_grid.append(
+            [
+                node.x + deformations[i][0],
+                node.y + deformations[i][1],
+                node.z + deformations[i][2],
+                deformations[i][3],
+                deformations[i][4],
+                deformations[i][5],
+            ]
+        )
+
+    return deformed_grid, force_vector, deformations, node_vector
+
+
+# ==================================================================================================
+
+
+def create_global_FEM_matrices(nodes, fem_elements, loads):
+
+    n_nodes = len(nodes)
+
+    # Generate global stiffness matrix
+    K_global = np.zeros((n_nodes * 6, n_nodes * 6))
+    F_global = np.zeros((n_nodes * 6, 1))
+
+    for fem_element in fem_elements:
+        K_element = fem_element.calc_K_global()
+        correlation_vector = fem_element.correlation_vector
+
+        for i in range(len(correlation_vector)):
+            for j in range(len(correlation_vector)):
+                K_global[correlation_vector[i]][correlation_vector[j]] += K_element[i][
+                    j
+                ]
+
+    # Generate Force Matrix
+    for load in loads:
+        node_index = load.application_node.number * 6
+        correlation_vector = [
+            node_index,
+            node_index + 1,
+            node_index + 2,
+            node_index + 3,
+            node_index + 4,
+            node_index + 5,
+        ]
+
+        for i in range(len(correlation_vector)):
+            F_global[correlation_vector[i]] += load.load[i]
+
+    return K_global, F_global
+
+# ==================================================================================================
+
+
+def FEM_solver(K_global, F_global, constraints):
+
+    n_dof = len(F_global)
+    X_global = np.zeros((n_dof, 1))
+
+    # Find constrained degrees of freedom
+    constrained_dof = [False for i in range(n_dof)]
+
+    for constraint in constraints:
+        node_index = constraint.application_node.number * 6
+        correlation_vector = [
+            node_index,
+            node_index + 1,
+            node_index + 2,
+            node_index + 3,
+            node_index + 4,
+            node_index + 5,
+        ]
+
+        for i in range(len(correlation_vector)):
+            if constraint.dof_constraints[i] is not None:
+                constrained_dof[correlation_vector[i]] = True
+                X_global[correlation_vector[i]] += constraint.dof_constraints[i]
+
+    # Created reduced stiffess and force matrices
+    red_K_global = np.copy(K_global)
+    red_F_global = np.copy(F_global)
+
+    dof_to_delete = []
+    for i, dof in enumerate(constrained_dof):
+        if dof:
+            dof_to_delete.append(i)
+
+    red_F_global = np.delete(red_F_global, dof_to_delete, 0)
+    red_K_global = np.delete(red_K_global, dof_to_delete, 0)
+    red_K_global = np.delete(red_K_global, dof_to_delete, 1)
+
+    # Solve linear System
+    red_X_global = np.linalg.solve(red_K_global, red_F_global)
+
+    # Copy results do deformation vector
+    counter = 0
+    for i, dof in enumerate(constrained_dof):
+        if not dof:
+            X_global[i] = red_X_global[counter]
+            counter += 1
+
+    return X_global

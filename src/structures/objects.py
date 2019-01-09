@@ -222,12 +222,12 @@ class EulerBeamElement(object):
         zero = np.zeros((3, 3))
         r = np.zeros((3, 3))
 
-        for i, local_axis in [
+        for i, local_axis in enumerate([
             orientation_node.x_axis,
             orientation_node.y_axis,
             orientation_node.z_axis,
-        ]:
-            for j, global_axis in [x_global, y_global, z_global]:
+        ]):
+            for j, global_axis in enumerate([x_global, y_global, z_global]):
                 r[i][j] = geo.functions.cos_between(local_axis, global_axis)
 
         rotation_matrix = np.block(
@@ -256,7 +256,7 @@ class EulerBeamElement(object):
 
         return K_local
 
-    def calc_K_global(self, grid):
+    def calc_K_global(self):
         """ Apply the rotation matrix to the local stiffness matrix and calculate the element
             global stiffness matrix.
 
@@ -268,7 +268,7 @@ class EulerBeamElement(object):
         """
 
         rotation_matrix = self.calc_rotation_matrix()
-        K_local = self.calc_K_local(grid)
+        K_local = self.calc_K_local()
 
         # Global Stiffness Matrix
         K_global = rotation_matrix.transpose() @ (K_local @ rotation_matrix)
@@ -306,19 +306,20 @@ class Section:
 
 
 class Load:
-    def __init__(self, application_point_index, components):
+    def __init__(self, application_node, load):
 
-        self.application_point_index = application_point_index
-        self.components = components
+        self.application_node = application_node
+        self.load = load
+
 
 
 # ==================================================================================================
 
 
 class Constraint:
-    def __init__(self, application_point_index, dof_constraints):
+    def __init__(self, application_node, dof_constraints):
 
-        self.application_point_index = application_point_index
+        self.application_node = application_node
         self.dof_constraints = dof_constraints
 
 

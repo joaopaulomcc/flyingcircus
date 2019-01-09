@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from pyquaternion import Quaternion
+
 
 from context import src
-from pyquaternion import Quaternion
 from src import geometry as geo
 from src import visualization as vis
 from src import aerodynamics as aero
@@ -14,6 +15,7 @@ from src import structures as struct
 # Simple Aircraft for testing purposes
 
 # WING
+# Definition of the wing macro surface and it's components
 
 airfoil = "NACA 0012"
 
@@ -30,7 +32,7 @@ material = struct.objects.Material(
 )
 
 wing_section = geo.objects.Section(
-    airfoil=airfoil,
+    identifier=airfoil,
     material=material,
     area=0.15,
     Iyy=0.000_281_25,
@@ -39,130 +41,135 @@ wing_section = geo.objects.Section(
     shear_center=0.5,
 )
 
+# --------------------------------------------------------------------------------------------------
 # Stub
-root_chord = 2
-root_section = wing_section
-tip_chord = 1.5
-tip_section = wing_section
-length = 2
-leading_edge_sweep_angle_deg = 30
-dihedral_angle_deg = 5
-tip_torsion_angle_deg = -1
-control_surface_hinge_position = None
+# Definition of the right and left wing stubs
 
-surface_identifier = "right_stub"
+STUB_ROOT_CHORD = 2
+STUB_ROOT_SECTION = wing_section
+STUB_TIP_CHORD = 1.5
+STUB_TIP_SECTION = wing_section
+STUB_LENGTH = 2
+STUB_LEADING_EDGE_SWEEP_ANGLE_DEG = 30
+STUB_DIHEDRAL_ANGLE_DEG = 5
+STUB_TIP_TORSION_ANGLE_DEG = -1
+STUB_CONTROL_SURFACE_HINGE_POSITION = None
+
 right_stub = geo.objects.Surface(
-    surface_identifier,
-    root_chord,
-    root_section,
-    tip_chord,
-    tip_section,
-    length,
-    leading_edge_sweep_angle_deg,
-    dihedral_angle_deg,
-    tip_torsion_angle_deg,
-    control_surface_hinge_position,
+    identifier="right_stub",
+    root_chord=STUB_ROOT_CHORD,
+    root_section=STUB_ROOT_SECTION,
+    tip_chord=STUB_TIP_CHORD,
+    tip_section=STUB_TIP_SECTION,
+    length=STUB_LENGTH,
+    leading_edge_sweep_angle_deg=STUB_LEADING_EDGE_SWEEP_ANGLE_DEG,
+    dihedral_angle_deg=STUB_DIHEDRAL_ANGLE_DEG,
+    tip_torsion_angle_deg=STUB_TIP_TORSION_ANGLE_DEG,
+    control_surface_hinge_position=STUB_CONTROL_SURFACE_HINGE_POSITION,
 )
 
-surface_identifier = "left_stub"
 left_stub = geo.objects.Surface(
-    surface_identifier,
-    root_chord,
-    root_section,
-    tip_chord,
-    tip_section,
-    length,
-    leading_edge_sweep_angle_deg,
-    dihedral_angle_deg,
-    tip_torsion_angle_deg,
-    control_surface_hinge_position,
+    identifier="left_stub",
+    root_chord=STUB_ROOT_CHORD,
+    root_section=STUB_ROOT_SECTION,
+    tip_chord=STUB_TIP_CHORD,
+    tip_section=STUB_TIP_SECTION,
+    length=STUB_LENGTH,
+    leading_edge_sweep_angle_deg=STUB_LEADING_EDGE_SWEEP_ANGLE_DEG,
+    dihedral_angle_deg=STUB_DIHEDRAL_ANGLE_DEG,
+    tip_torsion_angle_deg=STUB_TIP_TORSION_ANGLE_DEG,
+    control_surface_hinge_position=STUB_CONTROL_SURFACE_HINGE_POSITION,
 )
 
 # --------------------------------------------------------------------------------------------------
 # Aileron
+# Definition of the right and left wing ailerons
 
-root_chord = 1.5
-root_section = wing_section
-tip_chord = 1
-tip_section = wing_section
-length = 2
-leading_edge_sweep_angle_deg = 30
-dihedral_angle_deg = 5
-tip_torsion_angle_deg = -2
-control_surface_hinge_position = 0.75
+AILERON_ROOT_CHORD = 1.5
+AILERON_ROOT_SECTION = wing_section
+AILERON_TIP_CHORD = 1
+AILERON_TIP_SECTION = wing_section
+AILERON_LENGTH = 2
+AILERON_LEADING_EDGE_SWEEP_ANGLE_DEG = 30
+AILERON_DIHEDRAL_ANGLE_DEG = 5
+AILERON_TIP_TORSION_ANGLE_DEG = -2
+AILERON_CONTROL_SURFACE_HINGE_POSITION = 0.75
 
-surface_identifier = "right_aileron"
 right_aileron = geo.objects.Surface(
-    surface_identifier,
-    root_chord,
-    root_section,
-    tip_chord,
-    tip_section,
-    length,
-    leading_edge_sweep_angle_deg,
-    dihedral_angle_deg,
-    tip_torsion_angle_deg,
-    control_surface_hinge_position,
+    identifier="right_aileron",
+    root_chord=AILERON_ROOT_CHORD,
+    root_section=AILERON_ROOT_SECTION,
+    tip_chord=AILERON_TIP_CHORD,
+    tip_section=AILERON_TIP_SECTION,
+    length=AILERON_LENGTH,
+    leading_edge_sweep_angle_deg=AILERON_LEADING_EDGE_SWEEP_ANGLE_DEG,
+    dihedral_angle_deg=AILERON_DIHEDRAL_ANGLE_DEG,
+    tip_torsion_angle_deg=AILERON_TIP_TORSION_ANGLE_DEG,
+    control_surface_hinge_position=AILERON_CONTROL_SURFACE_HINGE_POSITION,
 )
 
-surface_identifier = "left_aileron"
 left_aileron = geo.objects.Surface(
-    surface_identifier,
-    root_chord,
-    root_section,
-    tip_chord,
-    tip_section,
-    length,
-    leading_edge_sweep_angle_deg,
-    dihedral_angle_deg,
-    tip_torsion_angle_deg,
-    control_surface_hinge_position,
+    identifier="left_aileron",
+    root_chord=AILERON_ROOT_CHORD,
+    root_section=AILERON_ROOT_SECTION,
+    tip_chord=AILERON_TIP_CHORD,
+    tip_section=AILERON_TIP_SECTION,
+    length=AILERON_LENGTH,
+    leading_edge_sweep_angle_deg=AILERON_LEADING_EDGE_SWEEP_ANGLE_DEG,
+    dihedral_angle_deg=AILERON_DIHEDRAL_ANGLE_DEG,
+    tip_torsion_angle_deg=AILERON_TIP_TORSION_ANGLE_DEG,
+    control_surface_hinge_position=AILERON_CONTROL_SURFACE_HINGE_POSITION,
 )
 
 # --------------------------------------------------------------------------------------------------
 # Winglet
+# Definition of the right and left wing winglets
 
-root_chord = 1
-root_section = wing_section
-tip_chord = 0.3
-tip_section = wing_section
-length = 1
-leading_edge_sweep_angle_deg = 45
-dihedral_angle_deg = 90
-tip_torsion_angle_deg = 0
-control_surface_hinge_position = None
+WINGLET_ROOT_CHORD = 1
+WINGLET_ROOT_SECTION = wing_section
+WINGLET_TIP_CHORD = 0.3
+WINGLET_TIP_SECTION = wing_section
+WINGLET_LENGTH = 1
+WINGLET_LEADING_EDGE_SWEEP_ANGLE_DEG = 45
+WINGLET_DIHEDRAL_ANGLE_DEG = 90
+WINGLET_TIP_TORSION_ANGLE_DEG = 0
+WINGLET_CONTROL_SURFACE_HINGE_POSITION = None
 
-surface_identifier = "right_winglet"
 right_winglet = geo.objects.Surface(
-    surface_identifier,
-    root_chord,
-    root_section,
-    tip_chord,
-    tip_section,
-    length,
-    leading_edge_sweep_angle_deg,
-    dihedral_angle_deg,
-    tip_torsion_angle_deg,
-    control_surface_hinge_position,
+    identifier="right_winglet",
+    root_chord=WINGLET_ROOT_CHORD,
+    root_section=WINGLET_ROOT_SECTION,
+    tip_chord=WINGLET_TIP_CHORD,
+    tip_section=WINGLET_TIP_SECTION,
+    length=WINGLET_LENGTH,
+    leading_edge_sweep_angle_deg=WINGLET_LEADING_EDGE_SWEEP_ANGLE_DEG,
+    dihedral_angle_deg=WINGLET_DIHEDRAL_ANGLE_DEG,
+    tip_torsion_angle_deg=WINGLET_TIP_TORSION_ANGLE_DEG,
+    control_surface_hinge_position=WINGLET_CONTROL_SURFACE_HINGE_POSITION,
 )
 
-surface_identifier = "left_winglet"
 left_winglet = geo.objects.Surface(
-    surface_identifier,
-    root_chord,
-    root_section,
-    tip_chord,
-    tip_section,
-    length,
-    leading_edge_sweep_angle_deg,
-    dihedral_angle_deg,
-    tip_torsion_angle_deg,
-    control_surface_hinge_position,
+    identifier="left_winglet",
+    root_chord=WINGLET_ROOT_CHORD,
+    root_section=WINGLET_ROOT_SECTION,
+    tip_chord=WINGLET_TIP_CHORD,
+    tip_section=WINGLET_TIP_SECTION,
+    length=WINGLET_LENGTH,
+    leading_edge_sweep_angle_deg=WINGLET_LEADING_EDGE_SWEEP_ANGLE_DEG,
+    dihedral_angle_deg=WINGLET_DIHEDRAL_ANGLE_DEG,
+    tip_torsion_angle_deg=WINGLET_TIP_TORSION_ANGLE_DEG,
+    control_surface_hinge_position=WINGLET_CONTROL_SURFACE_HINGE_POSITION,
 )
 
 # --------------------------------------------------------------------------------------------------
 # Wing macrosurface
-wing_surface_list = [
+# Creation of the wing macrosurface object
+
+WING_POSITION = np.array([2.0, 0, 0])
+WING_INCIDENCE = 2
+WING_SYMMETRY_PLANE = "XZ"
+
+WING_SURFACE_LIST = [
     left_winglet,
     left_aileron,
     left_stub,
@@ -170,139 +177,142 @@ wing_surface_list = [
     right_aileron,
     right_winglet,
 ]
-# wing_surface_list = [left_stub, right_stub]
-wing_incidence = 2
-wing_position = np.array([0.0, 0, 0])
-wing_symmetry_plane = "XZ"
 
 wing = geo.objects.MacroSurface(
-    wing_position, wing_incidence, wing_surface_list, symmetry_plane=wing_symmetry_plane
+    position=WING_POSITION,
+    incidence=WING_INCIDENCE,
+    surface_list=WING_SURFACE_LIST,
+    symmetry_plane=WING_SYMMETRY_PLANE,
 )
 
 # ==================================================================================================
 # Horizontal Tail
-root_chord = 1
-root_section = wing_section
-tip_chord = 0.6
-tip_section = wing_section
-length = 2
-leading_edge_sweep_angle_deg = 25
-dihedral_angle_deg = 0
-tip_torsion_angle_deg = 0
-control_surface_hinge_position = 0.75
+# Definition of the horizontal tail macrosurface and it's components
 
-surface_identifier = "right_elevator"
+H_TAIL_ROOT_CHORD = 1
+H_TAIL_ROOT_SECTION = wing_section
+H_TAIL_TIP_CHORD = 0.6
+H_TAIL_TIP_SECTION = wing_section
+H_TAIL_LENGTH = 2
+H_TAIL_LEADING_EDGE_SWEEP_ANGLE_DEG = 25
+H_TAIL_DIHEDRAL_ANGLE_DEG = 0
+H_TAIL_TIP_TORSION_ANGLE_DEG = 0
+H_TAIL_CONTROL_SURFACE_HINGE_POSITION = 0.75
+
 right_elevator = geo.objects.Surface(
-    surface_identifier,
-    root_chord,
-    root_section,
-    tip_chord,
-    tip_section,
-    length,
-    leading_edge_sweep_angle_deg,
-    dihedral_angle_deg,
-    tip_torsion_angle_deg,
-    control_surface_hinge_position,
+    identifier="right_elevator",
+    root_chord=H_TAIL_ROOT_CHORD,
+    root_section=H_TAIL_ROOT_SECTION,
+    tip_chord=H_TAIL_TIP_CHORD,
+    tip_section=H_TAIL_TIP_SECTION,
+    length=H_TAIL_LENGTH,
+    leading_edge_sweep_angle_deg=H_TAIL_LEADING_EDGE_SWEEP_ANGLE_DEG,
+    dihedral_angle_deg=H_TAIL_DIHEDRAL_ANGLE_DEG,
+    tip_torsion_angle_deg=H_TAIL_TIP_TORSION_ANGLE_DEG,
+    control_surface_hinge_position=H_TAIL_CONTROL_SURFACE_HINGE_POSITION,
 )
 
-surface_identifier = "left_elevator"
 left_elevator = geo.objects.Surface(
-    surface_identifier,
-    root_chord,
-    root_section,
-    tip_chord,
-    tip_section,
-    length,
-    leading_edge_sweep_angle_deg,
-    dihedral_angle_deg,
-    tip_torsion_angle_deg,
-    control_surface_hinge_position,
+    identifier="left_elevator",
+    root_chord=H_TAIL_ROOT_CHORD,
+    root_section=H_TAIL_ROOT_SECTION,
+    tip_chord=H_TAIL_TIP_CHORD,
+    tip_section=H_TAIL_TIP_SECTION,
+    length=H_TAIL_LENGTH,
+    leading_edge_sweep_angle_deg=H_TAIL_LEADING_EDGE_SWEEP_ANGLE_DEG,
+    dihedral_angle_deg=H_TAIL_DIHEDRAL_ANGLE_DEG,
+    tip_torsion_angle_deg=H_TAIL_TIP_TORSION_ANGLE_DEG,
+    control_surface_hinge_position=H_TAIL_CONTROL_SURFACE_HINGE_POSITION,
 )
 
-h_tail_surface_list = [left_elevator, right_elevator]
-h_tail_incidence = 0
-h_tail_position = np.array([7, 0, 0.5])
-h_tail_symmetry_plane = "XZ"
+H_TAIL_POSITION = np.array([7, 0, 0.5])
+H_TAIL_INCIDENCE = 0
+H_TAIL_SURFACE_LIST = [left_elevator, right_elevator]
+H_TAIL_SYMMETRY_PLANE = "XZ"
 
 h_tail = geo.objects.MacroSurface(
-    h_tail_position,
-    h_tail_incidence,
-    h_tail_surface_list,
-    symmetry_plane=h_tail_symmetry_plane,
+    position=H_TAIL_POSITION,
+    incidence=H_TAIL_INCIDENCE,
+    surface_list=H_TAIL_SURFACE_LIST,
+    symmetry_plane=H_TAIL_SYMMETRY_PLANE,
 )
 
 # ==================================================================================================
 # Vertical Tail
-root_chord = 1
-root_section = wing_section
-tip_chord = 0.5
-tip_section = wing_section
-length = 1.5
-leading_edge_sweep_angle_deg = 45
-dihedral_angle_deg = 90
-tip_torsion_angle_deg = 0
-control_surface_hinge_position = 0.6
+# Definition of the vertical tail macrosurface and it's components
 
-surface_identifier = "rudder"
+V_TAIL_ROOT_CHORD = 1
+V_TAIL_ROOT_SECTION = wing_section
+V_TAIL_TIP_CHORD = 0.5
+V_TAIL_TIP_SECTION = wing_section
+V_TAIL_LENGTH = 1.5
+V_TAIL_LEADING_EDGE_SWEEP_ANGLE_DEG = 45
+V_TAIL_DIHEDRAL_ANGLE_DEG = 90
+V_TAIL_TIP_TORSION_ANGLE_DEG = 0
+V_TAIL_CONTROL_SURFACE_HINGE_POSITION = 0.6
+
 rudder = geo.objects.Surface(
-    surface_identifier,
-    root_chord,
-    root_section,
-    tip_chord,
-    tip_section,
-    length,
-    leading_edge_sweep_angle_deg,
-    dihedral_angle_deg,
-    tip_torsion_angle_deg,
-    control_surface_hinge_position,
+    identifier="rudder",
+    root_chord=V_TAIL_ROOT_CHORD,
+    root_section=V_TAIL_ROOT_SECTION,
+    tip_chord=V_TAIL_TIP_CHORD,
+    tip_section=V_TAIL_TIP_SECTION,
+    length=V_TAIL_LENGTH,
+    leading_edge_sweep_angle_deg=V_TAIL_LEADING_EDGE_SWEEP_ANGLE_DEG,
+    dihedral_angle_deg=V_TAIL_DIHEDRAL_ANGLE_DEG,
+    tip_torsion_angle_deg=V_TAIL_TIP_TORSION_ANGLE_DEG,
+    control_surface_hinge_position=V_TAIL_CONTROL_SURFACE_HINGE_POSITION,
 )
-v_tail_surface_list = [rudder]
-v_tail_incidence = 0
-v_tail_position = np.array([7, 0, 0.5])
-v_tail_symmetry_plane = None
+
+V_TAIL_POSITION = np.array([7, 0, 0.5])
+V_TAIL_INCIDENCE = 0
+V_TAIL_SURFACE_LIST = [rudder]
+V_TAIL_SYMMETRY_PLANE = None
 
 v_tail = geo.objects.MacroSurface(
-    v_tail_position,
-    v_tail_incidence,
-    v_tail_surface_list,
-    symmetry_plane=v_tail_symmetry_plane,
+    position=V_TAIL_POSITION,
+    incidence=V_TAIL_INCIDENCE,
+    surface_list=V_TAIL_SURFACE_LIST,
+    symmetry_plane=V_TAIL_SYMMETRY_PLANE,
 )
 
 # ==================================================================================================
 # ==================================================================================================
 # Fuselage Definition
+# Definition of the fuselage as a Beam object
 
-front_root_point = np.array([1, 0, 0])
-front_tip_point = np.array([3, 0, 0])
+FRONT_ROOT_POINT = np.array([0, 0, 0])
+FRONT_TIP_POINT = np.array([3, 0, 0])
 
-back_root_point = np.array([3, 0, 0])
-back_tip_point = np.array([7.5, 0, 0.5])
+BACK_ROOT_POINT = np.array([3, 0, 0])
+BACK_TIP_POINT = np.array([7.5, 0, 0])
 
 fuselage_material = material
 
 fuselage_section = geo.objects.Section(
     airfoil="Circle",
     material=fuselage_material,
-    area=0.282_743_338_8,
-    Iyy=0.028_981_192_2,
-    Izz=0.028_981_192_2,
-    J=0.057_962_384_5,
+    area=1,
+    Iyy=1,
+    Izz=1,
+    J=1,
     shear_center=0.5,
 )
 
 fuselage_property = struct.objects.ElementProperty(fuselage_section, fuselage_material)
 
+
 front_fuselage = geo.objects.Beam(
     identifier="front_fuselage",
-    root_point=front_root_point,
-    tip_point=front_tip_point,
+    root_point=FRONT_ROOT_POINT,
+    tip_point=FRONT_TIP_POINT,
     ElementProperty=fuselage_property,
 )
 
 back_fuselage = geo.objects.Beam(
     identifier="back_fuselage",
-    root_point=back_root_point,
-    tip_point=back_tip_point,
+    root_point=BACK_ROOT_POINT,
+    tip_point=BACK_TIP_POINT,
     ElementProperty=fuselage_property,
 )
 
@@ -317,25 +327,37 @@ def engine_thrust_function(throtle, parameters):
     return 4000 * throtle
 
 
-left_engine_position = np.array([0, -2.5, 0])
-engine_inertial_properties = "engine inertial properties"
-engine_thrust_vector = np.array([-1, 0, 0])
-orientation_quaternion = Quaternion(axis=np.array([0, 0, 1]), angle=np.pi)
+ENGINE_ORIENTATION_QUATERNION = Quaternion(axis=np.array([0, 0, 1]), angle=np.pi)
+ENGINE_INERTIA = geo.objects.MaterialPoint(
+    identifier="engine_inertia",
+    orientation_quaternion=Quaternion(),
+    mass=1,
+    position=np.array([0, 0, 0]),
+    Ixx=1,
+    Iyy=1,
+    Izz=1,
+    Ixy=1,
+    Ixz=1,
+    Iyz=1,
+)
+
+LEFT_ENGINE_POSITION = np.array([2, -2, -0.5])
+RIGHT_ENGINE_POSITION = np.array([2, 2, -0.5])
+
 
 left_engine = geo.objects.Engine(
     identifier="left_engine",
-    position=left_engine_position,
-    orientation_quaternion=orientation_quaternion,
-    inertial_properties=engine_inertial_properties,
+    position=LEFT_ENGINE_POSITION,
+    orientation_quaternion=ENGINE_ORIENTATION_QUATERNION,
+    inertial_properties=ENGINE_INERTIA,
     thrust_function=engine_thrust_function,
 )
 
-right_engine_position = np.array([0, 2.5, 0])
 right_engine = geo.objects.Engine(
     identifier="right_engine",
-    position=right_engine_position,
-    orientation_quaternion=orientation_quaternion,
-    inertial_properties=engine_inertial_properties,
+    position=RIGHT_ENGINE_POSITION,
+    orientation_quaternion=ENGINE_ORIENTATION_QUATERNION,
+    inertial_properties=ENGINE_INERTIA,
     thrust_function=engine_thrust_function,
 )
 
@@ -382,7 +404,7 @@ aircraft_inertia = geo.objects.MaterialPoint(
 
 # ==================================================================================================
 # ==================================================================================================
-# Aircraft Structure Conncetions
+# Aircraft Structure Connections
 
 
 front_fuselage_to_wing = struct.objects.Connection(
@@ -466,13 +488,14 @@ simple_aircraft = geo.objects.Aircraft(
     connections=connections,
 )
 
-"""
+
 print("# Plotting Geometry...")
 
 vis.plot_3D.plot_aircraft(simple_aircraft)
 
 
 print()
+"""
 user_input = input("# Proceed with calculation? [Y/N]\n")
 
 if user_input == "N" or user_input == "n":
@@ -744,6 +767,21 @@ v_tail_fem_elements = struct.fem.generate_macrosurface_fem_elements(
     macrosurface=v_tail, macrosurface_nodes_list=v_tail_struct_grid, prop_choice="MIDDLE"
 )
 
+front_fuselage_elements = struct.fem.generate_beam_fem_elements(
+    beam=front_fuselage, beam_nodes_list=front_fuselage_struct_grid, prop_choice="MIDDLE"
+)
+
+back_fuselage_elements = struct.fem.generate_beam_fem_elements(
+    beam=back_fuselage, beam_nodes_list=back_fuselage_struct_grid, prop_choice="MIDDLE"
+)
+
+right_pylon_elements = struct.fem.generate_beam_fem_elements(
+    beam=right_engine_pylon, beam_nodes_list=right_engine_pylon_struct_grid, prop_choice="MIDDLE"
+)
+
+left_pylon_elements = struct.fem.generate_beam_fem_elements(
+    beam=left_engine_pylon, beam_nodes_list=left_engine_pylon_struct_grid, prop_choice="MIDDLE"
+)
 
 
 print()

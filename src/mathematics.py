@@ -41,28 +41,28 @@ def sum2(vec, result):
     """ Calculate the sum of two 3d vectors and store the result in the second parameter. """
     result[0] = vec[0] + result[0]
     result[1] = vec[1] + result[1]
-    result[2] = vec[2] + result[2]      
-    
+    result[2] = vec[2] + result[2]
+
 @jit(nopython = True)
 def sum3(vec1, vec2, result):
     """ Calculate the sum of two 3d vectors and store the result in the third parameter. """
     result[0] = vec1[0] + vec2[0]
     result[1] = vec1[1] + vec2[1]
-    result[2] = vec1[2] + vec2[2]      
+    result[2] = vec1[2] + vec2[2]
 
 @jit(nopython = True)
 def sub2(vec, result):
     """ Calculate the difference of two 3d vectors and store the result in the second parameter. """
     result[0] = result[0] - vec[0]
     result[1] = result[1] - vec[1]
-    result[2] = result[2] - vec[2]  
+    result[2] = result[2] - vec[2]
 
 @jit(nopython = True)
 def sub3(vec1, vec2, result):
     """ Calculate the difference of two 3d vectors and store the result in the third parameter. """
     result[0] = vec1[0] - vec2[0]
     result[1] = vec1[1] - vec2[1]
-    result[2] = vec1[2] - vec2[2] 
+    result[2] = vec1[2] - vec2[2]
 
 
 @jit(nopython = True)
@@ -78,7 +78,7 @@ def mul3(a, vec, result):
     result[0] = a * vec[0]
     result[1] = a * vec[1]
     result[2] = a * vec[2]
-    
+
 @jit(nopython = True)
 def div2(a, result):
     """ Divide a 3d vector by a scalar and store the result in the second parameter."""
@@ -92,20 +92,20 @@ def div3(a, vec, result):
     result[0] = vec[0] / a
     result[1] = vec[1] / a
     result[2] = vec[2] / a
-    
+
 @jit(nopython = True)
 def neg_sum(a, b, c, result):
     """ Calculate the sum of three vectors and multiply the result with -1. """
     result[0] = -(a[0] + b[0] + c[0])
     result[1] = -(a[1] + b[1] + c[1])
     result[2] = -(a[2] + b[2] + c[2])
-    
+
 @jit(nopython = True)
 def copy2(a, result):
     """ Calculate the difference of two 3d vectors. """
     result[0] = a[0]
     result[1] = a[1]
-    result[2] = a[2]    
+    result[2] = a[2]
 
 @jit
 def cross(vec1, vec2):
@@ -182,16 +182,16 @@ def init():
     sum2(vec1, result)
     sum3(vec1, vec2, result)
     sub2(vec1, result)
-    sub3(vec1, vec2, result)    
+    sub3(vec1, vec2, result)
     mul2(a, result)
-    mul3(a, vec1, result) 
-    div2(a, result)     
-    div3(a, vec1, result)  
+    mul3(a, vec1, result)
+    div2(a, result)
+    div3(a, vec1, result)
     result = normalize(vec2)
     normalize1(vec1)
     normalize2(vec1, result)
     cross(vec1, vec2)
-    cross3(vec1, vec2, result) 
+    cross3(vec1, vec2, result)
     dot(vec1, vec2)
     norm(vec1)
 

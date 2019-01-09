@@ -187,21 +187,25 @@ class Node(object):
 
 
 class Beam:
-    def __init__(self, identifier, root_point, tip_point, ElementProperty):
+    def __init__(self, identifier, root_point, tip_point, orientation_vector, ElementProperty):
 
         self.identifier = identifier
         self.root_point = root_point
         self.tip_point = tip_point
+        self.orientation_vector = orientation_vector
         self.ElementProperty = ElementProperty
         self.vector = m.normalize(self.tip_point - self.root_point)
-        self.L = m.norm(self.vector)
+        self.L = m.norm(self.tip_point - self.root_point)
 
     def create_grid(self, n_elements):
 
         n_nodes = n_elements + 1
 
         # Calculate rotation quarternion
+        node = Node(np.array([0.0, 0.0, 0.0]), Quaternion())
         x_axis = np.array([1, 0, 0])
+
+        # Rotate to align x axis with beam vector
 
         rot_axis = m.cross(x_axis, self.vector)
 
@@ -209,7 +213,23 @@ class Beam:
             rot_axis = x_axis
 
         rot_angle = f.angle_between(x_axis, self.vector)
-        rot_quaternion = Quaternion(axis=rot_axis, angle=rot_angle)
+        rot_quaternion_1 = Quaternion(axis=rot_axis, angle=rot_angle)
+
+        node = node.rotate(rot_quaternion_1, rotation_center=np.zeros(3))
+
+        # Rotate to align y axis with orientation vector
+
+        rot_axis = m.cross(node.y_axis, self.orientation_vector)
+
+        if np.array_equal(rot_axis, np.zeros(3)):
+            rot_axis = x_axis
+
+        rot_angle = f.angle_between(node.y_axis, self.orientation_vector)
+        rot_quaternion_2 = Quaternion(axis=rot_axis, angle=rot_angle)
+
+        # Multiply both quaternions to generate final rot_quaternion
+
+        rot_quaternion = rot_quaternion_2 * rot_quaternion_1
 
         # Calculate Root and Tip nodes
         root_node = Node(self.root_point, rot_quaternion)
@@ -242,8 +262,8 @@ class Airfoil(object):
 
 
 class Section(object):
-    def __init__(self, airfoil, material, area, Iyy, Izz, J, shear_center):
-        self.airfoil = airfoil
+    def __init__(self, identifier, material, area, Iyy, Izz, J, shear_center):
+        self.identifier = identifier
         self.material = material
         self.area = area
         self.Iyy = Iyy
