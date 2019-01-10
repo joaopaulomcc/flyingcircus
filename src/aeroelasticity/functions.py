@@ -5,7 +5,8 @@ import numpy as np
 
 from .. import geometry as geo
 from .. import aerodynamics as aero
-
+from .. import structures as struct
+from .. import mathematics as m
 # ==================================================================================================
 
 
@@ -77,9 +78,7 @@ def deformation_to_aero_grid_weight_matrix(
 
             for j, node in enumerate(node_vector):
 
-                distance = geo.functions.distance_between_points(
-                    point, node.xyz
-                )
+                distance = geo.functions.distance_between_points(point, node.xyz)
 
                 if distance <= min_distance:
 
@@ -97,8 +96,55 @@ def deformation_to_aero_grid_weight_matrix(
 # ==================================================================================================
 
 
-def generated_aero_loads(components_force_grid, macrosurface_struct_grid):
-    pass
+def generated_aero_loads(
+    macrosurface_aero_grid,
+    macro_surface_force_grid,
+    macrosurface_struct_grid,
+    algorithm="closest",
+):
+
+    macro_surface_loads = []
+
+
+    node_vector = geo.functions.create_macrosurface_node_vector(
+        macrosurface_struct_grid
+    )
+    panel_grid = aero.vlm.create_panel_grid(macrosurface_aero_grid)
+    panel_vector = aero.vlm.flatten(panel_grid)
+    force_vector = aero.vlm.flatten(macro_surface_force_grid)
+
+    # Changes force_vector from array of arrays to a single numpy array
+    force_vector = np.stack(force_vector)
+
+    weight_matrix = loads_to_nodes_weight_matrix(
+        macrosurface_aero_grid, macrosurface_struct_grid, algorithm=algorithm
+    )
+
+    node_forces = weight_matrix @ force_vector
+
+    for i, node in enumerate(node_vector):
+
+        force = node_forces[i]
+        r = panel_vector[i].aero_center - node.xyz
+        moment = m.cross(r, force)
+
+        load_components = np.array([
+            force[0],
+            force[1],
+            force[2],
+            moment[0],
+            moment[1],
+            moment[2],
+        ])
+
+        load = struct.objects.Load(
+            application_node=node,
+            load=load_components
+        )
+
+        macro_surface_loads.append(load)
+
+    return macro_surface_loads
 
 
 # ==================================================================================================

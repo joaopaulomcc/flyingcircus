@@ -156,7 +156,7 @@ wing_aero_grid, wing_struct_grid = wing.create_grids(
     wing_torsion_function_list,
 )
 
-aero_grid = wing_aero_grid
+aero_grid = [wing_aero_grid]
 struct_grid = wing_struct_grid
 
 # Creation of the wing structural connections
@@ -178,8 +178,6 @@ loads_to_nodes_matrix = aelast.functions.loads_to_nodes_weight_matrix(
 deformation_to_aero_grid_weight_matrix = aelast.functions.deformation_to_aero_grid_weight_matrix(
     wing_aero_grid, wing_struct_grid
 )
-
-print()
 
 # ==================================================================================================
 # AERODYNAMIC LOADS CALCULATION - CASE 1 - ALPHA 2º
@@ -226,6 +224,13 @@ print("- Running calculation...")
 ) = aero.vlm.aero_loads(
     aero_grid, velocity_vector, rotation_vector, attitude_vector, altitude, center
 )
+
+# ==================================================================================================
+# AEROELASTIC INTERACTION
+
+macro_surface_loads = aelast.functions.generated_aero_loads(wing_aero_grid, components_force_grid[0], wing_struct_grid)
+
+print()
 
 # ==================================================================================================
 # PROCESSING RESULTS

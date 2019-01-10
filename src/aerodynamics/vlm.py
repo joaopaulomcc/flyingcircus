@@ -27,7 +27,7 @@ from numba import jit
 # ==================================================================================================
 # VORTEX LATTICE METHOD
 
-@jit
+#@jit
 def create_panel_grid(macro_surface_mesh):
 
     n_span_panels = 0
@@ -110,7 +110,7 @@ def gamma_solver(influence_coef_matrix, right_hand_side_vector):
 # --------------------------------------------------------------------------------------------------
 
 
-@jit
+#@jit
 def aero_loads(
     aircraft_aero_mesh,
     velocity_vector,
