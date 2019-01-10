@@ -4,6 +4,7 @@ import scipy as sc
 from numpy import sin, cos, tan, pi
 from pyquaternion import Quaternion
 
+from .. import geometry as geo
 from . import functions as f
 from . import objects as o
 from .. import mathematics as m
@@ -378,33 +379,9 @@ def generate_beam_fem_elements(beam, beam_nodes_list, prop_choice="MIDDLE"):
 
 def structural_solver(struct_grid, struct_elements, struct_loads, struct_constraints):
 
-    node_vector = []
+    node_vector = geo.functions.create_macrosurface_node_vector(struct_grid)
+
     elements_vector = []
-
-    # Add all nodes to a vector and sort then by node number and remove duplicates
-
-    for component_grid in struct_grid:
-        node_vector += component_grid
-
-    # Sort the vector
-    node_vector.sort(key=lambda x: x.number)
-
-    last_node_number = None
-    remove_queue = []
-
-    # Find nodes with the same node number
-    for i, node in enumerate(node_vector):
-
-        if node.number == last_node_number:
-            remove_queue.append(i)
-        else:
-            last_node_number = node.number
-
-    # Delete duplicate nodes
-    # Iterate backwards so indice number don't change
-    for i in reversed(remove_queue):
-        del node_vector[i]
-
     # Add all elements to a vector
     for component_elements in struct_elements:
         elements_vector += component_elements

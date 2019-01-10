@@ -25,6 +25,21 @@ def distance_point_to_line(line_point_1, line_point_2, point):
 # --------------------------------------------------------------------------------------------------
 
 
+@jit(nopython=True)
+def distance_between_points(point_1, point_2):
+
+    distance = (
+        (point_2[0] - point_1[0]) ** 2
+        + (point_2[1] - point_1[1]) ** 2
+        + (point_2[2] - point_1[2]) ** 2
+    ) ** 0.5
+
+    return distance
+
+
+# --------------------------------------------------------------------------------------------------
+
+
 def discretization(discretization_type, n_points, control_surface_hinge_position=None):
 
     if discretization_type == "linear":
@@ -642,23 +657,19 @@ def apply_torsion_to_nodes(nodes_list, torsion_center, torsion_function, surface
         # Rotate Node around torsion center
 
         node_location = node.rotate(
-                rotation_quaternion=rot_quaternion, rotation_center=rot_center
-            )
+            rotation_quaternion=rot_quaternion, rotation_center=rot_center
+        )
 
         yaw_pitch_row = decompose_rotation(
-                rot_axis,
-                rot_angle,
-                node.x_axis,
-                node.y_axis,
-                node.z_axis,
-            )
+            rot_axis, rot_angle, node.x_axis, node.y_axis, node.z_axis
+        )
 
         rot_quaternion = Quaternion(axis=node.x_axis, angle=yaw_pitch_row[2])
         rot_center = node.xyz
 
         node_rotation = node.rotate(
-                rotation_quaternion=rot_quaternion, rotation_center=rot_center
-            )
+            rotation_quaternion=rot_quaternion, rotation_center=rot_center
+        )
 
         rot_node_prop = [node_location.xyz, node_rotation.quaternion]
 
@@ -668,14 +679,72 @@ def apply_torsion_to_nodes(nodes_list, torsion_center, torsion_function, surface
 
 
 # --------------------------------------------------------------------------------------------------
-"""
-def mirror_node_xz(node):
 
-    mirror_xyz = np.array([node.xyz[0], -node.xyz[1], node.xyz[2]])
 
-    mirror_rotation_angle = node.quaternion.angle + np.pi
-    mirror_rotation_axis = node.quaternion.axis
-    mirror_quaternion = Quaternion(axis=mirror_rotation_axis, angle=mirror_rotation_angle)
+def create_macrosurface_node_vector(macrosurface_struct_grid):
 
-    return [mirror_xyz, mirror_quaternion]
-"""
+    node_vector = []
+
+
+    # Add all nodes to a vector and sort then by node number and remove duplicates
+
+    for component_grid in macrosurface_struct_grid:
+        node_vector += component_grid
+
+    # Sort the vector
+    node_vector.sort(key=lambda x: x.number)
+
+    last_node_number = None
+    remove_queue = []
+
+    # Find nodes with the same node number
+    for i, node in enumerate(node_vector):
+
+        if node.number == last_node_number:
+            remove_queue.append(i)
+        else:
+            last_node_number = node.number
+
+    # Delete duplicate nodes
+    # Iterate backwards so indice number don't change
+    for i in reversed(remove_queue):
+        del node_vector[i]
+
+    return node_vector
+
+# --------------------------------------------------------------------------------------------------
+
+
+def macrosurface_aero_grid_to_single_grid(macro_surface_mesh):
+
+    n_span_points = 0
+    n_chord_points = 0
+
+    # Count number of chord and spam points
+    for surface_mesh in macro_surface_mesh:
+        i, j = np.shape(surface_mesh["xx"])
+        n_chord_points = i
+        n_span_points += j
+
+    # Initialize single grid
+    single_grid_xx = np.zeros((n_chord_points, n_span_points))
+    single_grid_yy = np.zeros((n_chord_points, n_span_points))
+    single_grid_zz = np.zeros((n_chord_points, n_span_points))
+
+    # Populate Single Grid
+    span_index = 0
+    for surface_mesh in macro_surface_mesh:
+        n_x, n_y = np.shape(surface_mesh["xx"])
+
+        for i in range(n_x):
+            for j in range(n_y):
+                single_grid_xx[i][j + span_index] = surface_mesh["xx"][i, j]
+                single_grid_yy[i][j + span_index] = surface_mesh["yy"][i, j]
+                single_grid_zz[i][j + span_index] = surface_mesh["zz"][i, j]
+
+        span_index += n_y
+
+    single_grid = {"xx":single_grid_xx, "yy":single_grid_yy, "zz":single_grid_zz}
+
+    return single_grid
+

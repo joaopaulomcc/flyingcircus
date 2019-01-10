@@ -89,7 +89,7 @@ beam_VI = geo.objects.Beam(
     root_point=POINT_1,
     tip_point=POINT_6,
     orientation_vector=np.array([-1.0, 1.0, 0.0]),
-    ElementProperty=beam_property,
+    ElementProperty=struct.objects.RigidConnection(),
 )
 
 struct_components = [beam_I, beam_II, beam_III, beam_IV, beam_V, beam_VI]
@@ -225,4 +225,4 @@ deformed_grid, force_vector, deformations, node_vector = struct.fem.structural_s
 
 vis.plot_3D.plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=5)
 
-print()
+print("FINISHED")

@@ -66,7 +66,7 @@ material = struct.objects.Material(
 
 # Wing section properties
 wing_section = geo.objects.Section(
-    airfoil=naca0012,
+    identifier=naca0012,
     material=material,
     area=0.75,
     Iyy=2e4,
@@ -80,8 +80,21 @@ wing_section = geo.objects.Section(
 # Wing surface
 
 # Definition of the wing planform
-wing_surface = geo.objects.Surface(
-    identifier="main_wing",
+left_wing_surface = geo.objects.Surface(
+    identifier="left_wing",
+    root_chord=1,
+    root_section=wing_section,
+    tip_chord=1,
+    tip_section=wing_section,
+    length=16,
+    leading_edge_sweep_angle_deg=0,
+    dihedral_angle_deg=0,
+    tip_torsion_angle_deg=0,
+    control_surface_hinge_position=None,
+)
+
+right_wing_surface = geo.objects.Surface(
+    identifier="right_wing",
     root_chord=1,
     root_section=wing_section,
     tip_chord=1,
@@ -97,7 +110,7 @@ wing_surface = geo.objects.Surface(
 wing = geo.objects.MacroSurface(
     position=np.array([0, 0, 0]),
     incidence=0,
-    surface_list=[wing_surface, wing_surface],
+    surface_list=[left_wing_surface, right_wing_surface],
     symmetry_plane="XZ",
     torsion_center=0.5,
 )
@@ -112,24 +125,27 @@ smith_wing = geo.objects.Aircraft(
     inertial_properties=geo.objects.MaterialPoint(),
 )
 
-vis.plot_3D.plot_aircraft(smith_wing)
+# vis.plot_3D.plot_aircraft(smith_wing)
+
 
 # ==================================================================================================
 # GRID CREATION
 print("# Generating aerodynamic and structural grid...")
+
 # Number of panels and finite elements
-n_chord_panels = 10
-n_span_panels = 20
-n_beam_elements_list = 64 * 2
+n_chord_panels = 3
+n_span_panels = 3
+n_beam_elements = 6
 
 wing_n_chord_panels = n_chord_panels
 wing_n_span_panels_list = [n_span_panels, n_span_panels]
-wing_n_beam_elements_list = [n_beam_elements_list, n_beam_elements_list]
+wing_n_beam_elements_list = [n_beam_elements, n_beam_elements]
 
 # Types of discretization to be used
 wing_chord_discretization = "linear"
 wing_span_discretization_list = ["linear", "linear"]
 wing_torsion_function_list = ["linear", "linear"]
+
 # Creation of the wing grids
 wing_aero_grid, wing_struct_grid = wing.create_grids(
     wing_n_chord_panels,
@@ -140,7 +156,30 @@ wing_aero_grid, wing_struct_grid = wing.create_grids(
     wing_torsion_function_list,
 )
 
-aero_grid = [wing_aero_grid]
+aero_grid = wing_aero_grid
+struct_grid = wing_struct_grid
+
+# Creation of the wing structural connections
+struct_connections = struct.fem.create_macrosurface_connections(wing)
+
+# Number th wing nodes
+struct.fem.number_nodes(
+    [left_wing_surface, right_wing_surface], struct_grid, struct_connections
+)
+
+
+# ==================================================================================================
+# FLUID STRUCTURE INTERACTION MATRICES CALCULATION
+
+loads_to_nodes_matrix = aelast.functions.loads_to_nodes_weight_matrix(
+    wing_aero_grid, wing_struct_grid
+)
+
+deformation_to_aero_grid_weight_matrix = aelast.functions.deformation_to_aero_grid_weight_matrix(
+    wing_aero_grid, wing_struct_grid
+)
+
+print()
 
 # ==================================================================================================
 # AERODYNAMIC LOADS CALCULATION - CASE 1 - ALPHA 2º
@@ -245,7 +284,11 @@ report_file.write("\n")
 
 # Create load distribution plots
 components_loads = loads.functions.load_distribution(
-    components_force_grid, components_panel_grid, attitude_vector, altitude, velocity_vector,
+    components_force_grid,
+    components_panel_grid,
+    attitude_vector,
+    altitude,
+    velocity_vector,
 )
 
 for component in components_loads:
