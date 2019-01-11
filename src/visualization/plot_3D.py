@@ -308,7 +308,7 @@ def plot_deformed_structure(struct_elements, node_vector, deformations, scale_fa
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_aircraft(aircraft):
+def plot_aircraft(aircraft, title=None):
 
     # Create figure and apply defaults
     fig = plt.figure()
@@ -335,7 +335,7 @@ def plot_aircraft(aircraft):
     """
 
     # Plot CG
-    if aircraft.inertial_properties is not None:
+    if aircraft.inertial_properties:
         cg_x = aircraft.inertial_properties.position[0]
         cg_y = aircraft.inertial_properties.position[1]
         cg_z = aircraft.inertial_properties.position[2]
@@ -343,7 +343,7 @@ def plot_aircraft(aircraft):
         ax.scatter([cg_x], [cg_y], [cg_z], marker="D", color="black", s=50)
 
     # Plot Engine and Thrust Vector
-    if aircraft.engines is not None:
+    if aircraft.engines:
         for engine in aircraft.engines:
             eng_x = engine.position[0]
             eng_y = engine.position[1]
@@ -403,21 +403,26 @@ def plot_aircraft(aircraft):
             ax.plot(x, y, z, c="black")
 
         # Plot aircraft beams
-        for beam in aircraft.beams:
-            x = np.array([beam.root_point[0], beam.tip_point[0]])
-            y = np.array([beam.root_point[1], beam.tip_point[1]])
-            z = np.array([beam.root_point[2], beam.tip_point[2]])
+        if aircraft.beams:
+            for beam in aircraft.beams:
+                x = np.array([beam.root_point[0], beam.tip_point[0]])
+                y = np.array([beam.root_point[1], beam.tip_point[1]])
+                z = np.array([beam.root_point[2], beam.tip_point[2]])
 
-            if beam.ElementProperty.material == "rigid_connection":
-                ax.plot(x, y, z, c="blue", ls="--")
-            else:
-                ax.plot(x, y, z, c="black")
+                if beam.ElementProperty.material == "rigid_connection":
+                    ax.plot(x, y, z, c="blue", ls="--")
+                else:
+                    ax.plot(x, y, z, c="black")
 
     # Fix axes scale
     set_axes_equal(ax)
 
     # Generate Plot
     plt.show()
+
+    # Write plot title
+    if title:
+        ax.set_title(title)
 
     return ax, fig
 

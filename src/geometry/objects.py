@@ -16,7 +16,7 @@ class Aircraft(object):
     def __init__(
         self,
         name,
-        macro_surfaces,
+        macrosurfaces,
         beams=None,
         engines=None,
         inertial_properties=None,
@@ -24,13 +24,13 @@ class Aircraft(object):
     ):
 
         self.name = name
-        self.macro_surfaces = macro_surfaces
+        self.macrosurfaces = macrosurfaces
         self.beams = beams
         self.engines = engines
         self.inertial_properties = inertial_properties
         self.connections = connections
-        self.ref_area = macro_surfaces[0].ref_area
-        self.mean_aero_chord = macro_surfaces[0].mean_aero_chord
+        self.ref_area = macrosurfaces[0].ref_area
+        self.mean_aero_chord = macrosurfaces[0].mean_aero_chord
 
 
 # ==================================================================================================
@@ -824,7 +824,7 @@ class MacroSurface(object):
 
         self.mean_aero_chord = surface_list[0].root_chord
 
-        macro_surface_aero_grid, macro_surface_nodes_list = self.create_grids(
+        macrosurface_aero_grid, macrosurface_nodes_list = self.create_grids(
             n_chord_panels=3,
             n_span_panels_list=[1 for surface in surface_list],
             n_beam_elements_list=[1 for surface in surface_list],
@@ -836,7 +836,7 @@ class MacroSurface(object):
         root_nodes = []
         tip_nodes = []
 
-        for surface_nodes in macro_surface_nodes_list:
+        for surface_nodes in macrosurface_nodes_list:
             root_nodes.append(surface_nodes[0])
             tip_nodes.append(surface_nodes[-1])
 
@@ -855,8 +855,8 @@ class MacroSurface(object):
         control_surface_deflection_dict=dict(),
     ):
 
-        macro_surface_aero_grid = []
-        macro_surface_nodes_list = []
+        macrosurface_aero_grid = []
+        macrosurface_nodes_list = []
 
         if self.symmetry_plane == "XZ" or self.symmetry_plane == "xz":
 
@@ -966,9 +966,9 @@ class MacroSurface(object):
             for j, node in enumerate(surface_nodes_list):
                 surface_nodes_list[j] = node.translate(translation_vector_list[i])
 
-            macro_surface_aero_grid.append(aero_grid_dict)
-            macro_surface_nodes_list.append(surface_nodes_list)
+            macrosurface_aero_grid.append(aero_grid_dict)
+            macrosurface_nodes_list.append(surface_nodes_list)
 
-        return macro_surface_aero_grid, macro_surface_nodes_list
+        return macrosurface_aero_grid, macrosurface_nodes_list
 
     # ----------------------------------------------------------------------------------------------

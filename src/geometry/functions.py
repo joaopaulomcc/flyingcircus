@@ -5,6 +5,8 @@ from pyquaternion import Quaternion
 from .. import mathematics as m
 from numba import jit
 
+import sys
+
 # --------------------------------------------------------------------------------------------------
 
 
@@ -747,4 +749,48 @@ def macrosurface_aero_grid_to_single_grid(macro_surface_mesh):
     single_grid = {"xx":single_grid_xx, "yy":single_grid_yy, "zz":single_grid_zz}
 
     return single_grid
+
+# --------------------------------------------------------------------------------------------------
+
+
+def generate_aircraft_grids(
+    aircraft_object,
+    macrosurfaces_grid_data,
+    beams_grid_data,
+    connections,
+):
+
+    macrosurfaces_aero_grids = []
+    macrosurfaces_struct_grids = []
+
+    components_connections = []
+
+    # Create aerodynamic and structural grids for the aircraft macrosurfaces
+
+    if aircraft_object.macrosurfaces:
+
+        for i, macrosurface in enumerate(aircraft_object.macrosurfaces):
+
+            grid_data = macrosurfaces_grid_data[i]
+
+            macrosurface_aero_grid, macrosurface_struct_grid = macrosurface.create_grids(
+                n_chord_panels=grid_data[i]["n_chord_panels"],
+                n_span_panels_list=grid_data[i]["n_span_panels_list"],
+                n_beam_elements_list=grid_data[i]["n_beam_elements_list"],
+                chord_discretization=grid_data[i]["chord_discretization"],
+                span_discretization_list=grid_data[i]["span_discretization_list"],
+                torsion_function_list=grid_data[i]["torsion_function_list"],
+                control_surface_deflection_dict=grid_data[i]["control_surface_deflection_dict"],
+            )
+
+            macrosurfaces_aero_grids.append(macrosurface_aero_grid)
+            macrosurfaces_struct_grids.append(macrosurface_struct_grid)
+
+
+    else:
+
+        print("geometry.function.generate_aircraft_grids: ERROR No macrosurfaces were found")
+        print("Quitting execution...")
+        sys.exit()
+
 
