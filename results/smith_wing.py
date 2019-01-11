@@ -21,6 +21,7 @@ Author: João Paulo Monteiro Cruvinel da Costa
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sc
+import sys
 
 # Import code sub packages
 from context import src
@@ -159,14 +160,35 @@ wing_aero_grid, wing_struct_grid = wing.create_grids(
 aero_grid = [wing_aero_grid]
 struct_grid = wing_struct_grid
 
+# ==================================================================================================
+# STRUCTURE DEFINITION
+
 # Creation of the wing structural connections
 struct_connections = struct.fem.create_macrosurface_connections(wing)
 
-# Number th wing nodes
+# Number the wing nodes
 struct.fem.number_nodes(
-    [left_wing_surface, right_wing_surface], struct_grid, struct_connections
+    [left_wing_surface, right_wing_surface], wing_struct_grid, struct_connections
 )
 
+# Create wing finite elements
+wing_fem_elements = struct.fem.generate_macrosurface_fem_elements(
+    macrosurface=wing,
+    macrosurface_nodes_list=wing_struct_grid,
+    prop_choice="ROOT"
+)
+
+struct_elements = wing_fem_elements
+
+# Generate Constraints
+wing_fixation = struct.objects.Constraint(
+    application_node=wing_struct_grid[0][0],
+    dof_constraints=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+)
+
+struct_constraints = [wing_fixation]
+
+vis.plot_3D.plot_structure(struct_elements)
 
 # ==================================================================================================
 # FLUID STRUCTURE INTERACTION MATRICES CALCULATION
@@ -225,12 +247,35 @@ print("- Running calculation...")
     aero_grid, velocity_vector, rotation_vector, attitude_vector, altitude, center
 )
 
+components_delta_p_grids = []
+components_force_mag_grids = []
+
+for panels, forces in zip(components_panel_grid, components_force_grid):
+
+    delta_p, force = aero.vlm.calc_panels_delta_pressure(panels, forces)
+    components_delta_p_grids.append(delta_p)
+    components_force_mag_grids.append(force)
+
+ax, fig = vis.plot_3D.plot_results(
+    aero_grid,
+    components_delta_p_grids,
+    title="Smith Wing - alpha: 2º",
+    label="Delta Pressure [Pa]",
+    colormap="coolwarm",
+)
+
 # ==================================================================================================
-# AEROELASTIC INTERACTION
+# DEFORMATION CALCULATION USING
 
 macro_surface_loads = aelast.functions.generated_aero_loads(wing_aero_grid, components_force_grid[0], wing_struct_grid)
 
-print()
+struct_loads = macro_surface_loads
+
+deformed_grid, force_vector, deformations, node_vector = struct.fem.structural_solver(
+    struct_grid, struct_elements, struct_loads, struct_constraints
+)
+
+vis.plot_3D.plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=1)
 
 # ==================================================================================================
 # PROCESSING RESULTS
@@ -318,22 +363,26 @@ for component in components_loads:
     ax3.plot(component["y_values"], component["drag"])
     plt.tight_layout()
 
-components_delta_p_grids = []
-components_force_mag_grids = []
+sys.exit()
 
-for panels, forces in zip(components_panel_grid, components_force_grid):
 
-    delta_p, force = aero.vlm.calc_panels_delta_pressure(panels, forces)
-    components_delta_p_grids.append(delta_p)
-    components_force_mag_grids.append(force)
 
-ax, fig = vis.plot_3D.plot_results(
-    aero_grid,
-    components_delta_p_grids,
-    title="Smith Wing - alpha: 2º",
-    label="Delta Pressure [Pa]",
-    colormap="coolwarm",
-)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ==================================================================================================
 # AERODYNAMIC LOADS CALCULATION - CASE 2 - ALPHA 4º

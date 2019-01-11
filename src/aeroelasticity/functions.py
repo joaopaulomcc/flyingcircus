@@ -105,7 +105,6 @@ def generated_aero_loads(
 
     macro_surface_loads = []
 
-
     node_vector = geo.functions.create_macrosurface_node_vector(
         macrosurface_struct_grid
     )
@@ -120,21 +119,31 @@ def generated_aero_loads(
         macrosurface_aero_grid, macrosurface_struct_grid, algorithm=algorithm
     )
 
-    node_forces = weight_matrix @ force_vector
+    for i, node_line in enumerate(weight_matrix):
 
-    for i, node in enumerate(node_vector):
+        node = node_vector[i]
 
-        force = node_forces[i]
-        r = panel_vector[i].aero_center - node.xyz
-        moment = m.cross(r, force)
+        node_force = np.zeros(3)
+        node_moment = np.zeros(3)
+
+        for j, panel_weight in enumerate(node_line):
+
+            panel = panel_vector[j]
+
+            force = force_vector[j] * panel_weight
+            r = panel.aero_center - node.xyz
+            moment = m.cross(r, force)
+
+            node_force += force
+            node_moment += moment
 
         load_components = np.array([
-            force[0],
-            force[1],
-            force[2],
-            moment[0],
-            moment[1],
-            moment[2],
+            node_force[0],
+            node_force[1],
+            node_force[2],
+            node_moment[0],
+            node_moment[1],
+            node_moment[2],
         ])
 
         load = struct.objects.Load(
