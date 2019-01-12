@@ -1,6 +1,8 @@
 """
 Aeroelasticity submodule
 """
+import sys
+
 import numpy as np
 
 from pyquaternion import Quaternion
@@ -230,8 +232,7 @@ def deform_aero_grid(
         deformed_points_vector.transpose(), np.shape(aero_grid["xx"])
     )
 
-    deformed_macrosurface_single_aero_grid = {"xx":x_grid, "yy":y_grid, "zz":z_grid}
-
+    deformed_macrosurface_single_aero_grid = {"xx": x_grid, "yy": y_grid, "zz": z_grid}
 
     deformed_macrosurface_aero_grid = []
 
@@ -253,3 +254,114 @@ def deform_aero_grid(
         )
 
     return deformed_macrosurface_aero_grid
+
+
+# ==================================================================================================
+
+
+def generate_aircraft_grids(aircraft_object, macrosurfaces_grid_data, beams_grid_data):
+
+    macrosurfaces_aero_grids = []
+    macrosurfaces_struct_grids = []
+    macrosurfaces_connections = []
+    macrosurfaces_components = []
+
+    beams_struct_grids = []
+
+    aircraft_components_list = []
+    aircraft_components_nodes_list = []
+    aircraft_connections_list = []
+
+    # Create aerodynamic and structural grids for the aircraft macrosurfaces
+    if aircraft_object.macrosurfaces:
+
+        for i, macrosurface in enumerate(aircraft_object.macrosurfaces):
+
+            grid_data = macrosurfaces_grid_data[i]
+
+            macrosurface_aero_grid, macrosurface_struct_grid = macrosurface.create_grids(
+                n_chord_panels=grid_data["n_chord_panels"],
+                n_span_panels_list=grid_data["n_span_panels_list"],
+                n_beam_elements_list=grid_data["n_beam_elements_list"],
+                chord_discretization=grid_data["chord_discretization"],
+                span_discretization_list=grid_data["span_discretization_list"],
+                torsion_function_list=grid_data["torsion_function_list"],
+                control_surface_deflection_dict=grid_data[
+                    "control_surface_deflection_dict"
+                ],
+            )
+
+            macrosurfaces_aero_grids.append(macrosurface_aero_grid)
+            macrosurfaces_struct_grids.append(macrosurface_struct_grid)
+
+            # Create connections for the macrosurface surfaces
+            macrosurface_connections = struct.fem.create_macrosurface_connections(
+                macrosurface
+            )
+            macrosurfaces_connections.append(macrosurface_connections)
+
+            # Add macrosurface's surfaces to a single vector
+            macrosurfaces_components.append(macrosurface.surface_list)
+
+    else:
+
+        print(
+            "geometry.function.generate_aircraft_grids: ERROR No macrosurfaces were found"
+        )
+        print("Quitting execution...")
+        sys.exit()
+
+    # Add each macrosurface's surfaces, it's nodes, and connections to a single list
+    for (
+        macrosurface_surfaces,
+        macrosurface_surfaces_nodes,
+        macrosurface_connections,
+    ) in zip(
+        macrosurfaces_components, macrosurfaces_struct_grids, macrosurfaces_connections
+    ):
+
+        for connection in macrosurface_connections:
+            aircraft_connections_list.append(connection)
+
+        for surface, surface_nodes in zip(
+            macrosurface_surfaces, macrosurface_surfaces_nodes
+        ):
+
+            aircraft_components_list.append(surface)
+            aircraft_components_nodes_list.append(surface_nodes)
+
+
+    # Structural grids for the aircraft beams
+    if aircraft_object.beams:
+
+        for i, beam in enumerate(aircraft_object.beams):
+
+            grid_data = beams_grid_data[i]
+            beam_struct_grid = beam.create_grid(n_elements=grid_data["n_elements"])
+
+        beams_struct_grids.append(beam_struct_grid)
+
+        # Add aircraft's beams, and it's nodes to the aircraft components and nodes list
+        for beam, beam_nodes_list in zip(aircraft_object.beams, beams_struct_grids):
+            aircraft_components_list.append(beam)
+            aircraft_components_nodes_list.append(beam_nodes_list)
+
+    # Add the structural connections to the aircraft connections list
+    if aircraft_object.connections:
+        for connection in aircraft_object.connections:
+            aircraft_connections_list.append(connection)
+
+    # Number the aircraft structural nodes
+    struct.fem.number_nodes(
+        aircraft_components_list,
+        aircraft_components_nodes_list,
+        aircraft_connections_list,
+    )
+
+    if aircraft_object.beams:
+
+        return macrosurfaces_aero_grids, macrosurfaces_struct_grids, beams_struct_grids
+
+    else:
+
+        return macrosurfaces_aero_grids, macrosurfaces_struct_grids,

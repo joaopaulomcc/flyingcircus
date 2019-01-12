@@ -321,7 +321,7 @@ def plot_aircraft(aircraft, title=None):
     ax.set_title(aircraft.name)
 
     # Define color map to be used. With this is possible to plot each component in a different color
-    n_colors = len(aircraft.macro_surfaces)
+    n_colors = len(aircraft.macrosurfaces)
     color_map = plt.get_cmap("tab20c")
     color_norm = matplotlib.colors.Normalize(vmin=0, vmax=n_colors - 1)
     scalar_map = matplotlib.cm.ScalarMappable(norm=color_norm, cmap=color_map)
@@ -359,21 +359,21 @@ def plot_aircraft(aircraft, title=None):
             )
 
     # Plot Aircraf Components
-    for i, macro_surface in enumerate(aircraft.macro_surfaces):
+    for i, macrosurface in enumerate(aircraft.macrosurfaces):
 
         # Generate component mesh
         n_chord_panels = 5
-        n_span_panels_list = [3 for i in range(len(macro_surface.surface_list))]
-        n_beam_elements_list = [3 for i in range(len(macro_surface.surface_list))]
+        n_span_panels_list = [3 for i in range(len(macrosurface.surface_list))]
+        n_beam_elements_list = [3 for i in range(len(macrosurface.surface_list))]
         chord_discretization = "linear"
         span_discretization_list = [
-            "linear" for i in range(len(macro_surface.surface_list))
+            "linear" for i in range(len(macrosurface.surface_list))
         ]
         torsion_function_list = [
-            "linear" for i in range(len(macro_surface.surface_list))
+            "linear" for i in range(len(macrosurface.surface_list))
         ]
 
-        macro_surface_aero_grid, macro_surface_nodes_list = macro_surface.create_grids(
+        macrosurface_aero_grid, macrosurface_nodes_list = macrosurface.create_grids(
             n_chord_panels,
             n_span_panels_list,
             n_beam_elements_list,
@@ -382,7 +382,7 @@ def plot_aircraft(aircraft, title=None):
             torsion_function_list,
         )
 
-        for mesh in macro_surface_aero_grid:
+        for mesh in macrosurface_aero_grid:
             xx = mesh["xx"]
             yy = mesh["yy"]
             zz = mesh["zz"]
@@ -390,7 +390,7 @@ def plot_aircraft(aircraft, title=None):
                 xx, yy, zz, color=scalar_map.to_rgba(i), shade=False, alpha=0.85
             )
 
-        for surface_node_list in macro_surface_nodes_list:
+        for surface_node_list in macrosurface_nodes_list:
             x = []
             y = []
             z = []
