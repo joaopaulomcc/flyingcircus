@@ -377,6 +377,54 @@ def generate_beam_fem_elements(beam, beam_nodes_list, prop_choice="MIDDLE"):
 # ==================================================================================================
 
 
+def generate_aircraft_fem_elements(
+    aircraft,
+    aircraft_grids,
+    prop_choice="ROOT",
+):
+
+    aircraft_macrosurfaces_struct_grids = aircraft_grids["macrosurfaces_struct_grids"]
+    aircraft_beams_struct_grids = aircraft_grids["beams_struct_grids"]
+
+    aircraft_macrosurfaces_fem_elements = []
+
+    for macrosurface, macrosurface_struct_grid in zip(
+        aircraft.macrosurfaces, aircraft_macrosurfaces_struct_grids
+    ):
+
+        macrosurface_fem_elements = generate_macrosurface_fem_elements(
+            macrosurface, macrosurface_struct_grid, prop_choice
+        )
+
+        aircraft_macrosurfaces_fem_elements.append(macrosurface_fem_elements)
+
+    aircraft_beams_fem_elements = []
+
+    if aircraft.beams:
+        for beam, beam_struct_grid in zip(aircraft.beams, aircraft_beams_struct_grids):
+
+            beam_elements = generate_beam_fem_elements(
+                beam, beam_struct_grid, prop_choice
+            )
+            aircraft_beams_fem_elements.append(beam_elements)
+
+    if aircraft.beams:
+        aircraft_fem_elements =  {
+            "macrosurfaces_fem_elements":aircraft_macrosurfaces_fem_elements,
+            "beams_fem_elements":aircraft_beams_fem_elements,
+        }
+
+    else:
+        aircraft_fem_elements =  {
+            "macrosurfaces_fem_elements":aircraft_macrosurfaces_fem_elements,
+            "beams_fem_elements":None,
+        }
+
+    return aircraft_fem_elements
+
+# ==================================================================================================
+
+
 def structural_solver(struct_grid, struct_elements, struct_loads, struct_constraints):
 
     node_vector = geo.functions.create_macrosurface_node_vector(struct_grid)
@@ -386,7 +434,9 @@ def structural_solver(struct_grid, struct_elements, struct_loads, struct_constra
     for component_elements in struct_elements:
         elements_vector += component_elements
 
-    K_global, F_global = create_global_FEM_matrices(node_vector, elements_vector, struct_loads)
+    K_global, F_global = create_global_FEM_matrices(
+        node_vector, elements_vector, struct_loads
+    )
 
     X_global = FEM_solver(K_global, F_global, struct_constraints)
 
@@ -449,6 +499,7 @@ def create_global_FEM_matrices(nodes, fem_elements, loads):
             F_global[correlation_vector[i]] += load.load[i]
 
     return K_global, F_global
+
 
 # ==================================================================================================
 

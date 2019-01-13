@@ -44,87 +44,8 @@ print("= AUTHORS: M. J. Smith, M. J. Patil, D. H. Hodges          =")
 print("============================================================")
 # ==================================================================================================
 # GEOMETRY DEFINITION
-print()
-print("# Generating geometry...")
-# Wing section
 
-# Aifoil name, only informative
-naca0012 = "NACA 0012"
-
-# Material properties, all equal to one as Smith et al only provies the stiffness characteristics
-# of the wing
-material = struct.objects.Material(
-    name="material",
-    density=0.75,
-    elasticity_modulus=1,
-    rigidity_modulus=1,
-    poisson_ratio=1,
-    yield_tensile_stress=1,
-    ultimate_tensile_stress=1,
-    yield_shear_stress=1,
-    ultimate_shear_stress=1,
-)
-
-# Wing section properties
-wing_section = geo.objects.Section(
-    identifier=naca0012,
-    material=material,
-    area=1,
-    Iyy=2e4,
-    Izz=5e6,
-    J=1e4,
-    shear_center=0.5,
-)
-
-# --------------------------------------------------------------------------------------------------
-
-# Wing surface
-
-# Definition of the wing planform
-left_wing_surface = geo.objects.Surface(
-    identifier="left_wing",
-    root_chord=1,
-    root_section=wing_section,
-    tip_chord=1,
-    tip_section=wing_section,
-    length=16,
-    leading_edge_sweep_angle_deg=0,
-    dihedral_angle_deg=0,
-    tip_torsion_angle_deg=0,
-    control_surface_hinge_position=None,
-)
-
-right_wing_surface = geo.objects.Surface(
-    identifier="right_wing",
-    root_chord=1,
-    root_section=wing_section,
-    tip_chord=1,
-    tip_section=wing_section,
-    length=16,
-    leading_edge_sweep_angle_deg=0,
-    dihedral_angle_deg=0,
-    tip_torsion_angle_deg=0,
-    control_surface_hinge_position=None,
-)
-
-# Creation of the wing macrosurface
-wing = geo.objects.MacroSurface(
-    position=np.array([0, 0, 0]),
-    incidence=0,
-    surface_list=[left_wing_surface, right_wing_surface],
-    symmetry_plane="XZ",
-    torsion_center=0.5,
-)
-
-# --------------------------------------------------------------------------------------------------
-
-# Aircraft definition
-
-smith_wing = geo.objects.Aircraft(
-    name="Smith Wing",
-    macro_surfaces=[wing],
-    inertial_properties=geo.objects.MaterialPoint(),
-)
+from smith_wing_data import smith_wing
 
 vis.plot_3D.plot_aircraft(smith_wing, title="Smith Wing")
 
@@ -145,63 +66,50 @@ CONTROL_SURFACE_DEFLECTION_DICT = dict()
 wing_grid_data = {
     "n_chord_panels": N_CHORD_PANELS,
     "n_span_panels_list": [N_SPAN_PANELS, N_SPAN_PANELS],
-    "n_beam_elements_list": [N_BEAM_ELEMENTS],
+    "n_beam_elements_list": [N_BEAM_ELEMENTS, N_BEAM_ELEMENTS],
     "chord_discretization": CHORD_DISCRETIZATION,
     "span_discretization_list": [SPAN_DISCRETIZATION, SPAN_DISCRETIZATION],
     "torsion_function_list": [TORSION_FUNCTION, TORSION_FUNCTION],
     "control_surface_deflection_dict": CONTROL_SURFACE_DEFLECTION_DICT,
 }
 
+# Creation of the smith wing grids
 
-wing_n_chord_panels = n_chord_panels
-wing_n_span_panels_list = [n_span_panels, n_span_panels]
-wing_n_beam_elements_list = [n_beam_elements, n_beam_elements]
-
-# Types of discretization to be used
-wing_chord_discretization = "linear"
-wing_span_discretization_list = ["linear", "linear"]
-wing_torsion_function_list = ["linear", "linear"]
-
-# Creation of the wing grids
-wing_aero_grid, wing_struct_grid = wing.create_grids(
-    wing_n_chord_panels,
-    wing_n_span_panels_list,
-    wing_n_beam_elements_list,
-    wing_chord_discretization,
-    wing_span_discretization_list,
-    wing_torsion_function_list,
+smith_wing_grids = aelast.functions.generate_aircraft_grids(
+    aircraft_object=smith_wing,
+    macrosurfaces_grid_data=[wing_grid_data],
+    beams_grid_data=None
 )
-
-aero_grid = [wing_aero_grid]
-struct_grid = wing_struct_grid
 
 # ==================================================================================================
 # STRUCTURE DEFINITION
 
-# Creation of the wing structural connections
-struct_connections = struct.fem.create_macrosurface_connections(wing)
-
-# Number the wing nodes
-struct.fem.number_nodes(
-    [left_wing_surface, right_wing_surface], wing_struct_grid, struct_connections
-)
-
 # Create wing finite elements
-wing_fem_elements = struct.fem.generate_macrosurface_fem_elements(
-    macrosurface=wing, macrosurface_nodes_list=wing_struct_grid, prop_choice="ROOT"
-)
 
-struct_elements = wing_fem_elements
+smith_wing_fem_elements = struct.fem.generate_aircraft_fem_elements(
+    aircraft=smith_wing,
+    aircraft_grids=smith_wing_grids,
+    prop_choice="ROOT",
+)
 
 # Generate Constraints
-wing_fixation = struct.objects.Constraint(
-    application_node=wing_struct_grid[0][0],
-    dof_constraints=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+wing_fixation = {
+    "component_identifier":"left_wing",
+    "fixation_point":"ROOT",
+    "dof_constraints":np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+}
+
+smith_wing_constrains_data = [wing_fixation]
+
+smith_wing_constraints = aelast.functions.generate_aircraft_constraints(
+    aircraft=smith_wing,
+    aircraft_grids=smith_wing_grids,
+    constraints_data_list=smith_wing_constrains_data,
 )
 
-struct_constraints = [wing_fixation]
+ax, fig = vis.plot_3D.plot_aircraft_grids(smith_wing_grids, smith_wing_fem_elements, title="Smith Wing Grids")
 
-vis.plot_3D.plot_structure(struct_elements)
+fig.show()
 
 # ==================================================================================================
 # FLUID STRUCTURE INTERACTION MATRICES CALCULATION
@@ -328,7 +236,7 @@ for i in range(10):
     # Deformation
 
     macro_surface_loads = aelast.functions.generated_aero_loads(
-        wing_aero_grid, components_force_grid[0], wing_struct_grid
+        aero_grid, components_force_grid[0], wing_struct_grid
     )
 
     struct_loads = macro_surface_loads

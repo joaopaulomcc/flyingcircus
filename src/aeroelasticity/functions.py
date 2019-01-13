@@ -330,7 +330,6 @@ def generate_aircraft_grids(aircraft_object, macrosurfaces_grid_data, beams_grid
             aircraft_components_list.append(surface)
             aircraft_components_nodes_list.append(surface_nodes)
 
-
     # Structural grids for the aircraft beams
     if aircraft_object.beams:
 
@@ -360,8 +359,87 @@ def generate_aircraft_grids(aircraft_object, macrosurfaces_grid_data, beams_grid
 
     if aircraft_object.beams:
 
-        return macrosurfaces_aero_grids, macrosurfaces_struct_grids, beams_struct_grids
+        aircraft_grids =  {
+            "macrosurfaces_aero_grids": macrosurfaces_aero_grids,
+            "macrosurfaces_struct_grids": macrosurfaces_struct_grids,
+            "beams_struct_grids": beams_struct_grids,
+        }
 
     else:
 
-        return macrosurfaces_aero_grids, macrosurfaces_struct_grids,
+        aircraft_grids = {
+            "macrosurfaces_aero_grids": macrosurfaces_aero_grids,
+            "macrosurfaces_struct_grids": macrosurfaces_struct_grids,
+            "beams_struct_grids": None,
+        }
+
+    return aircraft_grids
+
+# ==================================================================================================
+
+
+def generate_aircraft_constraints(aircraft, aircraft_grids, constraints_data_list):
+
+    aircraft_constraints = []
+
+    for constraint_data in constraints_data_list:
+
+        # Run trought all surfaces in the aircraft searching for the identifier in each
+        # of the constraints described in constraints_data_list
+
+        for i, macrosurface in enumerate(aircraft.macrosurfaces):
+
+            for j, surface in enumerate(macrosurface.surface_list):
+
+                if surface.identifier == constraint_data["component_identifier"]:
+
+                    surface_grid = aircraft_grids["macrosurfaces_struct_grids"][i][j]
+
+                    if constraint_data["fixation_point"] == "ROOT":
+
+                        # If root select root node
+                        constraint = struct.objects.Constraint(
+                            application_node=surface_grid[0],
+                            dof_constraints=constraint_data["dof_constraints"],
+                        )
+
+                    elif constraint_data["fixation_point"] == "TIP":
+
+                        # If tip select tip node
+                        constraint = struct.objects.Constraint(
+                            application_node=surface_grid[-1],
+                            dof_constraints=constraint_data["dof_constraints"],
+                        )
+
+                    aircraft_constraints.append(constraint)
+
+        # Run trought all beams in the aircraft searching for the identifier in each
+        # of the constraints described in constraints_data_list
+
+        if aircraft.beams:
+
+            for i, beam in enumerate(aircraft.beams):
+
+                if beam.identifier == constraint_data["component_identifier"]:
+
+                    beam_grid = aircraft_grids["beams_struct_grids"][i]
+
+                    if constraint_data["fixation_point"] == "ROOT":
+
+                        # If root select root node
+                        constraint = struct.objects.Constraint(
+                            application_node=beam_grid[0],
+                            dof_constraints=constraint_data["dof_constraints"],
+                        )
+
+                    elif constraint_data["fixation_point"] == "TIP":
+
+                        # If tip select tip node
+                        constraint = struct.objects.Constraint(
+                            application_node=beam_grid[-1],
+                            dof_constraints=constraint_data["dof_constraints"],
+                        )
+
+                    aircraft_constraints.append(constraint)
+
+    return aircraft_constraints

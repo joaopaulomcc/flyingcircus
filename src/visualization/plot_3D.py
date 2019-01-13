@@ -110,7 +110,18 @@ def plot_mesh(meshs):
     plt.show(block=False)
 
     return ax, fig
+# --------------------------------------------------------------------------------------------------
 
+def plot_surface_grid(surface_grid, matplotlib_axis, grid_color="blue"):
+
+    ax = matplotlib_axis
+    xx = surface_grid["xx"]
+    yy = surface_grid["yy"]
+    zz = surface_grid["zz"]
+
+    ax.plot_wireframe(xx, yy, zz, alpha=0.85)
+
+    return ax
 
 # --------------------------------------------------------------------------------------------------
 
@@ -258,6 +269,30 @@ def plot_structure(struct_elements):
 
     return ax, fig
 
+# --------------------------------------------------------------------------------------------------
+
+def plot_beam_elements(struct_elements, matplotlib_axis):
+
+    ax = matplotlib_axis
+
+    for beam_element in struct_elements:
+
+        point_A = [
+            beam_element.node_A.x,
+            beam_element.node_A.y,
+            beam_element.node_A.z,
+        ]
+        point_B = [
+            beam_element.node_B.x,
+            beam_element.node_B.y,
+            beam_element.node_B.z,
+        ]
+        x = [point_A[0], point_B[0]]
+        y = [point_A[1], point_B[1]]
+        z = [point_A[2], point_B[2]]
+        ax.plot(x, y, z, "-ko", linewidth=5, markersize=2)
+
+    return ax
 
 # --------------------------------------------------------------------------------------------------
 
@@ -426,6 +461,62 @@ def plot_aircraft(aircraft, title=None):
 
     return ax, fig
 
+# --------------------------------------------------------------------------------------------------
+
+
+def generate_blank_3D_plot(title=None, plot_origin=True):
+
+    # Create figure and apply defaults
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d", proj_type="persp")
+
+    # Add labels
+    ax.set_xlabel("X axis")
+    ax.set_ylabel("Y axis")
+    ax.set_zlabel("Z axis")
+    ax.set_title(title)
+
+    if plot_origin:
+
+        # Plot coordinate system
+        ax.quiver(
+            [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black"
+        )
+        ax.scatter([0], [0], [0], color="red")
+
+    return ax, fig
+
+# --------------------------------------------------------------------------------------------------
+
+def plot_aircraft_grids(aircraft_grids, aircraft_fem_elements, title=None):
+
+    ax, fig = generate_blank_3D_plot(title)
+
+    # Plot aerodynamic grids
+    for macrosurface_aero_grid in aircraft_grids["macrosurfaces_aero_grids"]:
+
+        for surface_aero_grid in macrosurface_aero_grid:
+
+            ax = plot_surface_grid(surface_aero_grid, ax, grid_color="blue")
+
+    # Plot macrosurfaces structures
+    for macrosurface_fem_elements in aircraft_fem_elements["macrosurfaces_fem_elements"]:
+
+        for surface_fem_elements in macrosurface_fem_elements:
+
+            ax = plot_beam_elements(surface_fem_elements, ax)
+
+
+    # Plot aircraft beams structure
+    if aircraft_fem_elements["beams_fem_elements"]:
+
+        for beam_fem_elements in aircraft_fem_elements["beams_fem_elements"]:
+
+            ax = plot_beam_elements(beam_fem_elements, ax)
+
+    set_axes_equal(ax)
+
+    return ax, fig
 
 # --------------------------------------------------------------------------------------------------
 
