@@ -216,13 +216,19 @@ vis.plot_3D.plot_structure(struct_elements)
 # ==================================================================================================
 # FEM SOLVER
 
-deformed_grid, force_vector, deformations, node_vector = struct.fem.structural_solver(
+deformed_struct_grid, struct_internal_loads, struct_strains, node_vector, deformations = struct.fem.structural_solver(
     struct_grid, struct_elements, struct_loads, struct_constraints
 )
+
+# deformed_grid, force_vector, deformations, node_vector = struct.fem.structural_solver(
+#    struct_grid, struct_elements, struct_loads, struct_constraints
+# )
 
 # ==================================================================================================
 # PLOT DEFORMED STRUCTURE
 
-vis.plot_3D.plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=5)
+vis.plot_3D.plot_deformed_structure(
+    struct_elements, node_vector, deformations, scale_factor=5
+)
 
 print("FINISHED")

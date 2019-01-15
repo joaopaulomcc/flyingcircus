@@ -82,6 +82,23 @@ def plot_surface(meshs):
 
     return ax, fig
 
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_aircraft_aero_grids(aircraft_aero_grids, title=None):
+
+    ax, fig = generate_blank_3D_plot(title)
+
+    # Plot aerodynamic grids
+    for macrosurface_aero_grid in aircraft_aero_grids:
+
+        for surface_aero_grid in macrosurface_aero_grid:
+
+            ax = plot_surface_grid(surface_aero_grid, ax)
+
+    set_axes_equal(ax)
+
+    return ax, fig
 
 # --------------------------------------------------------------------------------------------------
 
@@ -299,6 +316,7 @@ def plot_beam_elements(struct_elements, matplotlib_axis):
 
 def plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=1):
 
+#def plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=1):
     ax, fig = plot_structure(struct_elements)
 
     deformed_grid = []
@@ -336,6 +354,44 @@ def plot_deformed_structure(struct_elements, node_vector, deformations, scale_fa
 
     set_axes_equal(ax)
     plt.show(block=False)
+
+    ax, fig = plot_structure(struct_elements)
+
+#    deformed_grid = []
+#    for i, node in enumerate(node_vector):
+#        deformed_grid.append(
+#            [
+#                node.x + scale_factor * deformations[i][0],
+#                node.y + scale_factor * deformations[i][1],
+#                node.z + scale_factor * deformations[i][2],
+#                deformations[i][3],
+#                deformations[i][4],
+#                deformations[i][5],
+#            ]
+#        )
+#
+#    for component_elements in struct_elements:
+#        for beam_element in component_elements:
+#
+#            point_A = [
+#                deformed_grid[beam_element.node_A.number][0],
+#                deformed_grid[beam_element.node_A.number][1],
+#                deformed_grid[beam_element.node_A.number][2],
+#            ]
+#
+#            point_B = [
+#                deformed_grid[beam_element.node_B.number][0],
+#                deformed_grid[beam_element.node_B.number][1],
+#                deformed_grid[beam_element.node_B.number][2],
+#            ]
+#
+#            x = [point_A[0], point_B[0]]
+#            y = [point_A[1], point_B[1]]
+#            z = [point_A[2], point_B[2]]
+#            ax.plot(x, y, z, "-ro", markersize=2)
+#
+#    set_axes_equal(ax)
+#    plt.show(block=False)
 
     return ax, fig
 

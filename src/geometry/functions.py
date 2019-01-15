@@ -683,14 +683,14 @@ def apply_torsion_to_nodes(nodes_list, torsion_center, torsion_function, surface
 # --------------------------------------------------------------------------------------------------
 
 
-def create_macrosurface_node_vector(macrosurface_struct_grid):
+def create_structure_node_vector(structure_struct_grid):
 
     node_vector = []
 
 
     # Add all nodes to a vector and sort then by node number and remove duplicates
 
-    for component_grid in macrosurface_struct_grid:
+    for component_grid in structure_struct_grid:
         node_vector += component_grid
 
     # Sort the vector

@@ -2,6 +2,8 @@
 Aeroelasticity submodule
 """
 import sys
+import datetime
+import time
 
 import numpy as np
 
@@ -15,13 +17,11 @@ from .. import mathematics as m
 # ==================================================================================================
 
 
-def loads_to_nodes_weight_matrix(
+def calculate_loads_to_nodes_weight_matrix(
     macrosurface_aero_grid, macrosurface_struct_grid, algorithm="closest"
 ):
 
-    node_vector = geo.functions.create_macrosurface_node_vector(
-        macrosurface_struct_grid
-    )
+    node_vector = geo.functions.create_structure_node_vector(macrosurface_struct_grid)
     panel_grid = aero.vlm.create_panel_grid(macrosurface_aero_grid)
     panel_vector = aero.vlm.flatten(panel_grid)
 
@@ -56,13 +56,11 @@ def loads_to_nodes_weight_matrix(
 # ==================================================================================================
 
 
-def deformation_to_aero_grid_weight_matrix(
+def calculate_deformation_to_aero_grid_weight_matrix(
     macrosurface_aero_grid, macrosurface_struct_grid, algorithm="closest"
 ):
 
-    node_vector = geo.functions.create_macrosurface_node_vector(
-        macrosurface_struct_grid
-    )
+    node_vector = geo.functions.create_structure_node_vector(macrosurface_struct_grid)
 
     aero_grid = geo.functions.macrosurface_aero_grid_to_single_grid(
         macrosurface_aero_grid
@@ -103,26 +101,27 @@ def deformation_to_aero_grid_weight_matrix(
 
 def generated_aero_loads(
     macrosurface_aero_grid,
-    macro_surface_force_grid,
+    macrosurface_force_grid,
     macrosurface_struct_grid,
     algorithm="closest",
+    weight_matrix=None,
 ):
 
-    macro_surface_loads = []
+    macrosurface_loads = []
 
-    node_vector = geo.functions.create_macrosurface_node_vector(
-        macrosurface_struct_grid
-    )
+    node_vector = geo.functions.create_structure_node_vector(macrosurface_struct_grid)
     panel_grid = aero.vlm.create_panel_grid(macrosurface_aero_grid)
     panel_vector = aero.vlm.flatten(panel_grid)
-    force_vector = aero.vlm.flatten(macro_surface_force_grid)
+    force_vector = aero.vlm.flatten(macrosurface_force_grid)
 
     # Changes force_vector from array of arrays to a single numpy array
     force_vector = np.stack(force_vector)
 
-    weight_matrix = loads_to_nodes_weight_matrix(
-        macrosurface_aero_grid, macrosurface_struct_grid, algorithm=algorithm
-    )
+    if weight_matrix is None:
+
+        weight_matrix = calculate_loads_to_nodes_weight_matrix(
+            macrosurface_aero_grid, macrosurface_struct_grid, algorithm=algorithm
+        )
 
     for i, node_line in enumerate(weight_matrix):
 
@@ -155,9 +154,9 @@ def generated_aero_loads(
 
         load = struct.objects.Load(application_node=node, load=load_components)
 
-        macro_surface_loads.append(load)
+        macrosurface_loads.append(load)
 
-    return macro_surface_loads
+    return macrosurface_loads
 
 
 # ==================================================================================================
@@ -168,11 +167,10 @@ def deform_aero_grid(
     macrosurface_struct_grid,
     macrosurface_struct_deformations,
     algorithm="closest",
+    weight_matrix=None,
 ):
 
-    node_vector = geo.functions.create_macrosurface_node_vector(
-        macrosurface_struct_grid
-    )
+    node_vector = geo.functions.create_structure_node_vector(macrosurface_struct_grid)
 
     surface_grids_shapes = []
     for surface_aero_grid in macrosurface_aero_grid:
@@ -187,9 +185,11 @@ def deform_aero_grid(
         aero_grid["xx"], aero_grid["yy"], aero_grid["zz"]
     ).transpose()
 
-    weight_matrix = deformation_to_aero_grid_weight_matrix(
-        macrosurface_aero_grid, macrosurface_struct_grid, algorithm="closest"
-    )
+    if weight_matrix is None:
+
+        weight_matrix = calculate_deformation_to_aero_grid_weight_matrix(
+            macrosurface_aero_grid, macrosurface_struct_grid, algorithm="closest"
+        )
 
     x_axis = np.array([1.0, 0.0, 0.0])
     y_axis = np.array([0.0, 1.0, 0.0])
@@ -259,7 +259,7 @@ def deform_aero_grid(
 # ==================================================================================================
 
 
-def generate_aircraft_grids(aircraft_object, macrosurfaces_grid_data, beams_grid_data):
+def generate_aircraft_grids(aircraft_object, aircraft_grid_data):
 
     macrosurfaces_aero_grids = []
     macrosurfaces_struct_grids = []
@@ -271,6 +271,9 @@ def generate_aircraft_grids(aircraft_object, macrosurfaces_grid_data, beams_grid
     aircraft_components_list = []
     aircraft_components_nodes_list = []
     aircraft_connections_list = []
+
+    macrosurfaces_grid_data = aircraft_grid_data["macrosurfaces_grid_data"]
+    beams_grid_data = aircraft_grid_data["beams_grid_data"]
 
     # Create aerodynamic and structural grids for the aircraft macrosurfaces
     if aircraft_object.macrosurfaces:
@@ -359,7 +362,7 @@ def generate_aircraft_grids(aircraft_object, macrosurfaces_grid_data, beams_grid
 
     if aircraft_object.beams:
 
-        aircraft_grids =  {
+        aircraft_grids = {
             "macrosurfaces_aero_grids": macrosurfaces_aero_grids,
             "macrosurfaces_struct_grids": macrosurfaces_struct_grids,
             "beams_struct_grids": beams_struct_grids,
@@ -374,6 +377,7 @@ def generate_aircraft_grids(aircraft_object, macrosurfaces_grid_data, beams_grid
         }
 
     return aircraft_grids
+
 
 # ==================================================================================================
 
@@ -443,3 +447,390 @@ def generate_aircraft_constraints(aircraft, aircraft_grids, constraints_data_lis
                     aircraft_constraints.append(constraint)
 
     return aircraft_constraints
+
+
+# ==================================================================================================
+
+
+def calculate_aircraft_loads(
+    aircraft_object,
+    aircraft_grid_data,
+    aircraft_constraints_data,
+    flight_condition_data,
+    simulation_options={
+        "flexible_aircraft": True,
+        "status_messages": True,
+        "max_iterations": 50,
+        "bending_convergence_criteria": 0.01,
+        "torsion_convergence_criteria": 0.01,
+        "fem_prop_choice": "ROOT",
+        "interaction_algorithm": "closest",
+        "output_iteration_results": True,
+    },
+    influence_coef_matrix=None,
+):
+
+    output_iter = simulation_options["output_iteration_results"]
+    iteration_results = []
+
+    status = simulation_options["status_messages"]
+    simulation_start_time = time.time()
+
+    if status:
+        print("# Running simulation")
+
+    # Generate aircraft grids
+    if status:
+        print("- Generating aircraft grids ...")
+
+    grid_start_time = time.time()
+
+    macrosurfaces_grid_data = aircraft_grid_data["macrosurfaces_grid_data"]
+    beams_grid_data = aircraft_grid_data["beams_grid_data"]
+
+    aircraft_grids = generate_aircraft_grids(
+        aircraft_object=aircraft_object, aircraft_grid_data=aircraft_grid_data
+    )
+
+    grid_end_time = time.time()
+
+    aircraft_macrosurfaces_aero_grids = aircraft_grids["macrosurfaces_aero_grids"]
+    aircraft_macrosurfaces_struct_grids = aircraft_grids["macrosurfaces_struct_grids"]
+    aircraft_beams_struct_grids = aircraft_grids["beams_struct_grids"]
+
+    if status:
+        print(
+            f"- Generating aircraft grids - Completed in {str(datetime.timedelta(seconds=(grid_end_time - grid_start_time)))}"
+        )
+
+    if simulation_options["flexible_aircraft"]:
+
+        # Generate aircraft FEM elements
+
+        fem_start_time = time.time()
+
+        if status:
+            print(f"- Generating aircraft FEM Elements ...")
+
+        fem_prop_choice = simulation_options["fem_prop_choice"]
+
+        aircraft_fem_elements = struct.fem.generate_aircraft_fem_elements(
+            aircraft=aircraft_object,
+            aircraft_grids=aircraft_grids,
+            prop_choice=fem_prop_choice,
+        )
+
+        aircraft_macrosurfaces_fem_elements = aircraft_fem_elements[
+            "macrosurfaces_fem_elements"
+        ]
+        aircraft_beams_fem_elements = aircraft_fem_elements["beams_fem_elements"]
+
+        fem_end_time = time.time()
+
+        if status:
+            print(
+                f"- Generating aircraft FEM Elements - Completed in {str(datetime.timedelta(seconds=(fem_end_time - fem_start_time)))}"
+            )
+
+        # Generate aircraft constraints
+
+        aircraft_constraints = generate_aircraft_constraints(
+            aircraft=aircraft_object,
+            aircraft_grids=aircraft_grids,
+            constraints_data_list=aircraft_constraints_data,
+        )
+
+        # Generate fluid/structure interaction matrices
+
+        if status:
+            print(f"- Generating aircraft fluid/structure interaction matrices ...")
+
+        matrix_start_time = time.time()
+
+        loads_to_nodes_macrosurfaces_weight_matrices = []
+        deformation_to_aero_grid_macrosurfaces_weight_matrices = []
+        interaction_algorithm = simulation_options["interaction_algorithm"]
+
+        for i, macrosurface in enumerate(aircraft_object.macrosurfaces):
+
+            macrosurface_aero_grid = aircraft_macrosurfaces_aero_grids[i]
+            macrosurface_struct_grid = aircraft_macrosurfaces_struct_grids[i]
+
+            loads_to_nodes_matrix = calculate_loads_to_nodes_weight_matrix(
+                macrosurface_aero_grid, macrosurface_struct_grid, interaction_algorithm
+            )
+
+            deformation_to_aero_grid_weight_matrix = calculate_deformation_to_aero_grid_weight_matrix(
+                macrosurface_aero_grid, macrosurface_struct_grid, interaction_algorithm
+            )
+
+            loads_to_nodes_macrosurfaces_weight_matrices.append(loads_to_nodes_matrix)
+            deformation_to_aero_grid_macrosurfaces_weight_matrices.append(
+                deformation_to_aero_grid_weight_matrix
+            )
+
+        matrix_end_time = time.time()
+
+        if status:
+            print(
+                f"- Generating aircraft fluid/structure interaction matrices - Completed in {str(datetime.timedelta(seconds=(matrix_end_time - matrix_start_time)))}"
+            )
+
+        # Aeroelastic Calculation Loop
+
+        aelast_loop_start_time = time.time()
+
+        if status:
+            print(f"- Running aeroelastic calculation ...")
+
+        iteration_number = 0
+        bending_delta = float("inf")
+        torsion_delta = float("inf")
+
+        max_iterations = simulation_options["max_iterations"]
+        bending_convergence_criteria = simulation_options[
+            "bending_convergence_criteria"
+        ]
+        torsion_convergence_criteria = simulation_options[
+            "torsion_convergence_criteria"
+        ]
+
+        while (bending_delta > bending_convergence_criteria) or (
+            torsion_delta > torsion_convergence_criteria
+        ):
+
+            if iteration_number >= max_iterations:
+                if status:
+                    print(f"    - Maximum number of iterarions, {max_iterations}, reached.")
+                break
+
+            else:
+                iteration_number += 1
+
+            iteration_start_time = time.time()
+
+            if status:
+                print(f"    - Iteration {iteration_number}")
+
+            # Calculate aerodynamic loads
+
+            if iteration_number == 1:
+                aircraft_deformed_macrosurfaces_aero_grids = aircraft_macrosurfaces_aero_grids
+
+            aero_start_time = time.time()
+            (
+                aircraft_force_vector,
+                aircraft_panel_vector,
+                aircraft_gamma_vector,
+                aircraft_force_grid,
+                aircraft_panel_grid,
+                aircraft_gamma_grid,
+                influence_coef_matrix,
+            ) = aero.vlm.aero_loads(
+                aircraft_aero_mesh=aircraft_deformed_macrosurfaces_aero_grids,
+                velocity_vector=flight_condition_data["translation_velocity"],
+                rotation_vector=flight_condition_data["rotation_velocity"],
+                attitude_vector=flight_condition_data["attitude_angles_deg"],
+                altitude=flight_condition_data["altitude"],
+                center=flight_condition_data["center_of_rotation"],
+                influence_coef_matrix=influence_coef_matrix,
+            )
+            aero_end_time = time.time()
+
+            if status:
+                print(
+                    f"        . Aerodynamic calculation completed in {str(datetime.timedelta(seconds=(aero_end_time - aero_start_time)))}"
+                )
+
+            # Calculate structure deformation
+
+            struct_start_time = time.time()
+
+            # Calculate aerodynamic loads in the structure
+            aircraft_macrosurfaces_aero_loads = []
+
+            for (
+                macrosurface_aero_grid,
+                macrosurface_force_grid,
+                macrosurface_struct_grid,
+                loads_to_nodes_weight_matrix,
+            ) in zip(
+                aircraft_macrosurfaces_aero_grids,
+                aircraft_force_grid,
+                aircraft_macrosurfaces_struct_grids,
+                loads_to_nodes_macrosurfaces_weight_matrices,
+            ):
+
+                macrosurface_aero_loads = generated_aero_loads(
+                    macrosurface_aero_grid,
+                    macrosurface_force_grid,
+                    macrosurface_struct_grid,
+                    interaction_algorithm,
+                    loads_to_nodes_weight_matrix,
+                )
+
+                aircraft_macrosurfaces_aero_loads.append(macrosurface_aero_loads)
+
+            # Prepare input for structural solver
+
+            struct_grid = []
+            struct_fem_elements = []
+            struct_loads = []
+            struct_constraints = []
+
+            # Add all surfaces grids to a vector
+            for macrosurface_struct_grid in aircraft_macrosurfaces_struct_grids:
+
+                struct_grid.extend(macrosurface_struct_grid)
+
+            for macrosurface_fem_elements in aircraft_macrosurfaces_fem_elements:
+
+                struct_fem_elements.extend(macrosurface_fem_elements)
+
+            # Add all beams to a vector
+            if aircraft_object.beams:
+
+                struct_grid.extend(aircraft_beams_struct_grids)
+
+                struct_fem_elements.extend(aircraft_beams_fem_elements)
+
+            # Add all loads to a vector
+            for macrosurface_aero_loads in aircraft_macrosurfaces_aero_loads:
+
+                struct_loads.extend(macrosurface_aero_loads)
+
+            # Add constraints to a vector
+            struct_constraints.extend(aircraft_constraints)
+
+            # Calculate structure deformations
+            deformations, internal_loads = struct.fem.structural_solver(
+                struct_grid, struct_fem_elements, struct_loads, struct_constraints
+            )
+
+            struct_end_time = time.time()
+            if status:
+                print(
+                    f"        . Structural calculation completed in {str(datetime.timedelta(seconds=(struct_end_time - struct_start_time)))}"
+                )
+
+            # Deform aerodynamic grid
+
+            def_start_time = time.time()
+
+            aircraft_deformed_macrosurfaces_aero_grids = []
+            aircraft_deformed_macrosurfaces_aero_panels = []
+
+            for (
+                macrosurface_struct_grid,
+                macrosurface_aero_grid,
+                deformation_to_aero_grid_weight_matrix,
+            ) in zip(
+                aircraft_macrosurfaces_struct_grids,
+                aircraft_macrosurfaces_aero_grids,
+                deformation_to_aero_grid_macrosurfaces_weight_matrices,
+            ):
+
+                deformed_macrosurface_aero_grid = deform_aero_grid(
+                    macrosurface_aero_grid,
+                    macrosurface_struct_grid,
+                    deformations,
+                    weight_matrix=deformation_to_aero_grid_weight_matrix,
+                )
+
+                deformed_macrosurface_aero_panels = aero.vlm.create_panel_grid(deformed_macrosurface_aero_grid)
+
+                aircraft_deformed_macrosurfaces_aero_grids.append(deformed_macrosurface_aero_grid)
+                aircraft_deformed_macrosurfaces_aero_panels.append(deformed_macrosurface_aero_panels)
+
+            def_end_time = time.time()
+            if status:
+                print(
+                    f"        . Aerodynamic Grid deformation completed in {str(datetime.timedelta(seconds=(def_end_time - def_start_time)))}"
+                )
+
+            iteration_end_time = time.time()
+            if status:
+                print(
+                    f"        . Iteration {iteration_number} completed in {str(datetime.timedelta(seconds=(iteration_end_time - iteration_start_time)))}"
+                )
+
+            if output_iter:
+
+                this_iteration_results = {
+                    "iteration_number": iteration_number,
+                    "aircraft_deformed_macrosurfaces_aero_grids": aircraft_deformed_macrosurfaces_aero_grids,
+                    "aircraft_macrosurfaces_panel_grid": aircraft_deformed_macrosurfaces_aero_panels,
+                    "aircraft_gamma_grid": aircraft_gamma_grid,
+                    "aircraft_force_grid": aircraft_force_grid,
+                    "aircraft_struct_deformations": deformations,
+                    "aircraft_struct_internal_loads": internal_loads,
+                    "influence_coef_matrix": influence_coef_matrix,
+                }
+
+                iteration_results.append(this_iteration_results)
+
+
+        aelast_loop_end_time = time.time()
+
+        if status:
+            print(f"- Running aeroelastic calculation - Completed in {str(datetime.timedelta(seconds=(aelast_loop_end_time - aelast_loop_start_time)))}")
+
+        simulation_end_time = time.time()
+        if status:
+            print(f"# Running simulation - Completed in {str(datetime.timedelta(seconds=(simulation_end_time - simulation_start_time)))}")
+
+        final_results = {
+                "aircraft_deformed_macrosurfaces_aero_grids": aircraft_deformed_macrosurfaces_aero_grids,
+                "aircraft_deformed_macrosurfaces_aero_panels": aircraft_deformed_macrosurfaces_aero_panels,
+                "aircraft_gamma_grid": aircraft_gamma_grid,
+                "aircraft_force_grid": aircraft_force_grid,
+                "aircraft_struct_deformations": deformations,
+                "aircraft_struct_internal_loads": internal_loads,
+                "influence_coef_matrix": influence_coef_matrix,
+        }
+
+        if output_iter:
+
+            return final_results, iteration_results
+
+        else:
+
+            return final_results
+
+    else:
+
+        aero_start_time = time.time()
+
+        (
+            aircraft_force_vector,
+            aircraft_panel_vector,
+            aircraft_gamma_vector,
+            aircraft_force_grid,
+            aircraft_panel_grid,
+            aircraft_gamma_grid,
+            influence_coef_matrix,
+        ) = aero.vlm.aero_loads(
+            aircraft_aero_mesh=aircraft_macrosurfaces_aero_grids,
+            velocity_vector=flight_condition_data["translation_velocity"],
+            rotation_vector=flight_condition_data["rotation_velocity"],
+            attitude_vector=flight_condition_data["attitude_angles_deg"],
+            altitude=flight_condition_data["altitude"],
+            center=flight_condition_data["center_of_rotation"],
+            influence_coef_matrix=influence_coef_matrix,
+        )
+
+        aero_end_time = time.time()
+
+        if status:
+            print(
+                f"        . Aerodynamic calculation completed in {str(datetime.timedelta(seconds=(aero_end_time - aero_start_time)))}"
+            )
+
+        results = {
+            "aircraft_macrosurfaces_panels": aircraft_panel_grid,
+            "aircraft_gamma_grid": aircraft_gamma_grid,
+            "aircraft_force_grid": aircraft_force_grid,
+            "influence_coef_matrix": influence_coef_matrix
+        }
+
+        return results

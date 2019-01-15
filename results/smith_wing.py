@@ -43,243 +43,42 @@ print("= Aeroelastic Behavior of High-Aspect Ratio Wings          =")
 print("= AUTHORS: M. J. Smith, M. J. Patil, D. H. Hodges          =")
 print("============================================================")
 # ==================================================================================================
-# GEOMETRY DEFINITION
+# EXECUTE CALCULATION
 
 from smith_wing_data import smith_wing
-
-vis.plot_3D.plot_aircraft(smith_wing, title="Smith Wing")
-
+from smith_wing_simulation import results, iteration_results
 
 # ==================================================================================================
-# GRID CREATION
-print("# Generating aerodynamic and structural grid...")
-
-# Number of panels and finite elements
-N_CHORD_PANELS = 10
-N_SPAN_PANELS = 5
-N_BEAM_ELEMENTS = 10
-CHORD_DISCRETIZATION = "linear"
-SPAN_DISCRETIZATION = "linear"
-TORSION_FUNCTION = "linear"
-CONTROL_SURFACE_DEFLECTION_DICT = dict()
-
-wing_grid_data = {
-    "n_chord_panels": N_CHORD_PANELS,
-    "n_span_panels_list": [N_SPAN_PANELS, N_SPAN_PANELS],
-    "n_beam_elements_list": [N_BEAM_ELEMENTS, N_BEAM_ELEMENTS],
-    "chord_discretization": CHORD_DISCRETIZATION,
-    "span_discretization_list": [SPAN_DISCRETIZATION, SPAN_DISCRETIZATION],
-    "torsion_function_list": [TORSION_FUNCTION, TORSION_FUNCTION],
-    "control_surface_deflection_dict": CONTROL_SURFACE_DEFLECTION_DICT,
-}
-
-# Creation of the smith wing grids
-
-smith_wing_grids = aelast.functions.generate_aircraft_grids(
-    aircraft_object=smith_wing,
-    macrosurfaces_grid_data=[wing_grid_data],
-    beams_grid_data=None
-)
-
-# ==================================================================================================
-# STRUCTURE DEFINITION
-
-# Create wing finite elements
-
-smith_wing_fem_elements = struct.fem.generate_aircraft_fem_elements(
-    aircraft=smith_wing,
-    aircraft_grids=smith_wing_grids,
-    prop_choice="ROOT",
-)
-
-# Generate Constraints
-wing_fixation = {
-    "component_identifier":"left_wing",
-    "fixation_point":"ROOT",
-    "dof_constraints":np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-}
-
-smith_wing_constrains_data = [wing_fixation]
-
-smith_wing_constraints = aelast.functions.generate_aircraft_constraints(
-    aircraft=smith_wing,
-    aircraft_grids=smith_wing_grids,
-    constraints_data_list=smith_wing_constrains_data,
-)
-
-ax, fig = vis.plot_3D.plot_aircraft_grids(smith_wing_grids, smith_wing_fem_elements, title="Smith Wing Grids")
-
-fig.show()
-
-# ==================================================================================================
-# FLUID STRUCTURE INTERACTION MATRICES CALCULATION
-
-loads_to_nodes_matrix = aelast.functions.loads_to_nodes_weight_matrix(
-    wing_aero_grid, wing_struct_grid
-)
-
-deformation_to_aero_grid_weight_matrix = aelast.functions.deformation_to_aero_grid_weight_matrix(
-    wing_aero_grid, wing_struct_grid
-)
-
-# ==================================================================================================
-# AERODYNAMIC LOADS CALCULATION - CASE 1 - ALPHA 2º
-print()
-print("# CASE 001:")
-print(f"    - Altitude: 20000m")
-print(f"    - True Airspeed: 25m/s")
-print(f"    - Alpha: 2º")
-print(f"    - Rigid Wing")
-print("- Setting flight conditions...")
-# Flight Conditions definition
-
-# Translation velocities
-V_x = 25
-V_y = 0
-V_z = 0
-velocity_vector = np.array([V_x, V_y, V_z])
-
-# Rotation velocities
-rotation_vector = np.array([0, 0, 0])
-
-# Attitude angles in degrees
-alpha = 2
-beta = 0
-gamma = 0
-
-attitude_vector = np.array([alpha, beta, gamma])
-
-# Center of rotation is set to the origin
-center = np.array([0.5, 0, 0])
-
-# Altitude is set to sea level
-altitude = 20000
-
-
-print("- Running calculation...")
-(
-    components_force_vector,
-    components_panel_vector,
-    components_gamma_vector,
-    components_force_grid,
-    components_panel_grid,
-    components_gamma_grid,
-) = aero.vlm.aero_loads(
-    aero_grid, velocity_vector, rotation_vector, attitude_vector, altitude, center
-)
+# PROCESSING RESULTS
 
 components_delta_p_grids = []
 components_force_mag_grids = []
 
-for panels, forces in zip(components_panel_grid, components_force_grid):
+for panels, forces in zip(
+    results["aircraft_deformed_macrosurfaces_aero_panels"],
+    results["aircraft_force_grid"],
+):
 
     delta_p, force = aero.vlm.calc_panels_delta_pressure(panels, forces)
     components_delta_p_grids.append(delta_p)
     components_force_mag_grids.append(force)
 
 ax, fig = vis.plot_3D.plot_results(
-    aero_grid,
-    components_delta_p_grids,
-    title="Smith Wing - alpha: 2º",
-    label="Delta Pressure [Pa]",
-    colormap="coolwarm",
-)
-
-# ==================================================================================================
-# DEFORMATION CALCULATION USING FINITE ELEMENT METHOD
-
-macro_surface_loads = aelast.functions.generated_aero_loads(
-    wing_aero_grid, components_force_grid[0], wing_struct_grid
-)
-
-struct_loads = macro_surface_loads
-
-deformed_grid, force_vector, deformations, node_vector = struct.fem.structural_solver(
-    struct_grid, struct_elements, struct_loads, struct_constraints
-)
-
-vis.plot_3D.plot_deformed_structure(
-    struct_elements, node_vector, deformations, scale_factor=1
-)
-
-# ==================================================================================================
-# DEFORMATION OF THE AERODYNAMIC MESH BASED ON THE STRUCTURE DEFORMATION
-
-deformed_macrosurface_aero_grid = aelast.functions.deform_aero_grid(
-    aero_grid[0], struct_grid, deformations, algorithm="closest"
-)
-
-vis.plot_3D.plot_results([deformed_macrosurface_aero_grid], components_delta_p_grids)
-
-
-# ==================================================================================================
-# AEROELASTIC ITERATION
-
-for i in range(10):
-
-    (
-        components_force_vector,
-        components_panel_vector,
-        components_gamma_vector,
-        components_force_grid,
-        components_panel_grid,
-        components_gamma_grid,
-    ) = aero.vlm.aero_loads(
-        [deformed_macrosurface_aero_grid],
-        velocity_vector,
-        rotation_vector,
-        attitude_vector,
-        altitude,
-        center,
-    )
-
-    # Deformation
-
-    macro_surface_loads = aelast.functions.generated_aero_loads(
-        aero_grid, components_force_grid[0], wing_struct_grid
-    )
-
-    struct_loads = macro_surface_loads
-
-    deformed_grid, force_vector, deformations, node_vector = struct.fem.structural_solver(
-        struct_grid, struct_elements, struct_loads, struct_constraints
-    )
-
-    deformed_macrosurface_aero_grid = aelast.functions.deform_aero_grid(
-        aero_grid[0], struct_grid, deformations, algorithm="closest"
-    )
-
-
-
-    print(f"    - Iteration: {i}    Deflection: {deformed_grid[6][2]}    Twist: {deformed_grid[6][4]*180/np.pi}")
-
-
-components_delta_p_grids = []
-components_force_mag_grids = []
-
-for panels, forces in zip(components_panel_grid, components_force_grid):
-
-    delta_p, force = aero.vlm.calc_panels_delta_pressure(panels, forces)
-    components_delta_p_grids.append(delta_p)
-    components_force_mag_grids.append(force)
-
-ax, fig = vis.plot_3D.plot_results(
-    aero_grid,
+    results["aircraft_deformed_macrosurfaces_aero_grids"],
     components_delta_p_grids,
     title="Smith Wing - alpha: 2º - 10 Iterations",
     label="Delta Pressure [Pa]",
     colormap="coolwarm",
 )
 
+plt.show()
 
-print()
-
-# ==================================================================================================
-# PROCESSING RESULTS
+print(results["aircraft_struct_deformations"])
 
 # Aerodynamic forces in the aircraft coordinate system
 total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = loads.functions.cg_aero_loads(
-    smith_wing, components_force_vector, components_panel_vector
+    smith_wing,
+    components_force_vector, components_panel_vector
 )
 
 # Aerodynamic forces in the wind coordinate system

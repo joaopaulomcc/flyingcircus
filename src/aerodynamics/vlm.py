@@ -223,6 +223,7 @@ def aero_loads(
         components_force_grid,
         components_panel_grid,
         components_gamma_grid,
+        influence_coef_matrix,
     )
 
 

@@ -427,7 +427,7 @@ def generate_aircraft_fem_elements(
 
 def structural_solver(struct_grid, struct_elements, struct_loads, struct_constraints):
 
-    node_vector = geo.functions.create_macrosurface_node_vector(struct_grid)
+    node_vector = geo.functions.create_structure_node_vector(struct_grid)
 
     elements_vector = []
     # Add all elements to a vector
@@ -445,6 +445,7 @@ def structural_solver(struct_grid, struct_elements, struct_loads, struct_constra
 
     # Deformed grid
     deformations = np.reshape(X_global, (len(node_vector), 6))
+    internal_loads = np.reshape(force_vector, (len(node_vector), 6))
 
     deformed_grid = []
     for i, node in enumerate(node_vector):
@@ -459,8 +460,60 @@ def structural_solver(struct_grid, struct_elements, struct_loads, struct_constra
             ]
         )
 
-    return deformed_grid, force_vector, deformations, node_vector
+    deformed_struct_grid = []
+    struct_internal_loads = []
+    struct_strains = []
 
+    for component_grid in struct_grid:
+
+        deformed_component_grid = []
+        component_internal_loads = []
+        component_strains = []
+
+        for node in component_grid:
+
+            # Create deformed grid
+            x_delta = deformations[node.number][0]
+            y_delta = deformations[node.number][1]
+            z_delta = deformations[node.number][2]
+            rx_delta = deformations[node.number][3]
+            ry_delta = deformations[node.number][4]
+            rz_delta = deformations[node.number][5]
+
+            x_axis = np.array([1.0, 0.0, 0.0])
+            y_axis = np.array([0.0, 1.0, 0.0])
+            z_axis = np.array([0.0, 0.0, 1.0])
+
+            # Apply translation
+            translation_vector = np.array([x_delta, y_delta, z_delta])
+            deformed_node = node.translate(translation_vector)
+
+            # Apply rotation
+            rot_quaternion = Quaternion(axis=x_axis, angle=rx_delta)
+            deformed_node = node.rotate(rot_quaternion)
+
+            rot_quaternion = Quaternion(axis=y_axis, angle=ry_delta)
+            deformed_node = node.rotate(rot_quaternion)
+
+            rot_quaternion = Quaternion(axis=z_axis, angle=rz_delta)
+            deformed_node = node.rotate(rot_quaternion)
+
+            deformed_component_grid.append(deformed_node)
+
+            # Create internal forces vector
+            node_internal_load = internal_loads[node.number]
+            component_internal_loads.append(node_internal_load)
+
+            # Create struct strains vector
+            node_strain = deformations[node.number]
+            component_strains.append(node_strain)
+
+        deformed_struct_grid.append(deformed_component_grid)
+        struct_internal_loads.append(component_internal_loads)
+        struct_strains.append(component_strains)
+
+    return deformations, internal_loads
+    #return deformed_struct_grid, struct_internal_loads, struct_strains, node_vector, deformations
 
 # ==================================================================================================
 
