@@ -715,7 +715,8 @@ class Surface(object):
         )
 
         if mirror:
-            z_rotation = np.pi - z_rotation
+            #z_rotation = np.pi - z_rotation
+            z_rotation = - z_rotation
 
         root_quaternion = Quaternion(axis=[0, 0, 1], angle=z_rotation)
         tip_quaternion = Quaternion(axis=[0, 0, 1], angle=z_rotation)

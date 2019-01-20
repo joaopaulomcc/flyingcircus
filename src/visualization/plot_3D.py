@@ -245,6 +245,24 @@ def plot_node(Node, plot_axis):
 
     plot_axis.scatter([x], [y], [z], color="black")
 
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_structure_nodes(components_node_list):
+
+    ax, fig = generate_blank_3D_plot()
+
+    for component_nodes_list in components_node_list:
+
+        for node in component_nodes_list:
+
+            plot_node(node, ax)
+
+    set_axes_equal(ax)
+    plt.show()
+
+    return ax, fig
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -314,37 +332,28 @@ def plot_beam_elements(struct_elements, matplotlib_axis):
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=1):
+def plot_deformed_structure(struct_elements, deformations, scale_factor=1):
 
 #def plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=1):
-    ax, fig = plot_structure(struct_elements)
 
-    deformed_grid = []
-    for i, node in enumerate(node_vector):
-        deformed_grid.append(
-            [
-                node.x + scale_factor * deformations[i][0],
-                node.y + scale_factor * deformations[i][1],
-                node.z + scale_factor * deformations[i][2],
-                deformations[i][3],
-                deformations[i][4],
-                deformations[i][5],
-            ]
-        )
+    ax, fig = plot_structure(struct_elements)
 
     for component_elements in struct_elements:
         for beam_element in component_elements:
 
+            node_A = beam_element.node_A
+            node_B = beam_element.node_B
+
             point_A = [
-                deformed_grid[beam_element.node_A.number][0],
-                deformed_grid[beam_element.node_A.number][1],
-                deformed_grid[beam_element.node_A.number][2],
+                node_A.x + scale_factor * deformations[node_A.number][0],
+                node_A.y + scale_factor * deformations[node_A.number][1],
+                node_A.z + scale_factor * deformations[node_A.number][2],
             ]
 
             point_B = [
-                deformed_grid[beam_element.node_B.number][0],
-                deformed_grid[beam_element.node_B.number][1],
-                deformed_grid[beam_element.node_B.number][2],
+                node_B.x + scale_factor * deformations[node_B.number][0],
+                node_B.y + scale_factor * deformations[node_B.number][1],
+                node_B.z + scale_factor * deformations[node_B.number][2],
             ]
 
             x = [point_A[0], point_B[0]]
@@ -616,3 +625,12 @@ def plot_deformation(elements, nodes, deformations, scale=1):
     plt.show(block=False)
 
     return ax, fig
+
+# --------------------------------------------------------------------------------------------------
+
+def plot_loads_to_nodes_connections(loads, elements, nodes, loads_to_nodes_matrix):
+
+    pass
+
+    ax, fig = generate_blank_3D_plot(title)
+

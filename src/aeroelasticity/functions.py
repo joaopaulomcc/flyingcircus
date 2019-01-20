@@ -13,6 +13,7 @@ from .. import geometry as geo
 from .. import aerodynamics as aero
 from .. import structures as struct
 from .. import mathematics as m
+from .. import visualization as vis
 
 # ==================================================================================================
 
@@ -701,6 +702,10 @@ def calculate_aircraft_loads(
 
             # Add constraints to a vector
             struct_constraints.extend(aircraft_constraints)
+
+
+
+            vis.plot_3D.plot_structure_nodes(struct_grid)
 
             # Calculate structure deformations
             deformations, internal_loads = struct.fem.structural_solver(

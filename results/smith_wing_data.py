@@ -34,7 +34,7 @@ naca0012 = "NACA 0012"
 
 # Material properties, all equal to one as Smith et al only provies the stiffness characteristics
 # of the wing
-material = struct.objects.Material(
+MATERIAL = struct.objects.Material(
     name="material",
     density=0.75,
     elasticity_modulus=1,
@@ -47,9 +47,9 @@ material = struct.objects.Material(
 )
 
 # Wing section properties
-wing_section = geo.objects.Section(
+WING_SECTION = geo.objects.Section(
     identifier=naca0012,
-    material=material,
+    material=MATERIAL,
     area=100000000000000000,
     Iyy=2e4,
     Izz=5e6,
@@ -61,30 +61,38 @@ wing_section = geo.objects.Section(
 
 # Wing surface
 
+WING_ROOT_CHORD = 1
+WING_TIP_CHORD = 1
+SEMI_WING_LENGTH = 16
+WING_SWEEP_ANGLE = 0
+WING_DIHEDRAL = 45
+WING_TIP_TORSION_ANGLE = 0
+
+
 # Definition of the wing planform
 left_wing_surface = geo.objects.Surface(
     identifier="left_wing",
-    root_chord=1,
-    root_section=wing_section,
-    tip_chord=1,
-    tip_section=wing_section,
-    length=16,
-    leading_edge_sweep_angle_deg=0,
-    dihedral_angle_deg=0,
-    tip_torsion_angle_deg=0,
+    root_chord=WING_ROOT_CHORD,
+    root_section=WING_SECTION,
+    tip_chord=WING_TIP_CHORD,
+    tip_section=WING_SECTION,
+    length=SEMI_WING_LENGTH,
+    leading_edge_sweep_angle_deg=WING_SWEEP_ANGLE,
+    dihedral_angle_deg=WING_DIHEDRAL,
+    tip_torsion_angle_deg=WING_TIP_TORSION_ANGLE,
     control_surface_hinge_position=None,
 )
 
 right_wing_surface = geo.objects.Surface(
     identifier="right_wing",
-    root_chord=1,
-    root_section=wing_section,
-    tip_chord=1,
-    tip_section=wing_section,
-    length=16,
-    leading_edge_sweep_angle_deg=0,
-    dihedral_angle_deg=0,
-    tip_torsion_angle_deg=0,
+    root_chord=WING_ROOT_CHORD,
+    root_section=WING_SECTION,
+    tip_chord=WING_TIP_CHORD,
+    tip_section=WING_SECTION,
+    length=SEMI_WING_LENGTH,
+    leading_edge_sweep_angle_deg=WING_SWEEP_ANGLE,
+    dihedral_angle_deg=WING_DIHEDRAL,
+    tip_torsion_angle_deg=WING_TIP_TORSION_ANGLE,
     control_surface_hinge_position=None,
 )
 

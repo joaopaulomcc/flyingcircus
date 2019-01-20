@@ -11,8 +11,10 @@ from src import structures as struct
 
 
 POINT_1 = np.array([0.0, 0.0, 0.0])
-POINT_2 = np.array([3.0, 0.0, 0.0])
+POINT_2 = np.array([3.0, -3.0, 0.0])
 POINT_3 = np.array([3.0, 3.0, 0.0])
+
+
 POINT_4 = np.array([0.0, 0.0, 3.0])
 POINT_5 = np.array([3.0, 0.0, 3.0])
 POINT_6 = np.array([3.0, 3.0, 3.0])
@@ -47,15 +49,15 @@ beam_property = struct.objects.ElementProperty(section=section, material=materia
 beam_I = geo.objects.Beam(
     identifier="beam_I",
     root_point=POINT_1,
-    tip_point=POINT_4,
+    tip_point=POINT_2,
     orientation_vector=np.array([0.0, 1.0, 0.0]),
     ElementProperty=beam_property,
 )
 
 beam_II = geo.objects.Beam(
     identifier="beam_II",
-    root_point=POINT_2,
-    tip_point=POINT_5,
+    root_point=POINT_1,
+    tip_point=POINT_3,
     orientation_vector=np.array([0.0, 1.0, 0.0]),
     ElementProperty=beam_property,
 )
@@ -92,24 +94,28 @@ beam_VI = geo.objects.Beam(
     ElementProperty=struct.objects.RigidConnection(),
 )
 
-struct_components = [beam_I, beam_II, beam_III, beam_IV, beam_V, beam_VI]
+#struct_components = [beam_I, beam_II, beam_III, beam_IV, beam_V, beam_VI]
+struct_components = [beam_I, beam_II]
 
 # ==================================================================================================
 # CONNECTIONS
 
-I_to_IV = struct.objects.Connection(beam_I, "TIP", beam_IV, "ROOT")
+I_to_II = struct.objects.Connection(beam_I, "ROOT", beam_II, "ROOT")
 
-II_to_IV = struct.objects.Connection(beam_II, "TIP", beam_IV, "TIP")
+# I_to_IV = struct.objects.Connection(beam_I, "TIP", beam_IV, "ROOT")
+#
+# II_to_IV = struct.objects.Connection(beam_II, "TIP", beam_IV, "TIP")
+#
+# II_to_V = struct.objects.Connection(beam_II, "TIP", beam_V, "ROOT")
+#
+# III_to_V = struct.objects.Connection(beam_III, "TIP", beam_V, "TIP")
+#
+# III_to_VI = struct.objects.Connection(beam_III, "TIP", beam_VI, "TIP")
+#
+# I_to_VI = struct.objects.Connection(beam_I, "ROOT", beam_VI, "ROOT")
 
-II_to_V = struct.objects.Connection(beam_II, "TIP", beam_V, "ROOT")
-
-III_to_V = struct.objects.Connection(beam_III, "TIP", beam_V, "TIP")
-
-III_to_VI = struct.objects.Connection(beam_III, "TIP", beam_VI, "TIP")
-
-I_to_VI = struct.objects.Connection(beam_I, "ROOT", beam_VI, "ROOT")
-
-struct_connections = [I_to_IV, II_to_IV, II_to_V, III_to_V, III_to_VI, I_to_VI]
+# struct_connections = [I_to_IV, II_to_IV, II_to_V, III_to_V, III_to_VI, I_to_VI]
+struct_connections = [I_to_II]
 
 # ==================================================================================================
 # FEM GRID GENERATION
@@ -123,14 +129,16 @@ beam_IV_struct_grid = beam_IV.create_grid(n_elements=N_BEAM_ELEMENTS)
 beam_V_struct_grid = beam_V.create_grid(n_elements=N_BEAM_ELEMENTS)
 beam_VI_struct_grid = beam_VI.create_grid(n_elements=N_BEAM_ELEMENTS)
 
-struct_grid = [
-    beam_I_struct_grid,
-    beam_II_struct_grid,
-    beam_III_struct_grid,
-    beam_IV_struct_grid,
-    beam_V_struct_grid,
-    beam_VI_struct_grid,
-]
+# struct_grid = [
+#     beam_I_struct_grid,
+#     beam_II_struct_grid,
+#     beam_III_struct_grid,
+#     beam_IV_struct_grid,
+#     beam_V_struct_grid,
+#     beam_VI_struct_grid,
+# ]
+
+struct_grid = [beam_I_struct_grid, beam_II_struct_grid]
 
 # Numbering nodes
 
@@ -146,39 +154,41 @@ beam_I_fem_elements = struct.fem.generate_beam_fem_elements(
 beam_II_fem_elements = struct.fem.generate_beam_fem_elements(
     beam=beam_II, beam_nodes_list=beam_II_struct_grid, prop_choice="ROOT"
 )
-beam_III_fem_elements = struct.fem.generate_beam_fem_elements(
-    beam=beam_III, beam_nodes_list=beam_III_struct_grid, prop_choice="ROOT"
-)
-beam_IV_fem_elements = struct.fem.generate_beam_fem_elements(
-    beam=beam_IV, beam_nodes_list=beam_IV_struct_grid, prop_choice="ROOT"
-)
-beam_V_fem_elements = struct.fem.generate_beam_fem_elements(
-    beam=beam_V, beam_nodes_list=beam_V_struct_grid, prop_choice="ROOT"
-)
-beam_VI_fem_elements = struct.fem.generate_beam_fem_elements(
-    beam=beam_VI, beam_nodes_list=beam_VI_struct_grid, prop_choice="ROOT"
-)
+# beam_III_fem_elements = struct.fem.generate_beam_fem_elements(
+#     beam=beam_III, beam_nodes_list=beam_III_struct_grid, prop_choice="ROOT"
+# )
+# beam_IV_fem_elements = struct.fem.generate_beam_fem_elements(
+#     beam=beam_IV, beam_nodes_list=beam_IV_struct_grid, prop_choice="ROOT"
+# )
+# beam_V_fem_elements = struct.fem.generate_beam_fem_elements(
+#     beam=beam_V, beam_nodes_list=beam_V_struct_grid, prop_choice="ROOT"
+# )
+# beam_VI_fem_elements = struct.fem.generate_beam_fem_elements(
+#     beam=beam_VI, beam_nodes_list=beam_VI_struct_grid, prop_choice="ROOT"
+# )
 
-struct_elements = [
-    beam_I_fem_elements,
-    beam_II_fem_elements,
-    beam_III_fem_elements,
-    beam_IV_fem_elements,
-    beam_V_fem_elements,
-    beam_VI_fem_elements,
-]
+# struct_elements = [
+#     beam_I_fem_elements,
+#     beam_II_fem_elements,
+#     beam_III_fem_elements,
+#     beam_IV_fem_elements,
+#     beam_V_fem_elements,
+#     beam_VI_fem_elements,
+# ]
+
+struct_elements = [beam_I_fem_elements, beam_II_fem_elements]
 
 # ==================================================================================================
 # LOADS GENERATION
 
 beam_I_tip_load = struct.objects.Load(
     application_node=beam_I_struct_grid[-1],
-    load=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 1000.0]),
+    load=np.array([100.0, 100.0, 1000.0, 50.0, 2000.0, 100]),
 )
 
 beam_II_tip_load = struct.objects.Load(
     application_node=beam_II_struct_grid[-1],
-    load=np.array([1000.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+    load=np.array([100.0, -100.0, 1000.0, -50.0, 2000.0, -100]),
 )
 
 beam_III_tip_load = struct.objects.Load(
@@ -186,7 +196,8 @@ beam_III_tip_load = struct.objects.Load(
     load=np.array([0.0, 2000.0, 0.0, 0.0, 0.0, 0.0]),
 )
 
-struct_loads = [beam_I_tip_load, beam_II_tip_load, beam_III_tip_load]
+# struct_loads = [beam_I_tip_load, beam_II_tip_load, beam_III_tip_load]
+struct_loads = [beam_I_tip_load, beam_II_tip_load]
 
 # ==================================================================================================
 # CONSTRAINTS GENERATION
@@ -206,7 +217,9 @@ beam_III_fixation = struct.objects.Constraint(
     dof_constraints=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
 )
 
-struct_constraints = [beam_I_fixation, beam_II_fixation, beam_III_fixation]
+# struct_constraints = [beam_I_fixation, beam_II_fixation, beam_III_fixation]
+
+struct_constraints = [beam_I_fixation]
 
 # ==================================================================================================
 # PLOT STRUCTURE
