@@ -71,9 +71,18 @@ ax, fig = vis.plot_3D.plot_results(
     colormap="coolwarm",
 )
 
+print()
+print(f"Deformation at control node:")
+print(f"    X : {results['deformation_at_control_node'][0]}")
+print(f"    Y : {results['deformation_at_control_node'][1]}")
+print(f"    Z : {results['deformation_at_control_node'][2]}")
+print(f"    RX: {np.degrees(results['deformation_at_control_node'][3])}")
+print(f"    RY: {np.degrees(results['deformation_at_control_node'][4])}")
+print(f"    RZ: {np.degrees(results['deformation_at_control_node'][5])}")
+
 plt.show()
 
-print(results["aircraft_struct_deformations"])
+sys.exit()
 
 # Aerodynamic forces in the aircraft coordinate system
 total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = loads.functions.cg_aero_loads(

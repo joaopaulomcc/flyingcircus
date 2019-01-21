@@ -499,6 +499,9 @@ def calculate_aircraft_loads(
     aircraft_macrosurfaces_struct_grids = aircraft_grids["macrosurfaces_struct_grids"]
     aircraft_beams_struct_grids = aircraft_grids["beams_struct_grids"]
 
+    control_node_string = simulation_options["control_node_string"]
+    control_node_number = find_control_node_number(aircraft_object, aircraft_grids, control_node_string)
+
     if status:
         print(
             f"- Generating aircraft grids - Completed in {str(datetime.timedelta(seconds=(grid_end_time - grid_start_time)))}"
@@ -596,13 +599,17 @@ def calculate_aircraft_loads(
             "torsion_convergence_criteria"
         ]
 
+        old_deformation = np.array([0, 0, 0, 0, 0, 0])
+
         while (bending_delta > bending_convergence_criteria) or (
             torsion_delta > torsion_convergence_criteria
         ):
 
             if iteration_number >= max_iterations:
                 if status:
-                    print(f"    - Maximum number of iterarions, {max_iterations}, reached.")
+                    print(
+                        f"    - Maximum number of iterarions, {max_iterations}, reached."
+                    )
                 break
 
             else:
@@ -616,7 +623,9 @@ def calculate_aircraft_loads(
             # Calculate aerodynamic loads
 
             if iteration_number == 1:
-                aircraft_deformed_macrosurfaces_aero_grids = aircraft_macrosurfaces_aero_grids
+                aircraft_deformed_macrosurfaces_aero_grids = (
+                    aircraft_macrosurfaces_aero_grids
+                )
 
             aero_start_time = time.time()
             (
@@ -703,10 +712,6 @@ def calculate_aircraft_loads(
             # Add constraints to a vector
             struct_constraints.extend(aircraft_constraints)
 
-
-
-            vis.plot_3D.plot_structure_nodes(struct_grid)
-
             # Calculate structure deformations
             deformations, internal_loads = struct.fem.structural_solver(
                 struct_grid, struct_fem_elements, struct_loads, struct_constraints
@@ -742,10 +747,16 @@ def calculate_aircraft_loads(
                     weight_matrix=deformation_to_aero_grid_weight_matrix,
                 )
 
-                deformed_macrosurface_aero_panels = aero.vlm.create_panel_grid(deformed_macrosurface_aero_grid)
+                deformed_macrosurface_aero_panels = aero.vlm.create_panel_grid(
+                    deformed_macrosurface_aero_grid
+                )
 
-                aircraft_deformed_macrosurfaces_aero_grids.append(deformed_macrosurface_aero_grid)
-                aircraft_deformed_macrosurfaces_aero_panels.append(deformed_macrosurface_aero_panels)
+                aircraft_deformed_macrosurfaces_aero_grids.append(
+                    deformed_macrosurface_aero_grid
+                )
+                aircraft_deformed_macrosurfaces_aero_panels.append(
+                    deformed_macrosurface_aero_panels
+                )
 
             def_end_time = time.time()
             if status:
@@ -754,10 +765,21 @@ def calculate_aircraft_loads(
                 )
 
             iteration_end_time = time.time()
-            if status:
-                print(
-                    f"        . Iteration {iteration_number} completed in {str(datetime.timedelta(seconds=(iteration_end_time - iteration_start_time)))}"
-                )
+
+            # Check convergence
+
+            new_deformation = deformations[control_node_number]
+
+            if np.array_equal(old_deformation, np.zeros([6])):
+                delta_deformation = np.full((6), float("inf"))
+
+            else:
+                delta_deformation = np.abs(new_deformation - old_deformation) / np.abs(old_deformation)
+
+            bending_delta = m.norm(delta_deformation[:3])
+            torsion_delta = m.norm(delta_deformation[3:])
+
+            old_deformation = np.copy(new_deformation)
 
             if output_iter:
 
@@ -769,29 +791,41 @@ def calculate_aircraft_loads(
                     "aircraft_force_grid": aircraft_force_grid,
                     "aircraft_struct_deformations": deformations,
                     "aircraft_struct_internal_loads": internal_loads,
+                    "deformation_at_control_node": old_deformation,
                     "influence_coef_matrix": influence_coef_matrix,
                 }
 
                 iteration_results.append(this_iteration_results)
 
+            print(f"        . Bending Delta: {bending_delta}")
+            print(f"        . Torsion Delta: {torsion_delta}")
 
+            if status:
+                print(
+                    f"        . Iteration {iteration_number} completed in {str(datetime.timedelta(seconds=(iteration_end_time - iteration_start_time)))}"
+                )
         aelast_loop_end_time = time.time()
 
         if status:
-            print(f"- Running aeroelastic calculation - Completed in {str(datetime.timedelta(seconds=(aelast_loop_end_time - aelast_loop_start_time)))}")
+            print(
+                f"- Running aeroelastic calculation - Completed in {str(datetime.timedelta(seconds=(aelast_loop_end_time - aelast_loop_start_time)))}"
+            )
 
         simulation_end_time = time.time()
         if status:
-            print(f"# Running simulation - Completed in {str(datetime.timedelta(seconds=(simulation_end_time - simulation_start_time)))}")
+            print(
+                f"# Running simulation - Completed in {str(datetime.timedelta(seconds=(simulation_end_time - simulation_start_time)))}"
+            )
 
         final_results = {
-                "aircraft_deformed_macrosurfaces_aero_grids": aircraft_deformed_macrosurfaces_aero_grids,
-                "aircraft_deformed_macrosurfaces_aero_panels": aircraft_deformed_macrosurfaces_aero_panels,
-                "aircraft_gamma_grid": aircraft_gamma_grid,
-                "aircraft_force_grid": aircraft_force_grid,
-                "aircraft_struct_deformations": deformations,
-                "aircraft_struct_internal_loads": internal_loads,
-                "influence_coef_matrix": influence_coef_matrix,
+            "aircraft_deformed_macrosurfaces_aero_grids": aircraft_deformed_macrosurfaces_aero_grids,
+            "aircraft_deformed_macrosurfaces_aero_panels": aircraft_deformed_macrosurfaces_aero_panels,
+            "aircraft_gamma_grid": aircraft_gamma_grid,
+            "aircraft_force_grid": aircraft_force_grid,
+            "aircraft_struct_deformations": deformations,
+            "aircraft_struct_internal_loads": internal_loads,
+            "deformation_at_control_node": old_deformation,
+            "influence_coef_matrix": influence_coef_matrix,
         }
 
         if output_iter:
@@ -835,7 +869,63 @@ def calculate_aircraft_loads(
             "aircraft_macrosurfaces_panels": aircraft_panel_grid,
             "aircraft_gamma_grid": aircraft_gamma_grid,
             "aircraft_force_grid": aircraft_force_grid,
-            "influence_coef_matrix": influence_coef_matrix
+            "influence_coef_matrix": influence_coef_matrix,
         }
 
         return results
+
+# ==================================================================================================
+
+
+def find_control_node_number(aircraft, aircraft_grids, control_node_string):
+
+    component_identifier, node_position = control_node_string.split("-")
+
+    # Run trought all surfaces in the aircraft searching for the identifier in each
+    # of the constraints described in constraints_data_list
+
+    for i, macrosurface in enumerate(aircraft.macrosurfaces):
+
+        for j, surface in enumerate(macrosurface.surface_list):
+
+            if surface.identifier == component_identifier:
+
+                surface_grid = aircraft_grids["macrosurfaces_struct_grids"][i][j]
+
+                if node_position == "ROOT":
+
+                    # If root select root node
+                    node_number = surface_grid[0].number
+
+                elif node_position == "TIP":
+
+                    # If tip select tip node
+                    node_number = surface_grid[-1].number
+
+                return node_number
+
+    # Run trought all beams in the aircraft searching for the identifier in each
+    # of the constraints described in constraints_data_list
+
+    if aircraft.beams:
+
+        for i, beam in enumerate(aircraft.beams):
+
+            if beam.identifier == component_identifier:
+
+                beam_grid = aircraft_grids["beams_struct_grids"][i]
+
+                if node_position == "ROOT":
+
+                    # If root select root node
+                    node_number = beam_grid[0],
+
+                elif node_position == "TIP":
+
+                    # If tip select tip node
+                    node_number = beam_grid[-1],
+
+                return node_number
+
+    print("ERROR: Control Node was not found")
+    return None

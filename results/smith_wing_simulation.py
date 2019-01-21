@@ -57,8 +57,8 @@ from smith_wing_data import smith_wing
 
 # Number of panels and finite elements
 N_CHORD_PANELS = 10
-N_SPAN_PANELS = 3
-N_BEAM_ELEMENTS = 6
+N_SPAN_PANELS = 20
+N_BEAM_ELEMENTS = 40
 CHORD_DISCRETIZATION = "linear"
 SPAN_DISCRETIZATION = "linear"
 TORSION_FUNCTION = "linear"
@@ -168,10 +168,11 @@ FLIGHT_CONDITIONS_DATA = {
 SIMULATION_OPTIONS = {
     "flexible_aircraft": True,
     "status_messages": True,
-    "max_iterations": 1,
+    "control_node_string": "left_wing-TIP",
+    "max_iterations": 100,
     "bending_convergence_criteria": 0.01,
     "torsion_convergence_criteria": 0.01,
-    "fem_prop_choice": "TIP",
+    "fem_prop_choice": "ROOT",
     "interaction_algorithm": "closest",
     "output_iteration_results": True,
 }

@@ -204,6 +204,8 @@ class Beam:
         # Calculate rotation quarternion
         node = Node(np.array([0.0, 0.0, 0.0]), Quaternion())
         x_axis = np.array([1, 0, 0])
+        y_axis = np.array([0, 1, 0])
+        z_axis = np.array([0, 0, 1])
 
         # Rotate to align x axis with beam vector
 
@@ -217,14 +219,16 @@ class Beam:
 
         node = node.rotate(rot_quaternion_1, rotation_center=np.zeros(3))
 
-        # Rotate to align y axis with orientation vector
+        # Calculate z axis based on orientation axis
+        node_z_axis = m.cross(node.x_axis, self.orientation_vector)
 
-        rot_axis = m.cross(node.y_axis, self.orientation_vector)
+        # Rotate to align node z axis with calculated z axis
+        rot_axis = m.cross(node.z_axis, node_z_axis)
+        rot_angle = f.angle_between(node.z_axis, node_z_axis)
 
         if np.array_equal(rot_axis, np.zeros(3)):
-            rot_axis = x_axis
+            rot_axis = z_axis
 
-        rot_angle = f.angle_between(node.y_axis, self.orientation_vector)
         rot_quaternion_2 = Quaternion(axis=rot_axis, angle=rot_angle)
 
         # Multiply both quaternions to generate final rot_quaternion
