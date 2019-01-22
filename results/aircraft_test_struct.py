@@ -10,9 +10,9 @@ from src import loads
 from src import structures as struct
 
 
-POINT_1 = np.array([0.0, 0.0, 0.0])
-POINT_2 = np.array([3.0, -3.0, 0.0])
-POINT_3 = np.array([3.0, 3.0, 0.0])
+POINT_1 = np.array([0.5, 0.0, 0.0])
+POINT_2 = np.array([8.5, -13.8564064, 0.0])
+POINT_3 = np.array([8.5, 13.8564064, 0.0])
 
 
 POINT_4 = np.array([0.0, 0.0, 3.0])
@@ -120,7 +120,7 @@ struct_connections = [I_to_II]
 # ==================================================================================================
 # FEM GRID GENERATION
 
-N_BEAM_ELEMENTS = 5
+N_BEAM_ELEMENTS = 6
 
 beam_I_struct_grid = beam_I.create_grid(n_elements=N_BEAM_ELEMENTS)
 beam_II_struct_grid = beam_II.create_grid(n_elements=N_BEAM_ELEMENTS)
@@ -141,6 +141,8 @@ beam_VI_struct_grid = beam_VI.create_grid(n_elements=N_BEAM_ELEMENTS)
 struct_grid = [beam_I_struct_grid, beam_II_struct_grid]
 
 # Numbering nodes
+
+vis.plot_3D.plot_structure_nodes(struct_grid)
 
 struct.fem.number_nodes(struct_components, struct_grid, struct_connections)
 

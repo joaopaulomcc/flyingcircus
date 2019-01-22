@@ -36,17 +36,17 @@ from src import visualization as vis
 
 # ==================================================================================================
 print()
-print("=============================================================")
-print("= VALIDATION OF AEROELASTIC CALCULATION                     =")
-print("= VALIDATION CASE: Static aeroelastic analysis of very      =")
-print("= flexible wings based on non-planar vortex lattice methods =")
-print("= AUTHORS: Xie Changchuan Wang Libo, Yang Chao, Liu Yi      =")
-print("=============================================================")
+print("============================================================")
+print("= VALIDATION OF AEROELASTIC CALCULATION                    =")
+print("= VALIDATION CASE: CFD-Based Analysis of Nonlinear         =")
+print("= Aeroelastic Behavior of High-Aspect Ratio Wings          =")
+print("= AUTHORS: M. J. Smith, M. J. Patil, D. H. Hodges          =")
+print("============================================================")
 # ==================================================================================================
 # EXECUTE CALCULATION
 
-from changchuan_wing_data import changchuan_wing
-from changchuan_wing_simulation import results, iteration_results
+from hale_aircraft_data import hale_aircraft
+from hale_aircraft_simulation import results, iteration_results
 
 # ==================================================================================================
 # PROCESSING RESULTS
@@ -66,7 +66,7 @@ for panels, forces in zip(
 ax, fig = vis.plot_3D.plot_results(
     results["aircraft_deformed_macrosurfaces_aero_grids"],
     components_delta_p_grids,
-    title="Changchuan Wing - alpha: 0.4º - vel: 34 m/s",
+    title="Smith Wing - alpha: 2º - 10 Iterations",
     label="Delta Pressure [Pa]",
     colormap="coolwarm",
 )
@@ -86,13 +86,13 @@ sys.exit()
 
 # Aerodynamic forces in the aircraft coordinate system
 total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = loads.functions.cg_aero_loads(
-    changchuan_wing,
+    hale_aircraft,
     components_force_vector, components_panel_vector
 )
 
 # Aerodynamic forces in the wind coordinate system
 forces, moments, coefficients = loads.functions.lift_drag(
-    changchuan_wing,
+    hale_aircraft,
     velocity_vector,
     altitude,
     attitude_vector,
@@ -106,7 +106,7 @@ print(f"    - Cl: {coefficients['Cl']} N")
 print(f"    - Drag: {forces['drag']} N")
 print(f"    - Cd: {coefficients['Cd']} N")
 # Write Results to file
-report_file = open("results/changchuan_wing_report.txt", "w")
+report_file = open("results/hale_aircraft_report.txt", "w")
 report_file.write("============================================================\n")
 report_file.write("= VALIDATION OF AEROELASTIC CALCULATION                    =\n")
 report_file.write("= VALIDATION CASE: CFD-Based Analysis of Nonlinear         =\n")
@@ -207,12 +207,12 @@ print("- Running calculation:")
 
 # Aerodynamic forces in the aircraft coordinate system
 total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = loads.functions.cg_aero_loads(
-    changchuan_wing, components_force_vector, components_panel_vector
+    hale_aircraft, components_force_vector, components_panel_vector
 )
 
 # Aerodynamic forces in the wind coordinate system
 forces, moments, coefficients = loads.functions.lift_drag(
-    changchuan_wing,
+    hale_aircraft,
     velocity_vector,
     altitude,
     attitude_vector,

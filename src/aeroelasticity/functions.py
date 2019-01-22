@@ -342,7 +342,7 @@ def generate_aircraft_grids(aircraft_object, aircraft_grid_data):
             grid_data = beams_grid_data[i]
             beam_struct_grid = beam.create_grid(n_elements=grid_data["n_elements"])
 
-        beams_struct_grids.append(beam_struct_grid)
+            beams_struct_grids.append(beam_struct_grid)
 
         # Add aircraft's beams, and it's nodes to the aircraft components and nodes list
         for beam, beam_nodes_list in zip(aircraft_object.beams, beams_struct_grids):

@@ -30,30 +30,30 @@ from src import structures as struct
 # Wing section
 
 # Aifoil name, only informative
-naca0012 = "NACA 0012"
+naca0015 = "NACA 0015"
 
 # Material properties, all equal to one as Smith et al only provies the stiffness characteristics
 # of the wing
 MATERIAL = struct.objects.Material(
-    name="material",
-    density=0.75,
-    elasticity_modulus=1,
-    rigidity_modulus=1,
-    poisson_ratio=1,
-    yield_tensile_stress=1,
-    ultimate_tensile_stress=1,
-    yield_shear_stress=1,
-    ultimate_shear_stress=1,
+    name="Spring Steel",
+    density=7.6e3,
+    elasticity_modulus=230e9,
+    rigidity_modulus=89.3e9,
+    poisson_ratio=0.25,
+    yield_tensile_stress=350e6,
+    ultimate_tensile_stress=420e6,
+    yield_shear_stress=0,
+    ultimate_shear_stress=0,
 )
 
 # Wing section properties
 WING_SECTION = geo.objects.Section(
-    identifier=naca0012,
+    identifier=naca0015,
     material=MATERIAL,
-    area=1e20,
-    Iyy=2e4,
-    Izz=5e6,
-    J=1e4,
+    area=8.0142e-6,
+    Iyy=8.679e-13,
+    Izz=3.301e-11,
+    J=3.117e-12,
     shear_center=0.5,
 )
 
@@ -61,30 +61,17 @@ WING_SECTION = geo.objects.Section(
 
 # Wing surface
 
-WING_ROOT_CHORD = 1
-WING_TIP_CHORD = 1
-SEMI_WING_LENGTH = 16
+WING_ROOT_CHORD = 0.06
+WING_TIP_CHORD = 0.06
+SEMI_WING_LENGTH = 0.487
 WING_SWEEP_ANGLE = 0
 WING_DIHEDRAL = 0
 WING_TIP_TORSION_ANGLE = 0
 
 
 # Definition of the wing planform
-left_wing_surface = geo.objects.Surface(
-    identifier="left_wing",
-    root_chord=WING_ROOT_CHORD,
-    root_section=WING_SECTION,
-    tip_chord=WING_TIP_CHORD,
-    tip_section=WING_SECTION,
-    length=SEMI_WING_LENGTH,
-    leading_edge_sweep_angle_deg=WING_SWEEP_ANGLE,
-    dihedral_angle_deg=WING_DIHEDRAL,
-    tip_torsion_angle_deg=WING_TIP_TORSION_ANGLE,
-    control_surface_hinge_position=None,
-)
-
-right_wing_surface = geo.objects.Surface(
-    identifier="right_wing",
+wing_surface = geo.objects.Surface(
+    identifier="main_wing",
     root_chord=WING_ROOT_CHORD,
     root_section=WING_SECTION,
     tip_chord=WING_TIP_CHORD,
@@ -100,8 +87,8 @@ right_wing_surface = geo.objects.Surface(
 wing = geo.objects.MacroSurface(
     position=np.array([0, 0, 0]),
     incidence=0,
-    surface_list=[left_wing_surface, right_wing_surface],
-    symmetry_plane="XZ",
+    surface_list=[wing_surface],
+    symmetry_plane=None,
     torsion_center=0.5,
 )
 
@@ -109,7 +96,7 @@ wing = geo.objects.MacroSurface(
 
 # Aircraft definition
 
-smith_wing = geo.objects.Aircraft(
+changchuan_wing = geo.objects.Aircraft(
     name="Smith Wing",
     macrosurfaces=[wing],
     inertial_properties=geo.objects.MaterialPoint(),
