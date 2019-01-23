@@ -52,18 +52,18 @@ vis.plot_3D.plot_aircraft(hale_aircraft, title="Smith Wing")
 
 
 # WING GRID DATA
-N_CHORD_PANELS = 3
+N_CHORD_PANELS = 5
 
-WING_N_SPAN_PANELS = 5
+WING_N_SPAN_PANELS = 20
 WING_N_BEAM_ELEMENTS = 2 * WING_N_SPAN_PANELS
 
-AILERON_N_SPAN_PANELS = 1
+AILERON_N_SPAN_PANELS = 4
 AILERON_N_BEAM_ELEMENTS = 2 * AILERON_N_SPAN_PANELS
 
 CHORD_DISCRETIZATION = "linear"
 SPAN_DISCRETIZATION = "linear"
 TORSION_FUNCTION = "linear"
-CONTROL_SURFACE_DEFLECTION_DICT = {"left_aileron": 0, "right_aileron": 0}
+CONTROL_SURFACE_DEFLECTION_DICT = {"left_aileron": -5, "right_aileron": 5}
 
 wing_grid_data = {
     "n_chord_panels": N_CHORD_PANELS,
@@ -98,15 +98,15 @@ wing_grid_data = {
 # --------------------------------------------------------------------------------------------------
 
 # TAIL GRID DATA
-TAIL_N_CHORD_PANELS = 3
+TAIL_N_CHORD_PANELS = 5
 
-TAIL_N_SPAN_PANELS = 3
+TAIL_N_SPAN_PANELS = 10
 TAIL_N_BEAM_ELEMENTS = 2 * TAIL_N_SPAN_PANELS
 
 TAIL_CHORD_DISCRETIZATION = "linear"
 TAIL_SPAN_DISCRETIZATION = "linear"
 TAIL_TORSION_FUNCTION = "linear"
-TAIL_CONTROL_SURFACE_DEFLECTION_DICT = {"left_elevator": 45, "right_elevator": 0}
+TAIL_CONTROL_SURFACE_DEFLECTION_DICT = {"left_elevator": 10, "right_elevator": 10}
 
 tail_grid_data = {
     "n_chord_panels": TAIL_N_CHORD_PANELS,
@@ -133,9 +133,9 @@ tail_grid_data = {
 # --------------------------------------------------------------------------------------------------
 # FUSELAGE AND TAIL BOOM GRID DATA
 
-fuselage_grid_data = {"n_elements": 1}
+fuselage_grid_data = {"n_elements": 3}
 
-tail_boom_grid_data = {"n_elements": 2}
+tail_boom_grid_data = {"n_elements": 10}
 
 # --------------------------------------------------------------------------------------------------
 # HALE AIRCRAFT GRID DATA
@@ -237,7 +237,7 @@ SIMULATION_OPTIONS = {
     "flexible_aircraft": True,
     "status_messages": True,
     "control_node_string": "left_aileron-TIP",
-    "max_iterations": 1,
+    "max_iterations": 10,
     "bending_convergence_criteria": 0.01,
     "torsion_convergence_criteria": 0.01,
     "fem_prop_choice": "ROOT",

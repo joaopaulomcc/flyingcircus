@@ -71,6 +71,25 @@ ax, fig = vis.plot_3D.plot_results(
     colormap="coolwarm",
 )
 
+ax, fig = vis.plot_3D2.generate_aircraft_grids_plot(
+    results["aircraft_original_grids"]["macrosurfaces_aero_grids"],
+    results["aircraft_struct_fem_elements"],
+    title=None,
+    ax=None,
+    show_origin=True,
+)
+
+ax, fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
+    results["aircraft_deformed_macrosurfaces_aero_grids"],
+    results["aircraft_struct_fem_elements"],
+    results["aircraft_struct_deformations"],
+    title=None,
+    ax=ax,
+    fig=fig,
+    show_origin=True,
+)
+
+
 print()
 print(f"Deformation at control node:")
 print(f"    X : {results['deformation_at_control_node'][0]}")

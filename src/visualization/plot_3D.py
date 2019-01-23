@@ -82,12 +82,11 @@ def plot_surface(meshs):
 
     return ax, fig
 
+
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_aircraft_aero_grids(aircraft_aero_grids, title=None):
-
-    ax, fig = generate_blank_3D_plot(title)
+def plot_aircraft_aero_grids(aircraft_aero_grids, ax, title=None):
 
     # Plot aerodynamic grids
     for macrosurface_aero_grid in aircraft_aero_grids:
@@ -98,7 +97,8 @@ def plot_aircraft_aero_grids(aircraft_aero_grids, title=None):
 
     set_axes_equal(ax)
 
-    return ax, fig
+    return ax
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -127,7 +127,10 @@ def plot_mesh(meshs):
     plt.show(block=False)
 
     return ax, fig
+
+
 # --------------------------------------------------------------------------------------------------
+
 
 def plot_surface_grid(surface_grid, matplotlib_axis, grid_color="blue"):
 
@@ -139,6 +142,7 @@ def plot_surface_grid(surface_grid, matplotlib_axis, grid_color="blue"):
     ax.plot_wireframe(xx, yy, zz, alpha=0.85)
 
     return ax
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -245,6 +249,7 @@ def plot_node(Node, plot_axis):
 
     plot_axis.scatter([x], [y], [z], color="black")
 
+
 # --------------------------------------------------------------------------------------------------
 
 
@@ -304,24 +309,44 @@ def plot_structure(struct_elements):
 
     return ax, fig
 
+
 # --------------------------------------------------------------------------------------------------
 
-def plot_beam_elements(struct_elements, matplotlib_axis):
 
-    ax = matplotlib_axis
+def plot_aircraft_structure(struct_elements, ax):
+
+    for component_elements in struct_elements:
+        for beam_element in component_elements:
+
+            point_A = [
+                beam_element.node_A.x,
+                beam_element.node_A.y,
+                beam_element.node_A.z,
+            ]
+            point_B = [
+                beam_element.node_B.x,
+                beam_element.node_B.y,
+                beam_element.node_B.z,
+            ]
+            x = [point_A[0], point_B[0]]
+            y = [point_A[1], point_B[1]]
+            z = [point_A[2], point_B[2]]
+            ax.plot(x, y, z, "-ko", markersize=2)
+
+    set_axes_equal(ax)
+
+    return ax
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_beam_elements(struct_elements, ax):
 
     for beam_element in struct_elements:
 
-        point_A = [
-            beam_element.node_A.x,
-            beam_element.node_A.y,
-            beam_element.node_A.z,
-        ]
-        point_B = [
-            beam_element.node_B.x,
-            beam_element.node_B.y,
-            beam_element.node_B.z,
-        ]
+        point_A = [beam_element.node_A.x, beam_element.node_A.y, beam_element.node_A.z]
+        point_B = [beam_element.node_B.x, beam_element.node_B.y, beam_element.node_B.z]
         x = [point_A[0], point_B[0]]
         y = [point_A[1], point_B[1]]
         z = [point_A[2], point_B[2]]
@@ -329,14 +354,13 @@ def plot_beam_elements(struct_elements, matplotlib_axis):
 
     return ax
 
+
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_deformed_structure(struct_elements, deformations, scale_factor=1):
+def plot_deformed_structure(struct_elements, deformations, ax, scale_factor=1):
 
-#def plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=1):
-
-    ax, fig = plot_structure(struct_elements)
+    # def plot_deformed_structure(struct_elements, node_vector, deformations, scale_factor=1):
 
     for component_elements in struct_elements:
         for beam_element in component_elements:
@@ -362,45 +386,44 @@ def plot_deformed_structure(struct_elements, deformations, scale_factor=1):
             ax.plot(x, y, z, "-ro", markersize=2)
 
     set_axes_equal(ax)
-    plt.show(block=False)
 
     ax, fig = plot_structure(struct_elements)
 
-#    deformed_grid = []
-#    for i, node in enumerate(node_vector):
-#        deformed_grid.append(
-#            [
-#                node.x + scale_factor * deformations[i][0],
-#                node.y + scale_factor * deformations[i][1],
-#                node.z + scale_factor * deformations[i][2],
-#                deformations[i][3],
-#                deformations[i][4],
-#                deformations[i][5],
-#            ]
-#        )
-#
-#    for component_elements in struct_elements:
-#        for beam_element in component_elements:
-#
-#            point_A = [
-#                deformed_grid[beam_element.node_A.number][0],
-#                deformed_grid[beam_element.node_A.number][1],
-#                deformed_grid[beam_element.node_A.number][2],
-#            ]
-#
-#            point_B = [
-#                deformed_grid[beam_element.node_B.number][0],
-#                deformed_grid[beam_element.node_B.number][1],
-#                deformed_grid[beam_element.node_B.number][2],
-#            ]
-#
-#            x = [point_A[0], point_B[0]]
-#            y = [point_A[1], point_B[1]]
-#            z = [point_A[2], point_B[2]]
-#            ax.plot(x, y, z, "-ro", markersize=2)
-#
-#    set_axes_equal(ax)
-#    plt.show(block=False)
+    #    deformed_grid = []
+    #    for i, node in enumerate(node_vector):
+    #        deformed_grid.append(
+    #            [
+    #                node.x + scale_factor * deformations[i][0],
+    #                node.y + scale_factor * deformations[i][1],
+    #                node.z + scale_factor * deformations[i][2],
+    #                deformations[i][3],
+    #                deformations[i][4],
+    #                deformations[i][5],
+    #            ]
+    #        )
+    #
+    #    for component_elements in struct_elements:
+    #        for beam_element in component_elements:
+    #
+    #            point_A = [
+    #                deformed_grid[beam_element.node_A.number][0],
+    #                deformed_grid[beam_element.node_A.number][1],
+    #                deformed_grid[beam_element.node_A.number][2],
+    #            ]
+    #
+    #            point_B = [
+    #                deformed_grid[beam_element.node_B.number][0],
+    #                deformed_grid[beam_element.node_B.number][1],
+    #                deformed_grid[beam_element.node_B.number][2],
+    #            ]
+    #
+    #            x = [point_A[0], point_B[0]]
+    #            y = [point_A[1], point_B[1]]
+    #            z = [point_A[2], point_B[2]]
+    #            ax.plot(x, y, z, "-ro", markersize=2)
+    #
+    #    set_axes_equal(ax)
+    #    plt.show(block=False)
 
     return ax, fig
 
@@ -526,6 +549,7 @@ def plot_aircraft(aircraft, title=None):
 
     return ax, fig
 
+
 # --------------------------------------------------------------------------------------------------
 
 
@@ -545,13 +569,21 @@ def generate_blank_3D_plot(title=None, plot_origin=True):
 
         # Plot coordinate system
         ax.quiver(
-            [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], color="black"
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            color="black",
         )
         ax.scatter([0], [0], [0], color="red")
 
     return ax, fig
 
+
 # --------------------------------------------------------------------------------------------------
+
 
 def plot_aircraft_grids(aircraft_grids, aircraft_fem_elements, title=None):
 
@@ -565,12 +597,13 @@ def plot_aircraft_grids(aircraft_grids, aircraft_fem_elements, title=None):
             ax = plot_surface_grid(surface_aero_grid, ax, grid_color="blue")
 
     # Plot macrosurfaces structures
-    for macrosurface_fem_elements in aircraft_fem_elements["macrosurfaces_fem_elements"]:
+    for macrosurface_fem_elements in aircraft_fem_elements[
+        "macrosurfaces_fem_elements"
+    ]:
 
         for surface_fem_elements in macrosurface_fem_elements:
 
             ax = plot_beam_elements(surface_fem_elements, ax)
-
 
     # Plot aircraft beams structure
     if aircraft_fem_elements["beams_fem_elements"]:
@@ -582,6 +615,44 @@ def plot_aircraft_grids(aircraft_grids, aircraft_fem_elements, title=None):
     set_axes_equal(ax)
 
     return ax, fig
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_aircraft_(aircraft_grids, aircraft_fem_elements, title=None):
+
+    ax, fig = generate_blank_3D_plot(title)
+
+    # Plot aerodynamic grids
+    for macrosurface_aero_grid in aircraft_grids["macrosurfaces_aero_grids"]:
+
+        for surface_aero_grid in macrosurface_aero_grid:
+
+            ax = plot_surface_grid(surface_aero_grid, ax, grid_color="blue")
+
+    # Plot macrosurfaces structures
+    for macrosurface_fem_elements in aircraft_fem_elements[
+        "macrosurfaces_fem_elements"
+    ]:
+
+        for surface_fem_elements in macrosurface_fem_elements:
+
+            ax = plot_beam_elements(surface_fem_elements, ax)
+
+    # Plot aircraft beams structure
+    if aircraft_fem_elements["beams_fem_elements"]:
+
+        for beam_fem_elements in aircraft_fem_elements["beams_fem_elements"]:
+
+            ax = plot_beam_elements(beam_fem_elements, ax)
+
+    set_axes_equal(ax)
+
+    return ax, fig
+
+
+# --------------------------------------------------------------------------------------------------
 
 # --------------------------------------------------------------------------------------------------
 
@@ -626,11 +697,55 @@ def plot_deformation(elements, nodes, deformations, scale=1):
 
     return ax, fig
 
+
 # --------------------------------------------------------------------------------------------------
+
 
 def plot_loads_to_nodes_connections(loads, elements, nodes, loads_to_nodes_matrix):
 
     pass
 
     ax, fig = generate_blank_3D_plot(title)
+
+
+def plot_points_to_nodes_connections():
+
+    pass
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def create_deformed_aircraft_plot(
+    aircraft_original_grids,
+    aircraft_deformed_aero_grids,
+    aircraft_fem_elements,
+    struct_deformations,
+    results,
+    plot_title,
+    plot_results_label,
+):
+
+    # Create blank plot
+    ax, fig = generate_blank_3D_plot(title=plot_title, plot_origin=True)
+
+    # Plot Original Grids
+
+    # Aerodynamic Grids
+    ax = plot_aircraft_aero_grids(
+        aircraft_aero_grids=aircraft_original_grids["macrosurfaces_aero_grids"], ax=ax
+    )
+    # Structural Grids
+    ax = plot_aircraft_structure(aircraft_fem_elements["macrosurfaces_fem_elements"], ax)
+
+    ax = plot_aircraft_structure(aircraft_fem_elements["beams_fem_elements"], ax)
+
+
+    # Plot Deformed Grids
+    ax = plot_aircraft_aero_grids(aircraft_deformed_aero_grids, ax)
+    ax = plot_deformed_structure(aircraft_fem_elements["macrosurfaces_fem_elements"], struct_deformations, ax)
+    ax = plot_deformed_structure(aircraft_fem_elements["beams_fem_elements"], struct_deformations, ax)
+
+    return ax, fig
+
 
