@@ -269,3 +269,52 @@ def load_distribution(components_force_grid, components_panel_grid, attitude_vec
         components_loads.append(loads)
 
     return components_loads
+
+# --------------------------------------------------------------------------------------------------
+
+
+def calculate_surface_panels_loads(surface_panel_grid, surface_force_grid):
+
+    n_chord_panels = np.shape(surface_panel_grid)[0]
+    n_spam_panels = np.shape(surface_panel_grid)[1]
+
+    delta_p_grid = np.zeros(np.shape(surface_panel_grid))
+    force_magnitude_grid = np.zeros(np.shape(surface_panel_grid))
+    force_x_grid = np.zeros(np.shape(surface_panel_grid))
+    force_y_grid = np.zeros(np.shape(surface_panel_grid))
+    force_z_grid = np.zeros(np.shape(surface_panel_grid))
+
+    for i in range(n_chord_panels):
+        for j in range(n_spam_panels):
+            force_x_grid[i][j] = surface_force_grid[i][j][0]
+            force_y_grid[i][j] = surface_force_grid[i][j][1]
+            force_z_grid[i][j] = surface_force_grid[i][j][2]
+
+            force_magnitude_grid[i][j] = m.norm(surface_force_grid[i][j])
+            delta_p_grid[i][j] = force_magnitude_grid[i][j] / surface_panel_grid[i][j].area
+
+    return {
+            "delta_p_grid": delta_p_grid,
+            "force_magnitude_grid": force_magnitude_grid,
+            "force_x_grid": force_x_grid,
+            "force_y_grid": force_y_grid,
+            "force_z_grid": force_z_grid,
+           }
+
+# --------------------------------------------------------------------------------------------------
+
+def calculate_aircraft_panel_loads(aircraft_panel_grids, aircraft_force_grids):
+
+    aircraft_panel_loads = []
+
+    for component_panel_grid, component_force_grid in zip(
+        aircraft_panel_grids,
+        aircraft_force_grids,
+    ):
+
+        component_panel_loads = calculate_surface_panels_loads(component_panel_grid, component_force_grid)
+
+        aircraft_panel_loads.append(component_panel_loads)
+
+    return aircraft_panel_loads
+

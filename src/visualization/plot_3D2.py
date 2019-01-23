@@ -94,13 +94,15 @@ def plot_macro_surface(macrosurface_aero_grid, ax):
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_macrosurface_aero_grid(macrosurface_aero_grid, ax):
+def plot_macrosurface_aero_grid(
+    macrosurface_aero_grid, ax, line_color="darkblue", alpha=1
+):
 
     for surface_aero_grid in macrosurface_aero_grid:
         xx = surface_aero_grid["xx"]
         yy = surface_aero_grid["yy"]
         zz = surface_aero_grid["zz"]
-        ax.plot_wireframe(xx, yy, zz)
+        ax.plot_wireframe(xx, yy, zz, color=line_color, alpha=alpha)
 
     return ax
 
@@ -108,7 +110,7 @@ def plot_macrosurface_aero_grid(macrosurface_aero_grid, ax):
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_structure(struct_elements, ax):
+def plot_structure(struct_elements, ax, show_nodes=True, line_color="k", alpha=1):
 
     for component_elements in struct_elements:
         for beam_element in component_elements:
@@ -126,7 +128,11 @@ def plot_structure(struct_elements, ax):
             x = [point_A[0], point_B[0]]
             y = [point_A[1], point_B[1]]
             z = [point_A[2], point_B[2]]
-            ax.plot(x, y, z, "-ko", markersize=2)
+
+            if show_nodes:
+                ax.plot(x, y, z, color=line_color, marker="o", markersize=2, alpha=alpha)
+            else:
+                ax.plot(x, y, z, color=line_color, alpha=alpha)
 
     return ax
 
@@ -134,7 +140,15 @@ def plot_structure(struct_elements, ax):
 # --------------------------------------------------------------------------------------------------
 
 
-def plot_deformed_structure(struct_elements, struct_deformations, ax, scale_factor=1):
+def plot_deformed_structure(
+    struct_elements,
+    struct_deformations,
+    ax,
+    scale_factor=1,
+    show_nodes=True,
+    line_color="k",
+    alpha=1,
+):
 
     for component_elements in struct_elements:
         for beam_element in component_elements:
@@ -157,7 +171,11 @@ def plot_deformed_structure(struct_elements, struct_deformations, ax, scale_fact
             x = [point_A[0], point_B[0]]
             y = [point_A[1], point_B[1]]
             z = [point_A[2], point_B[2]]
-            ax.plot(x, y, z, "-ro", markersize=2)
+
+            if show_nodes:
+                ax.plot(x, y, z, color=line_color, marker="o", markersize=2, alpha=alpha)
+            else:
+                ax.plot(x, y, z, color=line_color, alpha=alpha)
 
     return ax
 
@@ -172,20 +190,28 @@ def generate_aircraft_grids_plot(
     ax=None,
     fig=None,
     show_origin=True,
+    show_nodes=False,
+    line_color="k",
+    alpha=1,
 ):
 
     if ax is None:
         ax, fig = generate_blank_3D_plot(title, show_origin)
 
     for macrosurface_aero_grid in aircraft_macrosurfaces_aero_grids:
-        ax = plot_macrosurface_aero_grid(macrosurface_aero_grid, ax)
+        ax = plot_macrosurface_aero_grid(
+            macrosurface_aero_grid,
+            ax,
+            line_color=line_color,
+            alpha=alpha,
+        )
 
     for macrosurface_struct_fem_elements in aircraft_struct_fem_elements[
         "macrosurfaces_fem_elements"
     ]:
-        ax = plot_structure(macrosurface_struct_fem_elements, ax)
+        ax = plot_structure(macrosurface_struct_fem_elements, ax, show_nodes=show_nodes, line_color=line_color, alpha=alpha)
 
-    ax = plot_structure(aircraft_struct_fem_elements["beams_fem_elements"], ax)
+    ax = plot_structure(aircraft_struct_fem_elements["beams_fem_elements"], ax, show_nodes=show_nodes, line_color=line_color, alpha=alpha)
 
     set_axes_equal(ax)
 
@@ -203,13 +229,16 @@ def generate_deformed_aircraft_grids_plot(
     ax=None,
     fig=None,
     show_origin=True,
+    show_nodes=False,
+    line_color="k",
+    alpha=1,
 ):
 
     if ax is None:
         ax, fig = generate_blank_3D_plot(title, show_origin)
 
     for macrosurface_aero_grid in aircraft_deformed_macrosurfaces_aero_grids:
-        ax = plot_macrosurface_aero_grid(macrosurface_aero_grid, ax)
+        ax = plot_macrosurface_aero_grid(macrosurface_aero_grid, ax, line_color=line_color, alpha=alpha)
 
     for macrosurface_struct_fem_elements in aircraft_struct_fem_elements[
         "macrosurfaces_fem_elements"
@@ -220,14 +249,112 @@ def generate_deformed_aircraft_grids_plot(
             aircraft_struct_deformations,
             ax,
             scale_factor=1,
+            show_nodes=show_nodes, line_color=line_color, alpha=alpha
         )
 
     ax = plot_deformed_structure(
-            aircraft_struct_fem_elements["beams_fem_elements"],
+        aircraft_struct_fem_elements["beams_fem_elements"],
+        aircraft_struct_deformations,
+        ax,
+        scale_factor=1,
+        show_nodes=show_nodes, line_color=line_color, alpha=alpha
+    )
+
+    set_axes_equal(ax)
+
+    return ax, fig
+
+# --------------------------------------------------------------------------------------------------
+
+
+def plot_results(
+    aircraft_deformed_macrosurfaces_aero_grids,
+    aircraft_struct_fem_elements,
+    aircraft_struct_deformations,
+    aircraft_panel_loads,
+    results_string="delta_p_grid",
+    title=None,
+    colorbar_label="Delta Pressure [Pa]",
+    ax=None,
+    fig=None,
+    show_origin=True,
+    colormap="coolwarm",
+):
+
+    if ax is None:
+        ax, fig = generate_blank_3D_plot(title, show_origin)
+
+    # Configure Color Map
+    min_result_value = 0
+    max_result_value = 0
+
+    for component_panel_loads in aircraft_panel_loads:
+
+        grid_min = component_panel_loads[results_string].min()
+        grid_max = component_panel_loads[results_string].max()
+
+        if grid_min < min_result_value:
+            min_result_value = grid_min
+
+        if grid_max > max_result_value:
+            max_result_value = grid_max
+
+    norm = matplotlib.colors.Normalize(min_result_value, max_result_value)
+    m = plt.cm.ScalarMappable(norm=norm, cmap=colormap)
+    m.set_array([])
+
+    fig.colorbar(m, shrink=0.5, aspect=5, label=colorbar_label)
+
+    # Plot Aircraft Surfaces
+    for i, deformed_macrosurfaces_aero_grid in enumerate(aircraft_deformed_macrosurfaces_aero_grids):
+
+        results = aircraft_panel_loads[i][results_string]
+
+        index = 0
+
+        for deformed_surface_aero_grid in deformed_macrosurfaces_aero_grid:
+            n_chord_panels = np.shape(deformed_surface_aero_grid["xx"])[0] - 1
+            n_span_panels = np.shape(deformed_surface_aero_grid["xx"])[1] - 1
+
+            results_slice = results[:, index : (index + n_span_panels)]
+            index += n_span_panels
+
+            xx = deformed_surface_aero_grid["xx"]
+            yy = deformed_surface_aero_grid["yy"]
+            zz = deformed_surface_aero_grid["zz"]
+            fcolors = m.to_rgba(results_slice)
+            surf = ax.plot_surface(
+                xx,
+                yy,
+                zz,
+                facecolors=fcolors,
+                vmin=min_result_value,
+                vmax=max_result_value,
+                shade=False,
+                linewidth=0.5,
+                antialiased=False,
+            )
+
+    # Plot Aircraft Deformed Structure
+    for macrosurface_struct_fem_elements in aircraft_struct_fem_elements[
+        "macrosurfaces_fem_elements"
+    ]:
+
+        ax = plot_deformed_structure(
+            macrosurface_struct_fem_elements,
             aircraft_struct_deformations,
             ax,
             scale_factor=1,
+            show_nodes=False, line_color="k", alpha=1
         )
+
+    ax = plot_deformed_structure(
+        aircraft_struct_fem_elements["beams_fem_elements"],
+        aircraft_struct_deformations,
+        ax,
+        scale_factor=1,
+        show_nodes=False, line_color="k", alpha=1
+    )
 
     set_axes_equal(ax)
 

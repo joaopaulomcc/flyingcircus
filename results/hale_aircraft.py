@@ -46,13 +46,112 @@ print("============================================================")
 # EXECUTE CALCULATION
 
 from hale_aircraft_data import hale_aircraft
+
 from hale_aircraft_simulation import results, iteration_results, hale_aircraft_grids
+
+import pickle
+
+f = open('results_deflected.pckl', 'wb')
+pickle.dump([results, iteration_results, hale_aircraft_grids], f)
+f.close()
+
+#f = open("results_deflected.pckl", "rb")
+#results, iteration_results, hale_aircraft_grids = pickle.load(f)
+#f.close()
 
 # ==================================================================================================
 # PROCESSING RESULTS
 
+#        final_results = {
+#            "aircraft_deformed_macrosurfaces_aero_grids": aircraft_deformed_macrosurfaces_aero_grids,
+#            "aircraft_deformed_macrosurfaces_aero_panels": aircraft_deformed_macrosurfaces_aero_panels,
+#            "aircraft_gamma_grid": aircraft_gamma_grid,
+#            "aircraft_force_grid": aircraft_force_grid,
+#            "aircraft_struct_deformations": deformations,
+#            "aircraft_struct_internal_loads": internal_loads,
+#            "deformation_at_control_node": old_deformation,
+#            "influence_coef_matrix": influence_coef_matrix,
+#            "aircraft_original_grids": aircraft_grids,
+#            "aircraft_struct_fem_elements": aircraft_fem_elements,
+#            "original_aircraft_panel_grid": original_aircraft_panel_grid,
+#        }
+
+print()
+print(f"Deformation at control node:")
+print(f"    X : {results['deformation_at_control_node'][0]}")
+print(f"    Y : {results['deformation_at_control_node'][1]}")
+print(f"    Z : {results['deformation_at_control_node'][2]}")
+print(f"    RX: {np.degrees(results['deformation_at_control_node'][3])}")
+print(f"    RY: {np.degrees(results['deformation_at_control_node'][4])}")
+print(f"    RZ: {np.degrees(results['deformation_at_control_node'][5])}")
+
+
+ax, fig = vis.plot_3D2.generate_aircraft_grids_plot(
+    results["aircraft_original_grids"]["macrosurfaces_aero_grids"],
+    results["aircraft_struct_fem_elements"],
+    title=None,
+    ax=None,
+    show_origin=True,
+    show_nodes=False,
+    line_color="k",
+    alpha=0.5,
+)
+
+
+ax, fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
+    results["aircraft_deformed_macrosurfaces_aero_grids"],
+    results["aircraft_struct_fem_elements"],
+    results["aircraft_struct_deformations"],
+    title="Grids, V = 25 [m/s], Alpha = 2º",
+    ax=ax,
+    fig=fig,
+    show_origin=True,
+    show_nodes=False,
+    line_color="r",
+    alpha=1,
+)
+
+fig.set_size_inches(12, 10)
+
+for i in np.linspace(0,360,300):
+    ax.elev = 15
+    ax.azim = i
+    ax.dist = 6
+    plt.savefig(f"results\\hale\\deflected_grids_v_25_alfa_2_{i}_degrees.png", dpi=100)
+
 components_delta_p_grids = []
 components_force_mag_grids = []
+
+aircraft_panel_loads = loads.functions.calculate_aircraft_panel_loads(
+    results["original_aircraft_panel_grid"], results["aircraft_force_grid"]
+)
+
+ax, fig = vis.plot_3D2.plot_results(
+    results["aircraft_deformed_macrosurfaces_aero_grids"],
+    results["aircraft_struct_fem_elements"],
+    results["aircraft_struct_deformations"],
+    aircraft_panel_loads,
+    results_string="delta_p_grid",
+    title="Delta P, V = 25 [m/s], Alpha = 2º",
+    colorbar_label="Delta Pressure [Pa]",
+    ax=None,
+    fig=None,
+    show_origin=True,
+    colormap="coolwarm",
+)
+
+fig.set_size_inches(12, 10)
+
+for i in np.linspace(0,360,300):
+    ax.elev = 15
+    ax.azim = i
+    ax.dist = 6
+    plt.savefig(f"results\\hale\\deflected_delta_p_v_25_alfa_2_{i}_degrees.png", dpi=100)
+
+plt.show()
+
+sys.exit()
+
 
 for panels, forces in zip(
     results["aircraft_deformed_macrosurfaces_aero_panels"],
@@ -71,42 +170,10 @@ ax, fig = vis.plot_3D.plot_results(
     colormap="coolwarm",
 )
 
-ax, fig = vis.plot_3D2.generate_aircraft_grids_plot(
-    results["aircraft_original_grids"]["macrosurfaces_aero_grids"],
-    results["aircraft_struct_fem_elements"],
-    title=None,
-    ax=None,
-    show_origin=True,
-)
-
-ax, fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
-    results["aircraft_deformed_macrosurfaces_aero_grids"],
-    results["aircraft_struct_fem_elements"],
-    results["aircraft_struct_deformations"],
-    title=None,
-    ax=ax,
-    fig=fig,
-    show_origin=True,
-)
-
-
-print()
-print(f"Deformation at control node:")
-print(f"    X : {results['deformation_at_control_node'][0]}")
-print(f"    Y : {results['deformation_at_control_node'][1]}")
-print(f"    Z : {results['deformation_at_control_node'][2]}")
-print(f"    RX: {np.degrees(results['deformation_at_control_node'][3])}")
-print(f"    RY: {np.degrees(results['deformation_at_control_node'][4])}")
-print(f"    RZ: {np.degrees(results['deformation_at_control_node'][5])}")
-
-plt.show()
-
-sys.exit()
 
 # Aerodynamic forces in the aircraft coordinate system
 total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = loads.functions.cg_aero_loads(
-    hale_aircraft,
-    components_force_vector, components_panel_vector
+    hale_aircraft, components_force_vector, components_panel_vector
 )
 
 # Aerodynamic forces in the wind coordinate system

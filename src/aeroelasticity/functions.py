@@ -653,6 +653,9 @@ def calculate_aircraft_loads(
             )
             aero_end_time = time.time()
 
+            if iteration_number == 1:
+                original_aircraft_panel_grid = aircraft_panel_grid
+
             if status:
                 print(
                     f"        . Aerodynamic calculation completed in {str(datetime.timedelta(seconds=(aero_end_time - aero_start_time)))}"
@@ -834,6 +837,7 @@ def calculate_aircraft_loads(
             "influence_coef_matrix": influence_coef_matrix,
             "aircraft_original_grids": aircraft_grids,
             "aircraft_struct_fem_elements": aircraft_fem_elements,
+            "original_aircraft_panel_grid": original_aircraft_panel_grid,
         }
 
         if output_iter:

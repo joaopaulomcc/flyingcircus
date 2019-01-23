@@ -63,7 +63,7 @@ AILERON_N_BEAM_ELEMENTS = 2 * AILERON_N_SPAN_PANELS
 CHORD_DISCRETIZATION = "linear"
 SPAN_DISCRETIZATION = "linear"
 TORSION_FUNCTION = "linear"
-CONTROL_SURFACE_DEFLECTION_DICT = {"left_aileron": -5, "right_aileron": 5}
+CONTROL_SURFACE_DEFLECTION_DICT = {"left_aileron": -15, "right_aileron": +15}
 
 wing_grid_data = {
     "n_chord_panels": N_CHORD_PANELS,
@@ -106,7 +106,7 @@ TAIL_N_BEAM_ELEMENTS = 2 * TAIL_N_SPAN_PANELS
 TAIL_CHORD_DISCRETIZATION = "linear"
 TAIL_SPAN_DISCRETIZATION = "linear"
 TAIL_TORSION_FUNCTION = "linear"
-TAIL_CONTROL_SURFACE_DEFLECTION_DICT = {"left_elevator": 10, "right_elevator": 10}
+TAIL_CONTROL_SURFACE_DEFLECTION_DICT = {"left_elevator": 15, "right_elevator": -15}
 
 tail_grid_data = {
     "n_chord_panels": TAIL_N_CHORD_PANELS,
@@ -237,7 +237,7 @@ SIMULATION_OPTIONS = {
     "flexible_aircraft": True,
     "status_messages": True,
     "control_node_string": "left_aileron-TIP",
-    "max_iterations": 10,
+    "max_iterations": 100,
     "bending_convergence_criteria": 0.01,
     "torsion_convergence_criteria": 0.01,
     "fem_prop_choice": "ROOT",
