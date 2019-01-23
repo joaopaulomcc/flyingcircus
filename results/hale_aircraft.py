@@ -46,7 +46,7 @@ print("============================================================")
 # EXECUTE CALCULATION
 
 from hale_aircraft_data import hale_aircraft
-from hale_aircraft_simulation import results, iteration_results
+from hale_aircraft_simulation import results, iteration_results, hale_aircraft_grids
 
 # ==================================================================================================
 # PROCESSING RESULTS

@@ -166,7 +166,7 @@ def generated_aero_loads(
 def deform_aero_grid(
     macrosurface_aero_grid,
     macrosurface_struct_grid,
-    macrosurface_struct_deformations,
+    struct_deformations,
     algorithm="closest",
     weight_matrix=None,
 ):
@@ -197,6 +197,12 @@ def deform_aero_grid(
     z_axis = np.array([0.0, 0.0, 1.0])
 
     deformed_points_vector = np.zeros(np.shape(aero_points_vector))
+
+    macrosurface_struct_deformations = []
+
+    for node in node_vector:
+        node_deformation = struct_deformations[node.number]
+        macrosurface_struct_deformations.append(node_deformation)
 
     for i, point_line in enumerate(weight_matrix):
 
@@ -826,6 +832,8 @@ def calculate_aircraft_loads(
             "aircraft_struct_internal_loads": internal_loads,
             "deformation_at_control_node": old_deformation,
             "influence_coef_matrix": influence_coef_matrix,
+            "aircraft_original_grids": aircraft_grids,
+            "aircraft_struct_fem_elements": aircraft_fem_elements,
         }
 
         if output_iter:

@@ -101,12 +101,12 @@ wing_grid_data = {
 TAIL_N_CHORD_PANELS = 3
 
 TAIL_N_SPAN_PANELS = 3
-TAIL_N_BEAM_ELEMENTS = 2 * WING_N_SPAN_PANELS
+TAIL_N_BEAM_ELEMENTS = 2 * TAIL_N_SPAN_PANELS
 
 TAIL_CHORD_DISCRETIZATION = "linear"
 TAIL_SPAN_DISCRETIZATION = "linear"
 TAIL_TORSION_FUNCTION = "linear"
-TAIL_CONTROL_SURFACE_DEFLECTION_DICT = {"left_elevator": 0, "right_elevator": 0}
+TAIL_CONTROL_SURFACE_DEFLECTION_DICT = {"left_elevator": 45, "right_elevator": 0}
 
 tail_grid_data = {
     "n_chord_panels": TAIL_N_CHORD_PANELS,

@@ -199,7 +199,7 @@ aircraft_macrosurfaces = [wing, tail]
 
 POINT_1 = np.array([0.5, 0.0, 0.0])
 POINT_2 = np.array([0.93, 0.0, 0.0])
-POINT_3 = np.array([10.5, 0.0, 0.0])
+POINT_3 = np.array([11.0, 0.0, 0.0])
 
 beam_property = struct.objects.ElementProperty(section=SECTION, material=MATERIAL)
 
@@ -258,7 +258,7 @@ fuselage_to_cg = struct.objects.Connection(fuselage, "TIP", aircraft_cg, "ROOT")
 fuselage_to_tail_boom = struct.objects.Connection(fuselage, "TIP", tail_boom, "ROOT")
 
 tail_boom_to_tail = struct.objects.Connection(
-    tail_boom, "TIP", left_aileron_surface, "ROOT"
+    tail_boom, "TIP", left_elevator_surface, "ROOT"
 )
 
 aircraft_struct_connections = [
