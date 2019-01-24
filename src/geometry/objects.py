@@ -17,6 +17,8 @@ class Aircraft(object):
         self,
         name,
         macrosurfaces,
+        ref_area,
+        mean_aero_chord,
         beams=None,
         engines=None,
         inertial_properties=None,
@@ -29,8 +31,8 @@ class Aircraft(object):
         self.engines = engines
         self.inertial_properties = inertial_properties
         self.connections = connections
-        self.ref_area = macrosurfaces[0].ref_area
-        self.mean_aero_chord = macrosurfaces[0].mean_aero_chord
+        self.ref_area = ref_area
+        self.mean_aero_chord = mean_aero_chord
 
 
 # ==================================================================================================

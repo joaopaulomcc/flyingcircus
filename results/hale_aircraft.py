@@ -47,17 +47,17 @@ print("============================================================")
 
 from hale_aircraft_data import hale_aircraft
 
-from hale_aircraft_simulation import results, iteration_results, hale_aircraft_grids
+# from hale_aircraft_simulation import results, iteration_results, hale_aircraft_grids
 
 import pickle
 
-f = open('results_deflected.pckl', 'wb')
-pickle.dump([results, iteration_results, hale_aircraft_grids], f)
-f.close()
+# f = open('results.pckl', 'wb')
+# pickle.dump([results, iteration_results, hale_aircraft_grids], f)
+# f.close()
 
-#f = open("results_deflected.pckl", "rb")
-#results, iteration_results, hale_aircraft_grids = pickle.load(f)
-#f.close()
+f = open("results.pckl", "rb")
+results, iteration_results, hale_aircraft_grids = pickle.load(f)
+f.close()
 
 # ==================================================================================================
 # PROCESSING RESULTS
@@ -77,7 +77,7 @@ f.close()
 #        }
 
 print()
-print(f"Deformation at control node:")
+print(f"# Deformation at control node:")
 print(f"    X : {results['deformation_at_control_node'][0]}")
 print(f"    Y : {results['deformation_at_control_node'][1]}")
 print(f"    Z : {results['deformation_at_control_node'][2]}")
@@ -111,13 +111,13 @@ ax, fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
     alpha=1,
 )
 
-fig.set_size_inches(12, 10)
+#fig.set_size_inches(12, 10)
 
-for i in np.linspace(0,360,300):
-    ax.elev = 15
-    ax.azim = i
-    ax.dist = 6
-    plt.savefig(f"results\\hale\\deflected_grids_v_25_alfa_2_{i}_degrees.png", dpi=100)
+# for i in np.linspace(0,360,300):
+#    ax.elev = 15
+#    ax.azim = i
+#    ax.dist = 6
+#    plt.savefig(f"results\\hale\\deflected_grids_v_25_alfa_2_{i}_degrees.png", dpi=100)
 
 components_delta_p_grids = []
 components_force_mag_grids = []
@@ -140,57 +140,100 @@ ax, fig = vis.plot_3D2.plot_results(
     colormap="coolwarm",
 )
 
-fig.set_size_inches(12, 10)
+#fig.set_size_inches(12, 10)
 
-for i in np.linspace(0,360,300):
-    ax.elev = 15
-    ax.azim = i
-    ax.dist = 6
-    plt.savefig(f"results\\hale\\deflected_delta_p_v_25_alfa_2_{i}_degrees.png", dpi=100)
+# for i in np.linspace(0,360,300):
+#    ax.elev = 15
+#    ax.azim = i
+#    ax.dist = 6
+#    plt.savefig(f"results\\hale\\deflected_delta_p_v_25_alfa_2_{i}_degrees.png", dpi=100)
 
-plt.show()
-
-sys.exit()
-
-
-for panels, forces in zip(
-    results["aircraft_deformed_macrosurfaces_aero_panels"],
-    results["aircraft_force_grid"],
-):
-
-    delta_p, force = aero.vlm.calc_panels_delta_pressure(panels, forces)
-    components_delta_p_grids.append(delta_p)
-    components_force_mag_grids.append(force)
-
-ax, fig = vis.plot_3D.plot_results(
-    results["aircraft_deformed_macrosurfaces_aero_grids"],
-    components_delta_p_grids,
-    title="Smith Wing - alpha: 2º - 10 Iterations",
-    label="Delta Pressure [Pa]",
-    colormap="coolwarm",
-)
-
+interest_point = hale_aircraft.inertial_properties.position
 
 # Aerodynamic forces in the aircraft coordinate system
-total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = loads.functions.cg_aero_loads(
-    hale_aircraft, components_force_vector, components_panel_vector
+total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = loads.functions.calc_aero_loads_at_point(
+    interest_point,
+    results["aircraft_force_grid"],
+    results["aircraft_deformed_macrosurfaces_aero_panels"],
 )
 
-# Aerodynamic forces in the wind coordinate system
-forces, moments, coefficients = loads.functions.lift_drag(
+print()
+print(f"# Total loads at aircraft CG:")
+print(f"    FX: {total_cg_aero_force[0]} N")
+print(f"    FY: {total_cg_aero_force[1]} N")
+print(f"    FZ: {total_cg_aero_force[2]} N")
+print(f"    RX: {total_cg_aero_moment[0]} N")
+print(f"    RY: {total_cg_aero_moment[1]} N")
+print(f"    RZ: {total_cg_aero_moment[2]} N")
+
+V_X = 25
+V_Y = 0
+V_Z = 0
+
+# Rotation velocities
+R_X = 0
+R_Y = 0
+R_Z = 0
+
+# Aircraft Attitude in relation to the wind axis, in degrees
+ALPHA = 2  # Pitch angle
+BETA = 0  # Yaw angle
+GAMMA = 0  # Roll angle
+
+# Center of rotation, usually the aircraft CG position
+CENTER_OF_ROTATION = hale_aircraft.inertial_properties.position
+
+# Flight altitude, used to calculate atmosppheric conditions, in meters
+ALTITUDE = 20000
+
+forces, moments, coefficients = loads.functions.calc_lift_drag(
     hale_aircraft,
-    velocity_vector,
-    altitude,
-    attitude_vector,
-    components_force_vector,
-    components_panel_vector,
+    interest_point,
+    25,
+    20000,
+    np.array([5, 0, 0]),
+    results["aircraft_force_grid"],
+    results["aircraft_deformed_macrosurfaces_aero_panels"],
 )
 
-print("- Results:")
+print()
+print("# Aerodynamic Coeffients:")
 print(f"    - Lift: {forces['lift']} N")
 print(f"    - Cl: {coefficients['Cl']} N")
 print(f"    - Drag: {forces['drag']} N")
 print(f"    - Cd: {coefficients['Cd']} N")
+
+# Create load distribution plots
+components_loads = loads.functions.calc_load_distribution(
+    results["aircraft_force_grid"],
+    results["original_aircraft_panel_grid"],
+    attitude_vector=np.array([5, 0, 0]),
+    altitude=20000,
+    speed=25,
+)
+
+for component in components_loads:
+    fig = plt.figure()
+    ax1 = fig.add_subplot(3, 1, 1)
+    ax1.set_title("Lift Distribution")
+    ax1.set_xlabel("Spam Position [m]")
+    ax1.set_ylabel("Lift [N]")
+    ax1.plot(component["y_values"], component["lift"])
+
+    ax2 = fig.add_subplot(3, 1, 2)
+    ax2.set_title("Cl Distribution")
+    ax2.set_xlabel("Spam Position [m]")
+    ax2.set_ylabel("Cl")
+    ax2.plot(component["y_values"], component["Cl"])
+    plt.tight_layout()
+
+    ax3 = fig.add_subplot(3, 1, 3)
+    ax3.set_title("Drag Distribution")
+    ax3.set_xlabel("Spam Position [m]")
+    ax3.set_ylabel("Drag [N]")
+    ax3.plot(component["y_values"], component["drag"])
+    plt.tight_layout()
+
 # Write Results to file
 report_file = open("results/hale_aircraft_report.txt", "w")
 report_file.write("============================================================\n")
@@ -222,136 +265,6 @@ report_file.write(f"- Cl : {coefficients['Cl']}\n")
 report_file.write(f"- Cd : {coefficients['Cd']}\n")
 report_file.write(f"- Cm : {coefficients['Cm']}\n")
 report_file.write("\n")
-
-# Create load distribution plots
-components_loads = loads.functions.load_distribution(
-    components_force_grid,
-    components_panel_grid,
-    attitude_vector,
-    altitude,
-    velocity_vector,
-)
-
-for component in components_loads:
-    fig = plt.figure()
-    ax1 = fig.add_subplot(3, 1, 1)
-    ax1.set_title("Lift Distribution")
-    ax1.set_xlabel("Spam Position [m]")
-    ax1.set_ylabel("Lift [N]")
-    ax1.plot(component["y_values"], component["lift"])
-
-    ax2 = fig.add_subplot(3, 1, 2)
-    ax2.set_title("Cl Distribution")
-    ax2.set_xlabel("Spam Position [m]")
-    ax2.set_ylabel("Cl")
-    ax2.plot(component["y_values"], component["Cl"])
-    plt.tight_layout()
-
-    ax3 = fig.add_subplot(3, 1, 3)
-    ax3.set_title("Drag Distribution")
-    ax3.set_xlabel("Spam Position [m]")
-    ax3.set_ylabel("Drag [N]")
-    ax3.plot(component["y_values"], component["drag"])
-    plt.tight_layout()
-
-sys.exit()
-
-
-# ==================================================================================================
-# AERODYNAMIC LOADS CALCULATION - CASE 2 - ALPHA 4º
-
-print()
-print("# CASE 002:")
-print(f"    - Altitude: 20000m")
-print(f"    - True Airspeed: 25m/s")
-print(f"    - Alpha: 4º")
-print(f"    - Rigid Wing")
-print("- Setting flight conditions...")
-
-# Attitude angles in degrees
-alpha = 4
-beta = 0
-gamma = 0
-
-attitude_vector = np.array([alpha, beta, gamma])
-
-print("- Running calculation:")
-(
-    components_force_vector,
-    components_panel_vector,
-    components_gamma_vector,
-    components_force_grid,
-    components_panel_grid,
-    components_gamma_grid,
-) = aero.vlm.aero_loads(
-    aero_grid, velocity_vector, rotation_vector, attitude_vector, altitude, center
-)
-
-# ==================================================================================================
-# PROCESSING RESULTS
-
-
-# Aerodynamic forces in the aircraft coordinate system
-total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = loads.functions.cg_aero_loads(
-    hale_aircraft, components_force_vector, components_panel_vector
-)
-
-# Aerodynamic forces in the wind coordinate system
-forces, moments, coefficients = loads.functions.lift_drag(
-    hale_aircraft,
-    velocity_vector,
-    altitude,
-    attitude_vector,
-    components_force_vector,
-    components_panel_vector,
-)
-
-print("- Results:")
-print(f"    - Lift: {forces['lift']} N")
-print(f"    - Cl: {coefficients['Cl']} N")
-print(f"    - Drag: {forces['drag']} N")
-print(f"    - Cd: {coefficients['Cd']} N")
-
-report_file.write("\n")
-report_file.write("CASE 2:\n")
-report_file.write("# Aerodynamic loads in the aircraft coordinate system:\n")
-report_file.write(f"- X force: {total_cg_aero_force[0]} [N]\n")
-report_file.write(f"- Y force: {total_cg_aero_force[1]} [N]\n")
-report_file.write(f"- Z force: {total_cg_aero_force[2]} [N]\n")
-report_file.write(f"- X moment: {total_cg_aero_moment[0]} [N.m]\n")
-report_file.write(f"- Y moment: {total_cg_aero_moment[1]} [N.m]\n")
-report_file.write(f"- Z moment: {total_cg_aero_moment[2]} [N.m]\n")
-report_file.write("\n")
-report_file.write("# Aerodynamic loads in the wind coordinate system:\n")
-report_file.write(f"- Lift: {forces['lift']} [N]\n")
-report_file.write(f"- Drag: {forces['drag']} [N]\n")
-report_file.write(f"- Sideforce: {forces['sideforce']} [N]\n")
-report_file.write(f"- Roll moment: {moments['roll_moment']} [N.m]\n")
-report_file.write(f"- Pitch moment: {moments['pitch_moment']} [N.m]\n")
-report_file.write(f"- Yaw moment: {moments['yaw_moment']} [N.m]\n")
-report_file.write("\n")
-report_file.write("# Aerodynamic Coefficients:\n")
-report_file.write(f"- Cl : {coefficients['Cl']}\n")
-report_file.write(f"- Cd : {coefficients['Cd']}\n")
-report_file.write(f"- Cm : {coefficients['Cm']}\n")
-report_file.write("\n")
-
-components_delta_p_grids = []
-components_force_mag_grids = []
-
-for panels, forces in zip(components_panel_grid, components_force_grid):
-
-    delta_p, force = aero.vlm.calc_panels_delta_pressure(panels, forces)
-    components_delta_p_grids.append(delta_p)
-    components_force_mag_grids.append(force)
-
-ax, fig = vis.plot_3D.plot_results(
-    aero_grid,
-    components_delta_p_grids,
-    title="Smith Wing - alpha: 4º",
-    label="Delta Pressure [Pa]",
-    colormap="coolwarm",
-)
-
 report_file.close()
+
 plt.show()

@@ -283,4 +283,6 @@ hale_aircraft = geo.objects.Aircraft(
     beams=AIRCRAFT_BEAMS,
     inertial_properties=AIRCRAFT_INERTIAL_PROPERTIES,
     connections=AIRCRAFT_STRUCT_CONNECTIONS,
+    ref_area=wing.ref_area,
+    mean_aero_chord=wing.mean_aero_chord
 )

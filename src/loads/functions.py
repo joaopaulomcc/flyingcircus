@@ -15,53 +15,54 @@ from .. import geometry as geo
 # Functions
 
 
-def cg_aero_loads(aircraft, components_force_vector, components_panel_vector):
+def calc_aero_loads_at_point(point, aircraft_force_grid, aircraft_panel_grid):
 
-    component_cg_aero_loads = []
+    macrosurfaces_aero_loads = []
 
-    cg_position = aircraft.inertial_properties.position
-
-    for component_force_slice, component_panel_slice in zip(
-        components_force_vector, components_panel_vector
+    for macrosurface_force_grid, macrosurface_panel_grid in zip(
+        aircraft_force_grid, aircraft_panel_grid
     ):
 
-        cg_aero_forces = np.zeros(3)
-        cg_aero_moments = np.zeros(3)
+        # Transform into a vector
+        macrosurface_force_vector = np.copy(np.reshape(macrosurface_force_grid, np.size(macrosurface_force_grid)))
+        macrosurface_panel_vector = np.copy(np.reshape(macrosurface_panel_grid, np.size(macrosurface_panel_grid)))
 
-        for force, panel in zip(component_force_slice, component_panel_slice):
-            cg_aero_forces += force
+        # Compute forces
+        aero_forces = np.zeros(3)
+        aero_moments = np.zeros(3)
+
+        for force, panel in zip(macrosurface_force_vector, macrosurface_panel_vector):
+            aero_forces += force
 
             # Moment lever calculation
             force_application_point = panel.aero_center
-            lever_arm = cg_position - force_application_point
+            lever_arm = point - force_application_point
 
-            cg_aero_moments += m.cross(lever_arm, force)
+            aero_moments += m.cross(lever_arm, force)
 
-        component_cg_aero_loads.append(
-            [np.copy(cg_aero_forces), np.copy(cg_aero_moments)]
+        macrosurfaces_aero_loads.append(
+            [np.copy(aero_forces), np.copy(aero_moments)]
         )
 
-    total_cg_aero_force = np.zeros(3)
-    total_cg_aero_moment = np.zeros(3)
+    total_aero_force = np.zeros(3)
+    total_aero_moment = np.zeros(3)
 
-    for component in component_cg_aero_loads:
+    for component in macrosurfaces_aero_loads:
 
-        total_cg_aero_force += component[0]
-        total_cg_aero_moment += component[1]
+        total_aero_force += component[0]
+        total_aero_moment += component[1]
 
-    return total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads
+    return total_aero_force, total_aero_moment, macrosurfaces_aero_loads
 
 
 # --------------------------------------------------------------------------------------------------
 
 
-def cg_engine_loads(aircraft, throtle_list, parameters_list):
+def calc_engine_loads_at_point(aircraft, point, throtle_list, parameters_list):
 
     engine_loads = []
     engine_force = np.zeros(3)
     engine_moment = np.zeros(3)
-
-    cg_position = aircraft.inertial_properties.position
 
     for i, engine in enumerate(aircraft.engines):
 
@@ -69,7 +70,7 @@ def cg_engine_loads(aircraft, throtle_list, parameters_list):
         thrust = engine.thrust(throtle_list[i], parameters_list[i])
 
         # Moment calculation
-        lever_arm = cg_position - engine.position
+        lever_arm = point - engine.position
 
         moment = m.cross(lever_arm, thrust)
 
@@ -84,13 +85,14 @@ def cg_engine_loads(aircraft, throtle_list, parameters_list):
 # --------------------------------------------------------------------------------------------------
 
 
-def lift_drag(
+def calc_lift_drag(
     aircraft,
-    velocity_vector,
+    point,
+    speed,
     altitude,
     attitude_vector,
-    components_force_vector,
-    components_panel_vector,
+    aircraft_force_grid,
+    aircraft_panel_grid,
 ):
     """Calculates the lift and drag of the aircraft
     """
@@ -119,8 +121,8 @@ def lift_drag(
     )
 
     # Calculate aerodynamic forces in the aircraft coordinates system
-    total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = cg_aero_loads(
-        aircraft, components_force_vector, components_panel_vector
+    total_cg_aero_force, total_cg_aero_moment, component_cg_aero_loads = calc_aero_loads_at_point(
+        point, aircraft_force_grid, aircraft_panel_grid
     )
 
     # Transform aerodynamic forces from aircraft coordinate system to wind coordinate system
@@ -136,7 +138,6 @@ def lift_drag(
     sideforce = aero_forces[1]
 
     density, pressure, temperature = aero.functions.ISA(altitude)
-    speed = m.norm(velocity_vector)
     Cl = lift / (0.5 * density * (speed ** 2) * aircraft.ref_area)
     Cd = drag / (0.5 * density * (speed ** 2) * aircraft.ref_area)
 
@@ -170,15 +171,14 @@ def lift_drag(
 # --------------------------------------------------------------------------------------------------
 
 
-def load_distribution(components_force_grid, components_panel_grid, attitude_vector, altitude, velocity_vector):
+def calc_load_distribution(aircraft_force_grid, aircraft_panel_grid, attitude_vector, altitude, speed):
 
     density, pressure, temperature = aero.functions.ISA(altitude)
-    speed = m.norm(velocity_vector)
 
     components_loads = []
 
     for component_force_grid, component_panel_grid in zip(
-        components_force_grid, components_panel_grid
+        aircraft_force_grid, aircraft_panel_grid
     ):
 
         # Calculate wind coord system in relation to aircraft coodinate system
