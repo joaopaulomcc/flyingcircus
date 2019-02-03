@@ -120,5 +120,9 @@ venv.bak/
 *.toc
 
 # results
-/results/hale
-
+/results/hale_aircraft/results/*.png
+/results/gnba_aircraft/results/*.png
+/results/smith_wing/results/*.png
+/results/neely_wing/results/*.png
+/results/changchuan_wing/results/*.png
+/results/broeren_wing/results/*.png

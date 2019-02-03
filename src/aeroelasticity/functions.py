@@ -462,7 +462,6 @@ def generate_aircraft_constraints(aircraft, aircraft_grids, constraints_data_lis
 def calculate_aircraft_loads(
     aircraft_object,
     aircraft_grid_data,
-    aircraft_constraints_data,
     flight_condition_data,
     simulation_options={
         "flexible_aircraft": True,
@@ -474,6 +473,7 @@ def calculate_aircraft_loads(
         "interaction_algorithm": "closest",
         "output_iteration_results": True,
     },
+    aircraft_constraints_data=None,
     influence_coef_matrix=None,
 ):
 
@@ -879,6 +879,7 @@ def calculate_aircraft_loads(
 
         results = {
             "aircraft_macrosurfaces_panels": aircraft_panel_grid,
+            "aircraft_original_grids": aircraft_grids,
             "aircraft_gamma_grid": aircraft_gamma_grid,
             "aircraft_force_grid": aircraft_force_grid,
             "influence_coef_matrix": influence_coef_matrix,
