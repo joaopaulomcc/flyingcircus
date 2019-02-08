@@ -24,8 +24,12 @@ def calc_aero_loads_at_point(point, aircraft_force_grid, aircraft_panel_grid):
     ):
 
         # Transform into a vector
-        macrosurface_force_vector = np.copy(np.reshape(macrosurface_force_grid, np.size(macrosurface_force_grid)))
-        macrosurface_panel_vector = np.copy(np.reshape(macrosurface_panel_grid, np.size(macrosurface_panel_grid)))
+        macrosurface_force_vector = np.copy(
+            np.reshape(macrosurface_force_grid, np.size(macrosurface_force_grid))
+        )
+        macrosurface_panel_vector = np.copy(
+            np.reshape(macrosurface_panel_grid, np.size(macrosurface_panel_grid))
+        )
 
         # Compute forces
         aero_forces = np.zeros(3)
@@ -40,9 +44,7 @@ def calc_aero_loads_at_point(point, aircraft_force_grid, aircraft_panel_grid):
 
             aero_moments += m.cross(lever_arm, force)
 
-        macrosurfaces_aero_loads.append(
-            [np.copy(aero_forces), np.copy(aero_moments)]
-        )
+        macrosurfaces_aero_loads.append([np.copy(aero_forces), np.copy(aero_moments)])
 
     total_aero_force = np.zeros(3)
     total_aero_moment = np.zeros(3)
@@ -171,7 +173,9 @@ def calc_lift_drag(
 # --------------------------------------------------------------------------------------------------
 
 
-def calc_load_distribution(aircraft_force_grid, aircraft_panel_grid, attitude_vector, altitude, speed):
+def calc_load_distribution(
+    aircraft_force_grid, aircraft_panel_grid, attitude_vector, altitude, speed
+):
 
     density, pressure, temperature = aero.functions.ISA(altitude)
 
@@ -270,6 +274,7 @@ def calc_load_distribution(aircraft_force_grid, aircraft_panel_grid, attitude_ve
 
     return components_loads
 
+
 # --------------------------------------------------------------------------------------------------
 
 
@@ -291,28 +296,33 @@ def calculate_surface_panels_loads(surface_panel_grid, surface_force_grid):
             force_z_grid[i][j] = surface_force_grid[i][j][2]
 
             force_magnitude_grid[i][j] = m.norm(surface_force_grid[i][j])
-            delta_p_grid[i][j] = force_magnitude_grid[i][j] / surface_panel_grid[i][j].area
+            delta_p_grid[i][j] = (
+                force_magnitude_grid[i][j] / surface_panel_grid[i][j].area
+            )
 
     return {
-            "delta_p_grid": delta_p_grid,
-            "force_magnitude_grid": force_magnitude_grid,
-            "force_x_grid": force_x_grid,
-            "force_y_grid": force_y_grid,
-            "force_z_grid": force_z_grid,
-           }
+        "delta_p_grid": delta_p_grid,
+        "force_magnitude_grid": force_magnitude_grid,
+        "force_x_grid": force_x_grid,
+        "force_y_grid": force_y_grid,
+        "force_z_grid": force_z_grid,
+    }
+
 
 # --------------------------------------------------------------------------------------------------
+
 
 def calculate_aircraft_panel_loads(aircraft_panel_grids, aircraft_force_grids):
 
     aircraft_panel_loads = []
 
     for component_panel_grid, component_force_grid in zip(
-        aircraft_panel_grids,
-        aircraft_force_grids,
+        aircraft_panel_grids, aircraft_force_grids
     ):
 
-        component_panel_loads = calculate_surface_panels_loads(component_panel_grid, component_force_grid)
+        component_panel_loads = calculate_surface_panels_loads(
+            component_panel_grid, component_force_grid
+        )
 
         aircraft_panel_loads.append(component_panel_loads)
 

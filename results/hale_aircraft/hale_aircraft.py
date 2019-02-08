@@ -126,7 +126,7 @@ aircraft_panel_loads = loads.functions.calculate_aircraft_panel_loads(
     results["original_aircraft_panel_grid"], results["aircraft_force_grid"]
 )
 
-ax, fig = vis.plot_3D2.plot_results(
+ax, fig = vis.plot_3D2.generate_results_plot(
     results["aircraft_deformed_macrosurfaces_aero_grids"],
     results["aircraft_struct_fem_elements"],
     results["aircraft_struct_deformations"],

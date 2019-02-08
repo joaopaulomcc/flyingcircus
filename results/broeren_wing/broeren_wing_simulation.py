@@ -52,7 +52,7 @@ from broeren_wing_data import broeren_wing_i
 # from broeren_wing_data import broeren_wing_vi
 # from broeren_wing_data import broeren_wing_vii
 
-vis.plot_3D.plot_aircraft(broeren_wing_i, title="BROEREN WING I: 2.5-08-4416")
+#vis.plot_3D.plot_aircraft(broeren_wing_i, title="BROEREN WING I: 2.5-08-4416")
 
 
 # ==================================================================================================
@@ -65,7 +65,7 @@ N_CHORD_PANELS = 10
 N_SPAN_PANELS = 20
 N_BEAM_ELEMENTS = 40
 CHORD_DISCRETIZATION = "linear"
-SPAN_DISCRETIZATION = "linear"
+SPAN_DISCRETIZATION = "sin"
 TORSION_FUNCTION = "linear"
 CONTROL_SURFACE_DEFLECTION_DICT = dict()
 
@@ -136,7 +136,6 @@ ax, fig = vis.plot_3D2.generate_aircraft_grids_plot(
     broeren_wing_i_grids["macrosurfaces_aero_grids"],
     title="BROEREN WING I: 2.5-08-4416",
 )
-fig.show()
 
 # ==================================================================================================
 # AERODYNAMIC LOADS CALCULATION - CASE 1 - ALPHA 2º
@@ -144,7 +143,7 @@ print()
 print("# CASE 001:")
 print(f"    - Altitude: 20000m")
 print(f"    - True Airspeed: 25m/s")
-print(f"    - Alpha: 2º")
+print(f"    - Alpha: 5º")
 print(f"    - Flexible Wing")
 print()
 
@@ -161,7 +160,7 @@ R_Y = 0
 R_Z = 0
 
 # Aircraft Attitude in relation to the wind axis, in degrees
-ALPHA = 5  # Pitch angle
+ALPHA = 0  # Pitch angle
 BETA = 0  # Yaw angle
 GAMMA = 0  # Roll angle
 

@@ -112,5 +112,7 @@ wing = geo.objects.MacroSurface(
 smith_wing = geo.objects.Aircraft(
     name="Smith Wing",
     macrosurfaces=[wing],
-    inertial_properties=geo.objects.MaterialPoint(),
+    inertial_properties=geo.objects.MaterialPoint(position=np.array([0.25, 0, 0])),
+    ref_area=32,
+    mean_aero_chord=1,
 )
