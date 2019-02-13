@@ -11,12 +11,14 @@ Author: Antônio Bernardo Guimarães Neto
 # IMPORTS
 
 import numpy as np
+import matplotlib.pyplot as plt
 from pyquaternion import Quaternion
 
 # Import code sub packages
 from context import src
 from src import geometry as geo
 from src import structures as struct
+from src import visualization as vis
 
 # ==================================================================================================
 # MATERIAL DEFINITION
@@ -182,7 +184,7 @@ left_region_i_surface = geo.objects.Surface(
 )
 
 right_region_i_surface = geo.objects.Surface(
-    identifier="left_region_i",
+    identifier="right_region_i",
     root_chord=REGION_I_ROOT_CHORD,
     root_section=region_I_root_section,
     tip_chord=REGION_I_TIP_CHORD,
@@ -208,7 +210,7 @@ left_region_ii_surface = geo.objects.Surface(
 )
 
 right_region_ii_surface = geo.objects.Surface(
-    identifier="left_region_ii",
+    identifier="right_region_ii",
     root_chord=REGION_II_ROOT_CHORD,
     root_section=region_II_root_section,
     tip_chord=REGION_II_TIP_CHORD,
@@ -234,7 +236,7 @@ left_region_iii_surface = geo.objects.Surface(
 )
 
 right_region_iii_surface = geo.objects.Surface(
-    identifier="left_region_iii",
+    identifier="right_region_iii",
     root_chord=REGION_III_ROOT_CHORD,
     root_section=region_III_root_section,
     tip_chord=REGION_III_TIP_CHORD,
@@ -450,38 +452,38 @@ vtail_macrosurface = geo.objects.MacroSurface(
     torsion_center=VTAIL_TORSION_CENTER,
 )
 
-# --------------------------------------------------------------------------------------------------
-# FUSELAGE AND TAIL BOOM DEFINITION
-
-POINT_1 = np.array([0.5, 0.0, 0.0])
-POINT_2 = np.array([0.93, 0.0, 0.0])
-POINT_3 = np.array([11.0, 0.0, 0.0])
-
-beam_property = struct.objects.ElementProperty(section=SECTION, material=MATERIAL)
-
-fuselage = geo.objects.Beam(
-    identifier="fuselage",
-    root_point=POINT_1,
-    tip_point=POINT_2,
-    orientation_vector=np.array([0.0, 1.0, 0.0]),
-    ElementProperty=beam_property,
-)
-
-tail_boom = geo.objects.Beam(
-    identifier="tail_boom",
-    root_point=POINT_2,
-    tip_point=POINT_3,
-    orientation_vector=np.array([0.0, 1.0, 0.0]),
-    ElementProperty=beam_property,
-)
-
-aircraft_beams = [fuselage, tail_boom]
-
+## --------------------------------------------------------------------------------------------------
+## FUSELAGE AND TAIL BOOM DEFINITION
+#
+#POINT_1 = np.array([0.5, 0.0, 0.0])
+#POINT_2 = np.array([0.93, 0.0, 0.0])
+#POINT_3 = np.array([11.0, 0.0, 0.0])
+#
+#beam_property = struct.objects.ElementProperty(section=SECTION, material=MATERIAL)
+#
+#fuselage = geo.objects.Beam(
+#    identifier="fuselage",
+#    root_point=POINT_1,
+#    tip_point=POINT_2,
+#    orientation_vector=np.array([0.0, 1.0, 0.0]),
+#    ElementProperty=beam_property,
+#)
+#
+#tail_boom = geo.objects.Beam(
+#    identifier="tail_boom",
+#    root_point=POINT_2,
+#    tip_point=POINT_3,
+#    orientation_vector=np.array([0.0, 1.0, 0.0]),
+#    ElementProperty=beam_property,
+#)
+#
+#aircraft_beams = [fuselage, tail_boom]
+#
 # --------------------------------------------------------------------------------------------------
 # AIRCRAFT CG DEFINITION
 
 AIRCRAFT_MASS = 4000
-CG_POSITION = np.array([3, 0, 0])
+CG_POSITION = np.array([16.0, 0, 0])
 IXX = 1
 IYY = 1
 IZZ = 1
@@ -503,43 +505,50 @@ aircraft_cg = geo.objects.MaterialPoint(
 )
 
 # --------------------------------------------------------------------------------------------------
-# AIRCRAFT STRUCTURE CONNECTIONS
-
-wing_to_fuselage = struct.objects.Connection(
-    left_wing_surface, "ROOT", fuselage, "ROOT"
-)
-
-fuselage_to_cg = struct.objects.Connection(fuselage, "TIP", aircraft_cg, "ROOT")
-
-fuselage_to_tail_boom = struct.objects.Connection(fuselage, "TIP", tail_boom, "ROOT")
-
-tail_boom_to_tail = struct.objects.Connection(
-    tail_boom, "TIP", left_elevator_surface, "ROOT"
-)
-
-aircraft_struct_connections = [
-    wing_to_fuselage,
-    fuselage_to_tail_boom,
-    tail_boom_to_tail,
-]
-
+## AIRCRAFT STRUCTURE CONNECTIONS
+#
+#wing_to_fuselage = struct.objects.Connection(
+#    left_wing_surface, "ROOT", fuselage, "ROOT"
+#)
+#
+#fuselage_to_cg = struct.objects.Connection(fuselage, "TIP", aircraft_cg, "ROOT")
+#
+#fuselage_to_tail_boom = struct.objects.Connection(fuselage, "TIP", tail_boom, "ROOT")
+#
+#tail_boom_to_tail = struct.objects.Connection(
+#    tail_boom, "TIP", left_elevator_surface, "ROOT"
+#)
+#
+#aircraft_struct_connections = [
+#    wing_to_fuselage,
+#    fuselage_to_tail_boom,
+#    tail_boom_to_tail,
+#]
+#
 # --------------------------------------------------------------------------------------------------
 
 # Aircraft definition
 
-AIRCRAFT_NAME = "hale aircraft"
-AIRCRAFT_MACROSURFACES = aircraft_macrosurfaces
-AIRCRAFT_BEAMS = aircraft_beams
+AIRCRAFT_NAME = "GNBA aircraft"
+AIRCRAFT_MACROSURFACES = [wing_macrosurface, htail_macrosurface, vtail_macrosurface]
+AIRCRAFT_BEAMS = []
 AIRCRAFT_INERTIAL_PROPERTIES = aircraft_cg
-AIRCRAFT_STRUCT_CONNECTIONS = aircraft_struct_connections
+AIRCRAFT_STRUCT_CONNECTIONS = []
+AIRCRAFT_REF_AREA = 116
+AIRCRAFT_REF_MAC = 3.862
 
-hale_aircraft = geo.objects.Aircraft(
+gnba_aircraft = geo.objects.Aircraft(
     name=AIRCRAFT_NAME,
     macrosurfaces=AIRCRAFT_MACROSURFACES,
     beams=AIRCRAFT_BEAMS,
     inertial_properties=AIRCRAFT_INERTIAL_PROPERTIES,
     connections=AIRCRAFT_STRUCT_CONNECTIONS,
-    ref_area=wing.ref_area,
-    mean_aero_chord=wing.mean_aero_chord,
+    ref_area=AIRCRAFT_REF_AREA,
+    mean_aero_chord=AIRCRAFT_REF_MAC,
+)
+
+# Draw Aircraft
+aircraft_ax, aircraft_fig = vis.plot_3D2.generate_aircraft_plot(
+    gnba_aircraft, title=AIRCRAFT_NAME
 )
 

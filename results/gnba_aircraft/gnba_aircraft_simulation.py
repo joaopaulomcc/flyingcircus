@@ -34,50 +34,46 @@ from src import loads
 from src import structures as struct
 from src import visualization as vis
 
-# ==================================================================================================
-# print()
-# print("============================================================")
-# print("= VALIDATION OF AEROELASTIC CALCULATION                    =")
-# print("= VALIDATION CASE: CFD-Based Analysis of Nonlinear         =")
-# print("= Aeroelastic Behavior of High-Aspect Ratio Wings          =")
-# print("= AUTHORS: M. J. Smith, M. J. Patil, D. H. Hodges          =")
-# print("============================================================")
-# ==================================================================================================
-# GEOMETRY DEFINITION
-
 print("# Importing geometric data...")
-from hale_aircraft_data import hale_aircraft
+from gnba_aircraft_data import gnba_aircraft
 
-vis.plot_3D.plot_aircraft(hale_aircraft, title="Smith Wing")
-
+# ==================================================================================================
+# GRID DEFINITION
 
 # WING GRID DATA
-N_CHORD_PANELS = 5
+N_CHORD_PANELS = 10
 
-WING_N_SPAN_PANELS = 20
-WING_N_BEAM_ELEMENTS = 2 * WING_N_SPAN_PANELS
+REGION_I_N_SPAN_PANELS = 4
+REGION_I_N_BEAM_ELEMENTS = 2 * REGION_I_N_SPAN_PANELS
 
-AILERON_N_SPAN_PANELS = 4
-AILERON_N_BEAM_ELEMENTS = 2 * AILERON_N_SPAN_PANELS
+REGION_II_N_SPAN_PANELS = 8
+REGION_II_N_BEAM_ELEMENTS = 2 * REGION_II_N_SPAN_PANELS
+
+REGION_III_N_SPAN_PANELS = 20
+REGION_III_N_BEAM_ELEMENTS = 2 * REGION_III_N_SPAN_PANELS
 
 CHORD_DISCRETIZATION = "linear"
 SPAN_DISCRETIZATION = "linear"
 TORSION_FUNCTION = "linear"
-CONTROL_SURFACE_DEFLECTION_DICT = {"left_aileron": -15, "right_aileron": +15}
+CONTROL_SURFACE_DEFLECTION_DICT = dict()
 
 wing_grid_data = {
     "n_chord_panels": N_CHORD_PANELS,
     "n_span_panels_list": [
-        AILERON_N_SPAN_PANELS,
-        WING_N_SPAN_PANELS,
-        WING_N_SPAN_PANELS,
-        AILERON_N_SPAN_PANELS,
+        REGION_III_N_SPAN_PANELS,
+        REGION_II_N_SPAN_PANELS,
+        REGION_I_N_SPAN_PANELS,
+        REGION_I_N_SPAN_PANELS,
+        REGION_II_N_SPAN_PANELS,
+        REGION_III_N_SPAN_PANELS,
     ],
     "n_beam_elements_list": [
-        AILERON_N_BEAM_ELEMENTS,
-        WING_N_BEAM_ELEMENTS,
-        WING_N_BEAM_ELEMENTS,
-        AILERON_N_BEAM_ELEMENTS,
+        REGION_III_N_BEAM_ELEMENTS,
+        REGION_II_N_BEAM_ELEMENTS,
+        REGION_I_N_BEAM_ELEMENTS,
+        REGION_I_N_BEAM_ELEMENTS,
+        REGION_II_N_BEAM_ELEMENTS,
+        REGION_III_N_BEAM_ELEMENTS
     ],
     "chord_discretization": CHORD_DISCRETIZATION,
     "span_discretization_list": [
@@ -85,8 +81,12 @@ wing_grid_data = {
         SPAN_DISCRETIZATION,
         SPAN_DISCRETIZATION,
         SPAN_DISCRETIZATION,
+        SPAN_DISCRETIZATION,
+        SPAN_DISCRETIZATION,
     ],
     "torsion_function_list": [
+        TORSION_FUNCTION,
+        TORSION_FUNCTION,
         TORSION_FUNCTION,
         TORSION_FUNCTION,
         TORSION_FUNCTION,
@@ -97,60 +97,95 @@ wing_grid_data = {
 
 # --------------------------------------------------------------------------------------------------
 
-# TAIL GRID DATA
-TAIL_N_CHORD_PANELS = 5
+# HORIZONTAL TAIL GRID DATA
+HTAIL_N_CHORD_PANELS = 5
 
-TAIL_N_SPAN_PANELS = 10
-TAIL_N_BEAM_ELEMENTS = 2 * TAIL_N_SPAN_PANELS
+HTAIL_N_SPAN_PANELS = 10
+HTAIL_N_BEAM_ELEMENTS = 2 * HTAIL_N_SPAN_PANELS
 
-TAIL_CHORD_DISCRETIZATION = "linear"
-TAIL_SPAN_DISCRETIZATION = "linear"
-TAIL_TORSION_FUNCTION = "linear"
-TAIL_CONTROL_SURFACE_DEFLECTION_DICT = {"left_elevator": 15, "right_elevator": -15}
+HTAIL_CHORD_DISCRETIZATION = "linear"
+HTAIL_SPAN_DISCRETIZATION = "linear"
+HTAIL_TORSION_FUNCTION = "linear"
+HTAIL_CONTROL_SURFACE_DEFLECTION_DICT = dict()
 
-tail_grid_data = {
-    "n_chord_panels": TAIL_N_CHORD_PANELS,
+htail_grid_data = {
+    "n_chord_panels": HTAIL_N_CHORD_PANELS,
     "n_span_panels_list": [
-        TAIL_N_SPAN_PANELS,
-        TAIL_N_SPAN_PANELS,
+        HTAIL_N_SPAN_PANELS,
+        HTAIL_N_SPAN_PANELS,
     ],
     "n_beam_elements_list": [
-        TAIL_N_BEAM_ELEMENTS,
-        TAIL_N_BEAM_ELEMENTS,
+        HTAIL_N_BEAM_ELEMENTS,
+        HTAIL_N_BEAM_ELEMENTS,
     ],
-    "chord_discretization": TAIL_CHORD_DISCRETIZATION,
+    "chord_discretization": HTAIL_CHORD_DISCRETIZATION,
     "span_discretization_list": [
-        TAIL_SPAN_DISCRETIZATION,
-        TAIL_SPAN_DISCRETIZATION,
+        HTAIL_SPAN_DISCRETIZATION,
+        HTAIL_SPAN_DISCRETIZATION,
     ],
     "torsion_function_list": [
-        TAIL_TORSION_FUNCTION,
-        TAIL_TORSION_FUNCTION,
+        HTAIL_TORSION_FUNCTION,
+        HTAIL_TORSION_FUNCTION,
     ],
-    "control_surface_deflection_dict": TAIL_CONTROL_SURFACE_DEFLECTION_DICT,
+    "control_surface_deflection_dict": HTAIL_CONTROL_SURFACE_DEFLECTION_DICT,
 }
 
 # --------------------------------------------------------------------------------------------------
-# FUSELAGE AND TAIL BOOM GRID DATA
 
-fuselage_grid_data = {"n_elements": 3}
+# VERTICAL TAIL GRID DATA
+VTAIL_N_CHORD_PANELS = 5
 
-tail_boom_grid_data = {"n_elements": 10}
+VTAIL_N_SPAN_PANELS = 12
+VTAIL_N_BEAM_ELEMENTS = 2 * VTAIL_N_SPAN_PANELS
+
+VTAIL_CHORD_DISCRETIZATION = "linear"
+VTAIL_SPAN_DISCRETIZATION = "linear"
+VTAIL_TORSION_FUNCTION = "linear"
+VTAIL_CONTROL_SURFACE_DEFLECTION_DICT = dict()
+
+vtail_grid_data = {
+    "n_chord_panels": VTAIL_N_CHORD_PANELS,
+    "n_span_panels_list": [
+        VTAIL_N_SPAN_PANELS,
+        VTAIL_N_SPAN_PANELS,
+    ],
+    "n_beam_elements_list": [
+        VTAIL_N_BEAM_ELEMENTS,
+        VTAIL_N_BEAM_ELEMENTS,
+    ],
+    "chord_discretization": VTAIL_CHORD_DISCRETIZATION,
+    "span_discretization_list": [
+        VTAIL_SPAN_DISCRETIZATION,
+        VTAIL_SPAN_DISCRETIZATION,
+    ],
+    "torsion_function_list": [
+        VTAIL_TORSION_FUNCTION,
+        VTAIL_TORSION_FUNCTION,
+    ],
+    "control_surface_deflection_dict": VTAIL_CONTROL_SURFACE_DEFLECTION_DICT,
+}
 
 # --------------------------------------------------------------------------------------------------
-# HALE AIRCRAFT GRID DATA
+## FUSELAGE AND TAIL BOOM GRID DATA
+#
+#fuselage_grid_data = {"n_elements": 3}
+#
+#tail_boom_grid_data = {"n_elements": 10}
+#
+# --------------------------------------------------------------------------------------------------
+# GNBA AIRCRAFT GRID DATA
 
-hale_aircraft_grid_data = {
-    "macrosurfaces_grid_data": [wing_grid_data, tail_grid_data],
-    "beams_grid_data": [fuselage_grid_data, tail_boom_grid_data],
+gnba_aircraft_grid_data = {
+    "macrosurfaces_grid_data": [wing_grid_data, htail_grid_data, vtail_grid_data],
+    "beams_grid_data": None,
 }
 
 # ==================================================================================================
 # GRID CREATION
 
 # Creation of the smith wing grids
-hale_aircraft_grids = aelast.functions.generate_aircraft_grids(
-    aircraft_object=hale_aircraft, aircraft_grid_data=hale_aircraft_grid_data
+gnba_aircraft_grids = aelast.functions.generate_aircraft_grids(
+    aircraft_object=gnba_aircraft, aircraft_grid_data=gnba_aircraft_grid_data
 )
 
 # ==================================================================================================
@@ -158,23 +193,35 @@ hale_aircraft_grids = aelast.functions.generate_aircraft_grids(
 
 # Create wing finite elements
 
-hale_aircraft_fem_elements = struct.fem.generate_aircraft_fem_elements(
-    aircraft=hale_aircraft, aircraft_grids=hale_aircraft_grids, prop_choice="ROOT"
+gnba_aircraft_fem_elements = struct.fem.generate_aircraft_fem_elements(
+    aircraft=gnba_aircraft, aircraft_grids=gnba_aircraft_grids, prop_choice="ROOT"
 )
 
 # Generate Constraints
-cg_fixation = {
-    "component_identifier": "fuselage",
-    "fixation_point": "TIP",
+wing_fixation = {
+    "component_identifier": "region_I_root_section",
+    "fixation_point": "ROOT",
     "dof_constraints": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
 }
 
-hale_aircraft_constrains_data = [cg_fixation]
+htail_fixation = {
+    "component_identifier": "right_htail_surface",
+    "fixation_point": "ROOT",
+    "dof_constraints": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+}
 
-hale_aircraft_constraints = aelast.functions.generate_aircraft_constraints(
-    aircraft=hale_aircraft,
-    aircraft_grids=hale_aircraft_grids,
-    constraints_data_list=hale_aircraft_constrains_data,
+vtail_fixation = {
+    "component_identifier": "vtail_surface",
+    "fixation_point": "ROOT",
+    "dof_constraints": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+}
+
+gnba_aircraft_constrains_data = [wing_fixation, htail_fixation, vtail_fixation]
+
+gnba_aircraft_constraints = aelast.functions.generate_aircraft_constraints(
+    aircraft=gnba_aircraft,
+    aircraft_grids=gnba_aircraft_grids,
+    constraints_data_list=gnba_aircraft_constrains_data,
 )
 
 # ax, fig = vis.plot_3D.plot_aircraft_grids(hale_aircraft_grids, hale_aircraft_fem_elements, title="Hale Aircraft Grids")
@@ -186,7 +233,7 @@ hale_aircraft_constraints = aelast.functions.generate_aircraft_constraints(
 print()
 print("# CASE 001:")
 print(f"    - Altitude: 20000m")
-print(f"    - True Airspeed: 25m/s")
+print(f"    - True Airspeed: 100m/s")
 print(f"    - Alpha: 2º")
 print(f"    - Flexible Wing")
 print()
@@ -194,7 +241,7 @@ print()
 # Flight Conditions definition
 
 # Translation velocities
-V_X = 25
+V_X = 100
 V_Y = 0
 V_Z = 0
 
@@ -209,7 +256,7 @@ BETA = 0  # Yaw angle
 GAMMA = 0  # Roll angle
 
 # Center of rotation, usually the aircraft CG position
-CENTER_OF_ROTATION = hale_aircraft.inertial_properties.position
+CENTER_OF_ROTATION = gnba_aircraft.inertial_properties.position
 
 # Flight altitude, used to calculate atmosppheric conditions, in meters
 ALTITUDE = 20000
@@ -234,10 +281,10 @@ FLIGHT_CONDITIONS_DATA = {
 }
 
 SIMULATION_OPTIONS = {
-    "flexible_aircraft": True,
+    "flexible_aircraft": False,
     "status_messages": True,
-    "control_node_string": "left_aileron-TIP",
-    "max_iterations": 100,
+    "control_node_string": "right_region_iii-TIP",
+    "max_iterations": 1,
     "bending_convergence_criteria": 0.01,
     "torsion_convergence_criteria": 0.01,
     "fem_prop_choice": "ROOT",
@@ -245,10 +292,19 @@ SIMULATION_OPTIONS = {
     "output_iteration_results": True,
 }
 
-results, iteration_results = aelast.functions.calculate_aircraft_loads(
-    aircraft_object=hale_aircraft,
-    aircraft_grid_data=hale_aircraft_grid_data,
-    aircraft_constraints_data=hale_aircraft_constrains_data,
+#results, iteration_results = aelast.functions.calculate_aircraft_loads(
+#    aircraft_object=gnba_aircraft,
+#    aircraft_grid_data=gnba_aircraft_grid_data,
+#    aircraft_constraints_data=gnba_aircraft_constrains_data,
+#    flight_condition_data=FLIGHT_CONDITIONS_DATA,
+#    simulation_options=SIMULATION_OPTIONS,
+#    influence_coef_matrix=None,
+#)
+
+results = aelast.functions.calculate_aircraft_loads(
+    aircraft_object=gnba_aircraft,
+    aircraft_grid_data=gnba_aircraft_grid_data,
+    aircraft_constraints_data=gnba_aircraft_constrains_data,
     flight_condition_data=FLIGHT_CONDITIONS_DATA,
     simulation_options=SIMULATION_OPTIONS,
     influence_coef_matrix=None,
