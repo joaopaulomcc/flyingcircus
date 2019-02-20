@@ -174,15 +174,15 @@ def calc_lift_drag(
 
 
 def calc_load_distribution(
-    aircraft_force_grid, aircraft_panel_grid, attitude_vector, altitude, speed
+    aircraft_force_grid, aircraft_gamma_grid, aircraft_panel_grid, attitude_vector, altitude, speed
 ):
 
     density, pressure, temperature = aero.functions.ISA(altitude)
 
     components_loads = []
 
-    for component_force_grid, component_panel_grid in zip(
-        aircraft_force_grid, aircraft_panel_grid
+    for component_force_grid, component_gamma_grid, component_panel_grid in zip(
+        aircraft_force_grid, aircraft_gamma_grid, aircraft_panel_grid
     ):
 
         # Calculate wind coord system in relation to aircraft coodinate system
@@ -227,15 +227,25 @@ def calc_load_distribution(
         for i in range(n_span_panels):
             section_force = 0
             section = component_force_grid[:, i]
+            gamma_section = component_gamma_grid[:, i]
             panels_section = np.array(component_panel_grid)[:, i]
 
             for force in section:
                 section_force += force
 
-            # Calculate section area
+            # Calculate section area and chord
             section_area = 0
+            section_chord = 0
+            section_gamma = 0
             for panel in panels_section:
                 section_area += panel.area
+                section_chord += ((panel.l_chord + panel.r_chord) / 2)
+
+            for panel_gamma in gamma_section:
+                section_gamma += panel_gamma
+
+            # Calculate section chord
+
 
             x_force[i] = section_force[0]
             y_force[i] = section_force[1]
@@ -256,6 +266,7 @@ def calc_load_distribution(
             y_values[i] = panels_section[0].aero_center[1]
 
             Cl[i] = lift[i] / (0.5 * density * (speed ** 2) * section_area)
+            #Cl[i] = (2 * section_gamma) / (section_chord * speed)
             Cd[i] = drag[i] / (0.5 * density * (speed ** 2) * section_area)
 
         loads = {

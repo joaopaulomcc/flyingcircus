@@ -97,7 +97,9 @@ wing = geo.objects.MacroSurface(
 # Aircraft definition
 
 changchuan_wing = geo.objects.Aircraft(
-    name="Smith Wing",
+    name="Changchuan Wing",
     macrosurfaces=[wing],
     inertial_properties=geo.objects.MaterialPoint(),
+    ref_area=(WING_ROOT_CHORD + WING_TIP_CHORD) * SEMI_WING_LENGTH,
+    mean_aero_chord=WING_ROOT_CHORD
 )

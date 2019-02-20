@@ -445,7 +445,7 @@ def generate_aircraft_plot(aircraft, title=None, ax=None, fig=None, show_origin=
     for i, macrosurface in enumerate(aircraft.macrosurfaces):
 
         # Generate component mesh
-        n_chord_panels = 2
+        n_chord_panels = 3
         n_span_panels_list = [1 for i in range(len(macrosurface.surface_list))]
         n_beam_elements_list = [1 for i in range(len(macrosurface.surface_list))]
         chord_discretization = "linear"

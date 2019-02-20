@@ -971,15 +971,19 @@ def calculate_deformation_table(aircraft_original_grids, aircraft_struct_deforma
 
     if aircraft_original_grids["beams_struct_grids"]:
 
-        for i, node in enumerate(aircraft_original_grids["beams_struct_grids"]):
-            deformed_nodes[i][0] = node.x + aircraft_struct_deformations[node.number][0]
-            deformed_nodes[i][1] = node.y + aircraft_struct_deformations[node.number][1]
-            deformed_nodes[i][2] = node.z + aircraft_struct_deformations[node.number][2]
-            deformed_nodes[i][3] = aircraft_struct_deformations[node.number][3]
-            deformed_nodes[i][4] = aircraft_struct_deformations[node.number][4]
-            deformed_nodes[i][5] = aircraft_struct_deformations[node.number][5]
+        for beam in aircraft_original_grids["beams_struct_grids"]:
 
-        aircraft_beams_deformed_nodes.append(deformed_nodes)
+            deformed_nodes = np.zeros((len(beam), 6))
+
+            for i, node in enumerate(beam):
+                deformed_nodes[i][0] = node.x + aircraft_struct_deformations[node.number][0]
+                deformed_nodes[i][1] = node.y + aircraft_struct_deformations[node.number][1]
+                deformed_nodes[i][2] = node.z + aircraft_struct_deformations[node.number][2]
+                deformed_nodes[i][3] = aircraft_struct_deformations[node.number][3]
+                deformed_nodes[i][4] = aircraft_struct_deformations[node.number][4]
+                deformed_nodes[i][5] = aircraft_struct_deformations[node.number][5]
+
+            aircraft_beams_deformed_nodes.append(deformed_nodes)
 
     return {"aircraft_macrosurfaces_deformed_nodes": aircraft_macrosurfaces_deformed_nodes,
             "aircraft_beams_deformed_nodes": aircraft_beams_deformed_nodes}

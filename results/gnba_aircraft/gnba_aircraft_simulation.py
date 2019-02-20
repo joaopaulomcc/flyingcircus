@@ -44,13 +44,13 @@ from gnba_aircraft_data import gnba_aircraft
 N_CHORD_PANELS = 10
 
 REGION_I_N_SPAN_PANELS = 4
-REGION_I_N_BEAM_ELEMENTS = 2 * REGION_I_N_SPAN_PANELS
+REGION_I_N_BEAM_ELEMENTS = 5 * REGION_I_N_SPAN_PANELS
 
 REGION_II_N_SPAN_PANELS = 8
-REGION_II_N_BEAM_ELEMENTS = 2 * REGION_II_N_SPAN_PANELS
+REGION_II_N_BEAM_ELEMENTS = 5 * REGION_II_N_SPAN_PANELS
 
 REGION_III_N_SPAN_PANELS = 20
-REGION_III_N_BEAM_ELEMENTS = 2 * REGION_III_N_SPAN_PANELS
+REGION_III_N_BEAM_ELEMENTS = 5 * REGION_III_N_SPAN_PANELS
 
 CHORD_DISCRETIZATION = "linear"
 SPAN_DISCRETIZATION = "linear"
@@ -101,7 +101,7 @@ wing_grid_data = {
 HTAIL_N_CHORD_PANELS = 5
 
 HTAIL_N_SPAN_PANELS = 10
-HTAIL_N_BEAM_ELEMENTS = 2 * HTAIL_N_SPAN_PANELS
+HTAIL_N_BEAM_ELEMENTS = 5 * HTAIL_N_SPAN_PANELS
 
 HTAIL_CHORD_DISCRETIZATION = "linear"
 HTAIL_SPAN_DISCRETIZATION = "linear"
@@ -136,7 +136,7 @@ htail_grid_data = {
 VTAIL_N_CHORD_PANELS = 5
 
 VTAIL_N_SPAN_PANELS = 12
-VTAIL_N_BEAM_ELEMENTS = 2 * VTAIL_N_SPAN_PANELS
+VTAIL_N_BEAM_ELEMENTS = 5 * VTAIL_N_SPAN_PANELS
 
 VTAIL_CHORD_DISCRETIZATION = "linear"
 VTAIL_SPAN_DISCRETIZATION = "linear"
@@ -216,14 +216,8 @@ vtail_fixation = {
     "dof_constraints": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
 }
 
-gnba_aircraft_constrains_data = [wing_fixation, htail_fixation, vtail_fixation]
-
-gnba_aircraft_constraints = aelast.functions.generate_aircraft_constraints(
-    aircraft=gnba_aircraft,
-    aircraft_grids=gnba_aircraft_grids,
-    constraints_data_list=gnba_aircraft_constrains_data,
-)
-
+#gnba_aircraft_constrains_data = [wing_fixation, htail_fixation, vtail_fixation]
+gnba_aircraft_constrains_data = [wing_fixation]
 # ax, fig = vis.plot_3D.plot_aircraft_grids(hale_aircraft_grids, hale_aircraft_fem_elements, title="Hale Aircraft Grids")
 
 # fig.show()
@@ -281,10 +275,10 @@ FLIGHT_CONDITIONS_DATA = {
 }
 
 SIMULATION_OPTIONS = {
-    "flexible_aircraft": False,
+    "flexible_aircraft": True,
     "status_messages": True,
     "control_node_string": "right_region_iii-TIP",
-    "max_iterations": 1,
+    "max_iterations": 100,
     "bending_convergence_criteria": 0.01,
     "torsion_convergence_criteria": 0.01,
     "fem_prop_choice": "ROOT",

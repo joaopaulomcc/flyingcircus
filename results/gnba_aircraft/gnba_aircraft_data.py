@@ -530,7 +530,8 @@ aircraft_cg = geo.objects.MaterialPoint(
 # Aircraft definition
 
 AIRCRAFT_NAME = "GNBA aircraft"
-AIRCRAFT_MACROSURFACES = [wing_macrosurface, htail_macrosurface, vtail_macrosurface]
+#AIRCRAFT_MACROSURFACES = [wing_macrosurface, htail_macrosurface, vtail_macrosurface]
+AIRCRAFT_MACROSURFACES = [wing_macrosurface]
 AIRCRAFT_BEAMS = []
 AIRCRAFT_INERTIAL_PROPERTIES = aircraft_cg
 AIRCRAFT_STRUCT_CONNECTIONS = []

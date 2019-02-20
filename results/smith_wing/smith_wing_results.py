@@ -190,6 +190,7 @@ print(f"    - Cm: {coefficients['Cm']}")
 components_loads = loads.functions.calc_load_distribution(
     aircraft_force_grid=results_case1["aircraft_force_grid"],
     aircraft_panel_grid=results_case1["aircraft_macrosurfaces_panels"],
+    aircraft_gamma_grid=results_case1["aircraft_gamma_grid"],
     attitude_vector=np.array([ALPHA, BETA, GAMMA]),
     altitude=ALTITUDE,
     speed=V_X,
@@ -371,6 +372,7 @@ print(f"    - Cm: {coefficients['Cm']}")
 components_loads = loads.functions.calc_load_distribution(
     aircraft_force_grid=results_case2["aircraft_force_grid"],
     aircraft_panel_grid=results_case2["original_aircraft_panel_grid"],
+    aircraft_gamma_grid=results_case1["aircraft_gamma_grid"],
     attitude_vector=np.array([ALPHA, BETA, GAMMA]),
     altitude=ALTITUDE,
     speed=V_X,
@@ -553,6 +555,7 @@ print(f"    - Cm: {coefficients['Cm']}")
 components_loads = loads.functions.calc_load_distribution(
     aircraft_force_grid=results_case3["aircraft_force_grid"],
     aircraft_panel_grid=results_case3["original_aircraft_panel_grid"],
+    aircraft_gamma_grid=results_case1["aircraft_gamma_grid"],
     attitude_vector=np.array([ALPHA, BETA, GAMMA]),
     altitude=ALTITUDE,
     speed=V_X,

@@ -16,12 +16,15 @@ Author: João Paulo Monteiro Cruvinel da Costa
 # IMPORTS
 
 import numpy as np
+import matplotlib.pyplot as plt
+
 from pyquaternion import Quaternion
 
 # Import code sub packages
 from context import src
 from src import geometry as geo
 from src import structures as struct
+from src import visualization as vis
 
 # ==================================================================================================
 # GEOMETRY DEFINITION
@@ -59,23 +62,32 @@ SECTION = geo.objects.Section(
 # --------------------------------------------------------------------------------------------------
 # WING AND TAIL DEFINITION
 
+WING_INCIDENCE = 0
+
+# Stub surface data
+STUB_ROOT_CHORD = 1
+STUB_TIP_CHORD = 1
+SEMI_STUB_LENGTH = 2.5
+STUB_SWEEP_ANGLE = 0
+STUB_DIHEDRAL_ANGLE = 0
+STUB_TIP_TORSION_ANGLE = 0
+
 # Wing surface data
 WING_ROOT_CHORD = 1
 WING_TIP_CHORD = 1
-SEMI_WING_LENGTH = 14.03
+SEMI_WING_LENGTH = 11.5
 WING_SWEEP_ANGLE = 0
 WING_DIHEDRAL_ANGLE = 0
 WING_TIP_TORSION_ANGLE = 0
-WING_INCIDENCE = 0
 
 # Aileron Surface data
-AILERON_ROOT_CHORD = WING_ROOT_CHORD
-AILERON_TIP_CHORD = WING_TIP_CHORD
-AILERON_LENGTH = 1.97
-AILERON_SWEEP_ANGLE = WING_SWEEP_ANGLE
-AILERON_DIHEDRAL_ANGLE = WING_DIHEDRAL_ANGLE
-AILERON_TIP_TORSION_ANGLE = WING_TIP_TORSION_ANGLE
-AILERON_CONTROL_SURFACE_HINGE_POSITION = (1 - 0.22)
+AILERON_ROOT_CHORD = 1
+AILERON_TIP_CHORD = 1
+AILERON_LENGTH = 2
+AILERON_SWEEP_ANGLE = 0
+AILERON_DIHEDRAL_ANGLE = 0
+AILERON_TIP_TORSION_ANGLE = 0
+AILERON_CONTROL_SURFACE_HINGE_POSITION = 0.8
 
 # Elevator Surface Data
 ELEVATOR_ROOT_CHORD = 0.5
@@ -86,7 +98,42 @@ ELEVATOR_DIHEDRAL_ANGLE = 0
 ELEVATOR_TIP_TORSION_ANGLE = 0
 ELEVATOR_CONTROL_SURFACE_HINGE_POSITION = 0.5
 
+# Rudder Surface Data
+RUDDER_ROOT_CHORD = 0.5
+RUDDER_TIP_CHORD = 0.5
+RUDDER_LENGTH = 2.5
+RUDDER_SWEEP_ANGLE = 0
+RUDDER_DIHEDRAL_ANGLE = 90
+RUDDER_TIP_TORSION_ANGLE = 0
+RUDDER_CONTROL_SURFACE_HINGE_POSITION = 0.5
+
 # Creation of the surface objects of the wing macrosurface
+left_stub_surface = geo.objects.Surface(
+    identifier="left_stub",
+    root_chord=STUB_ROOT_CHORD,
+    root_section=SECTION,
+    tip_chord=STUB_TIP_CHORD,
+    tip_section=SECTION,
+    length=SEMI_STUB_LENGTH,
+    leading_edge_sweep_angle_deg=STUB_SWEEP_ANGLE,
+    dihedral_angle_deg=STUB_DIHEDRAL_ANGLE,
+    tip_torsion_angle_deg=STUB_TIP_TORSION_ANGLE,
+    control_surface_hinge_position=None,
+)
+
+right_stub_surface = geo.objects.Surface(
+    identifier="right_stub",
+    root_chord=STUB_ROOT_CHORD,
+    root_section=SECTION,
+    tip_chord=STUB_TIP_CHORD,
+    tip_section=SECTION,
+    length=SEMI_STUB_LENGTH,
+    leading_edge_sweep_angle_deg=STUB_SWEEP_ANGLE,
+    dihedral_angle_deg=STUB_DIHEDRAL_ANGLE,
+    tip_torsion_angle_deg=STUB_TIP_TORSION_ANGLE,
+    control_surface_hinge_position=None,
+)
+
 left_wing_surface = geo.objects.Surface(
     identifier="left_wing",
     root_chord=WING_ROOT_CHORD,
@@ -139,7 +186,7 @@ right_aileron_surface = geo.objects.Surface(
     control_surface_hinge_position=AILERON_CONTROL_SURFACE_HINGE_POSITION,
 )
 
-# Creation of the surface objects of the tail macrosurface
+# Creation of the surface objects of the horizontal tail macrosurface
 left_elevator_surface = geo.objects.Surface(
     identifier="left_elevator",
     root_chord=ELEVATOR_ROOT_CHORD,
@@ -166,6 +213,20 @@ right_elevator_surface = geo.objects.Surface(
     control_surface_hinge_position=ELEVATOR_CONTROL_SURFACE_HINGE_POSITION,
 )
 
+# Creation of the surface objects of the vertical tail macrosurface
+rudder_surface = geo.objects.Surface(
+    identifier="rudder",
+    root_chord=RUDDER_ROOT_CHORD,
+    root_section=SECTION,
+    tip_chord=RUDDER_TIP_CHORD,
+    tip_section=SECTION,
+    length=RUDDER_LENGTH,
+    leading_edge_sweep_angle_deg=RUDDER_SWEEP_ANGLE,
+    dihedral_angle_deg=RUDDER_DIHEDRAL_ANGLE,
+    tip_torsion_angle_deg=RUDDER_TIP_TORSION_ANGLE,
+    control_surface_hinge_position=RUDDER_CONTROL_SURFACE_HINGE_POSITION,
+)
+
 # Creation of the wing macrosurface
 wing = geo.objects.MacroSurface(
     position=np.array([0, 0, 0]),
@@ -173,6 +234,8 @@ wing = geo.objects.MacroSurface(
     surface_list=[
         left_aileron_surface,
         left_wing_surface,
+        left_stub_surface,
+        right_stub_surface,
         right_wing_surface,
         right_aileron_surface,
     ],
@@ -180,8 +243,8 @@ wing = geo.objects.MacroSurface(
     torsion_center=0.5,
 )
 
-# Creation of the tail macrosurface
-tail = geo.objects.MacroSurface(
+# Creation of the horizontal tail macrosurface
+htail = geo.objects.MacroSurface(
     position=np.array([10.75, 0, 0]),
     incidence=WING_INCIDENCE,
     surface_list=[
@@ -192,13 +255,24 @@ tail = geo.objects.MacroSurface(
     torsion_center=0.5,
 )
 
-aircraft_macrosurfaces = [wing, tail]
+# Creation of the vertical tail macrosurface
+vtail = geo.objects.MacroSurface(
+    position=np.array([10.75, 0, 0]),
+    incidence=WING_INCIDENCE,
+    surface_list=[
+        rudder_surface,
+    ],
+    symmetry_plane=None,
+    torsion_center=0.5,
+)
+
+aircraft_macrosurfaces = [wing, htail, vtail]
 
 # --------------------------------------------------------------------------------------------------
 # FUSELAGE AND TAIL BOOM DEFINITION
 
 POINT_1 = np.array([0.5, 0.0, 0.0])
-POINT_2 = np.array([0.93, 0.0, 0.0])
+POINT_2 = np.array([1.0, 0.0, 0.0])
 POINT_3 = np.array([11.0, 0.0, 0.0])
 
 beam_property = struct.objects.ElementProperty(section=SECTION, material=MATERIAL)
@@ -225,7 +299,7 @@ aircraft_beams = [fuselage, tail_boom]
 # AIRCRAFT CG DEFINITION
 
 AIRCRAFT_MASS = 4000
-CG_POSITION = np.array([3, 0, 0])
+CG_POSITION = POINT_2
 IXX = 1
 IYY = 1
 IZZ = 1
@@ -250,21 +324,30 @@ aircraft_cg = geo.objects.MaterialPoint(
 # AIRCRAFT STRUCTURE CONNECTIONS
 
 wing_to_fuselage = struct.objects.Connection(
-    left_wing_surface, "ROOT", fuselage, "ROOT"
+    left_stub_surface, "ROOT", fuselage, "ROOT"
 )
-
-fuselage_to_cg = struct.objects.Connection(fuselage, "TIP", aircraft_cg, "ROOT")
 
 fuselage_to_tail_boom = struct.objects.Connection(fuselage, "TIP", tail_boom, "ROOT")
 
-tail_boom_to_tail = struct.objects.Connection(
+
+tail_boom_to_htail = struct.objects.Connection(
     tail_boom, "TIP", left_elevator_surface, "ROOT"
+)
+
+tail_boom_to_vtail = struct.objects.Connection(
+    tail_boom, "TIP", rudder_surface, "ROOT"
+)
+
+htail_to_vtail = struct.objects.Connection(
+    left_elevator_surface, "ROOT", rudder_surface, "ROOT"
 )
 
 aircraft_struct_connections = [
     wing_to_fuselage,
     fuselage_to_tail_boom,
-    tail_boom_to_tail,
+    tail_boom_to_htail,
+    tail_boom_to_vtail,
+    htail_to_vtail,
 ]
 
 # --------------------------------------------------------------------------------------------------
@@ -283,6 +366,6 @@ hale_aircraft = geo.objects.Aircraft(
     beams=AIRCRAFT_BEAMS,
     inertial_properties=AIRCRAFT_INERTIAL_PROPERTIES,
     connections=AIRCRAFT_STRUCT_CONNECTIONS,
-    ref_area=wing.ref_area,
-    mean_aero_chord=wing.mean_aero_chord
+    ref_area=32,
+    mean_aero_chord=1
 )
