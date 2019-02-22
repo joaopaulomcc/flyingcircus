@@ -77,7 +77,7 @@ results_ax, results_fig = vis.plot_3D2.generate_results_plot(
     aircraft_panel_loads=aircraft_panel_loads,
     aircraft_struct_fem_elements=None,
     aircraft_struct_deformations=None,
-    results_string="delta_p_grid",
+    results_string="force_z_grid",#"delta_p_grid",
     title="Smith Wing - Case 001 - Delta Pressure [Pa]",
     colorbar_label="Delta Pressure [Pa]",
     ax=None,
@@ -152,6 +152,7 @@ print(f"    - Cm: {coefficients['Cm']}")
 components_loads = loads.functions.calc_load_distribution(
     aircraft_force_grid=results["aircraft_force_grid"],
     aircraft_panel_grid=results["aircraft_macrosurfaces_panels"],
+    aircraft_gamma_grid=results["aircraft_gamma_grid"],
     attitude_vector=np.array([ALPHA, BETA, GAMMA]),
     altitude=ALTITUDE,
     speed=V_X,

@@ -235,7 +235,7 @@ print()
 # Flight Conditions definition
 
 # Translation velocities
-V_X = 100
+V_X = 25
 V_Y = 0
 V_Z = 0
 
@@ -275,7 +275,7 @@ FLIGHT_CONDITIONS_DATA = {
 }
 
 SIMULATION_OPTIONS = {
-    "flexible_aircraft": True,
+    "flexible_aircraft": False,
     "status_messages": True,
     "control_node_string": "right_region_iii-TIP",
     "max_iterations": 100,
