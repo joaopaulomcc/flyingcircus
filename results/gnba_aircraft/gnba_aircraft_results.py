@@ -48,7 +48,7 @@ f.close()
 # Draw Aircraft
 
 aircraft_ax, aircraft_fig = vis.plot_3D2.generate_aircraft_plot(
-    gnba_aircraft, title="GNBA Aircraft"
+    gnba_aircraft, title=None
 )
 
 # ==================================================================================================

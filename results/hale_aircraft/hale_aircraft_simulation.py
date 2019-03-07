@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sc
 import sys
+import pickle
 
 # Import code sub packages
 from context import src
@@ -113,13 +114,13 @@ wing_grid_data = {
 # HTAIL GRID DATA
 HTAIL_N_CHORD_PANELS = 5
 
-HTAIL_N_SPAN_PANELS = 4
+HTAIL_N_SPAN_PANELS = 5
 HTAIL_N_BEAM_ELEMENTS = 2 * HTAIL_N_SPAN_PANELS
 
 HTAIL_CHORD_DISCRETIZATION = "linear"
 HTAIL_SPAN_DISCRETIZATION = "linear"
 HTAIL_TORSION_FUNCTION = "linear"
-HTAIL_CONTROL_SURFACE_DEFLECTION_DICT = {"left_elevator": 45, "right_elevator": 45}
+HTAIL_CONTROL_SURFACE_DEFLECTION_DICT = {"left_elevator": 0, "right_elevator": 0}
 
 htail_grid_data = {
     "n_chord_panels": HTAIL_N_CHORD_PANELS,
@@ -148,7 +149,7 @@ htail_grid_data = {
 # VTAIL GRID DATA
 VTAIL_N_CHORD_PANELS = 5
 
-VTAIL_N_SPAN_PANELS = 4
+VTAIL_N_SPAN_PANELS = 5
 VTAIL_N_BEAM_ELEMENTS = 2 * VTAIL_N_SPAN_PANELS
 
 VTAIL_CHORD_DISCRETIZATION = "linear"
@@ -274,35 +275,74 @@ def ATM_TURBULENCE_FUNCTION(point_coordinates):
 
     return np.zeros(3)
 
+rig_results = []
+flex_results = []
+flex_iteration_results = []
 
-FLIGHT_CONDITIONS_DATA = {
-    "translation_velocity": np.array([V_X, V_Y, V_Z]),
-    "rotation_velocity": np.array([R_X, R_Y, R_Z]),
-    "attitude_angles_deg": np.array([ALPHA, BETA, GAMMA]),
-    "center_of_rotation": CENTER_OF_ROTATION,
-    "altitude": ALTITUDE,
-    "atm_turbulenc_function": ATM_TURBULENCE_FUNCTION,
-    "center_of_rotation": CENTER_OF_ROTATION,
-}
+for i in range(1, 6):
 
-SIMULATION_OPTIONS = {
-    "flexible_aircraft": True,
-    "status_messages": True,
-    "control_node_string": "left_aileron-TIP",
-    "max_iterations": 100,
-    "bending_convergence_criteria": 0.01,
-    "torsion_convergence_criteria": 0.01,
-    "fem_prop_choice": "ROOT",
-    "interaction_algorithm": "closest",
-    "output_iteration_results": True,
-}
+    ALPHA = i
 
-results, iteration_results = aelast.functions.calculate_aircraft_loads(
-    aircraft_object=hale_aircraft,
-    aircraft_grid_data=hale_aircraft_grid_data,
-    aircraft_constraints_data=hale_aircraft_constrains_data,
-    flight_condition_data=FLIGHT_CONDITIONS_DATA,
-    simulation_options=SIMULATION_OPTIONS,
-    influence_coef_matrix=None,
-)
+    FLIGHT_CONDITIONS_DATA = {
+        "translation_velocity": np.array([V_X, V_Y, V_Z]),
+        "rotation_velocity": np.array([R_X, R_Y, R_Z]),
+        "attitude_angles_deg": np.array([ALPHA, BETA, GAMMA]),
+        "center_of_rotation": CENTER_OF_ROTATION,
+        "altitude": ALTITUDE,
+        "atm_turbulenc_function": ATM_TURBULENCE_FUNCTION,
+        "center_of_rotation": CENTER_OF_ROTATION,
+    }
+
+    SIMULATION_OPTIONS = {
+        "flexible_aircraft": True,
+        "status_messages": True,
+        "control_node_string": "left_aileron-TIP",
+        "max_iterations": 100,
+        "bending_convergence_criteria": 0.01,
+        "torsion_convergence_criteria": 0.01,
+        "fem_prop_choice": "ROOT",
+        "interaction_algorithm": "closest",
+        "output_iteration_results": True,
+    }
+
+    results, iteration_results = aelast.functions.calculate_aircraft_loads(
+        aircraft_object=hale_aircraft,
+        aircraft_grid_data=hale_aircraft_grid_data,
+        aircraft_constraints_data=hale_aircraft_constrains_data,
+        flight_condition_data=FLIGHT_CONDITIONS_DATA,
+        simulation_options=SIMULATION_OPTIONS,
+        influence_coef_matrix=None,
+    )
+
+    flex_results.append(results)
+    flex_iteration_results.append(iteration_results)
+
+    SIMULATION_OPTIONS = {
+        "flexible_aircraft": False,
+        "status_messages": True,
+        "control_node_string": "left_aileron-TIP",
+        "max_iterations": 100,
+        "bending_convergence_criteria": 0.01,
+        "torsion_convergence_criteria": 0.01,
+        "fem_prop_choice": "ROOT",
+        "interaction_algorithm": "closest",
+        "output_iteration_results": True,
+    }
+
+    results = aelast.functions.calculate_aircraft_loads(
+        aircraft_object=hale_aircraft,
+        aircraft_grid_data=hale_aircraft_grid_data,
+        aircraft_constraints_data=hale_aircraft_constrains_data,
+        flight_condition_data=FLIGHT_CONDITIONS_DATA,
+        simulation_options=SIMULATION_OPTIONS,
+        influence_coef_matrix=None,
+    )
+
+    rig_results.append(results)
+
+f = open("results\\hale_aircraft\\hale_aircraft_sim.pckl", "wb")
+pickle.dump([rig_results, flex_results, flex_iteration_results], f)
+f.close()
+
+
 

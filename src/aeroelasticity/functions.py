@@ -8,6 +8,7 @@ import time
 import numpy as np
 
 from pyquaternion import Quaternion
+from numba import jit
 
 from .. import geometry as geo
 from .. import aerodynamics as aero
@@ -17,7 +18,7 @@ from .. import visualization as vis
 
 # ==================================================================================================
 
-
+@jit
 def calculate_loads_to_nodes_weight_matrix(
     macrosurface_aero_grid, macrosurface_struct_grid, algorithm="closest"
 ):
@@ -56,7 +57,7 @@ def calculate_loads_to_nodes_weight_matrix(
 
 # ==================================================================================================
 
-
+@jit
 def calculate_deformation_to_aero_grid_weight_matrix(
     macrosurface_aero_grid, macrosurface_struct_grid, algorithm="closest"
 ):
@@ -99,7 +100,7 @@ def calculate_deformation_to_aero_grid_weight_matrix(
 
 # ==================================================================================================
 
-
+@jit
 def generated_aero_loads(
     macrosurface_aero_grid,
     macrosurface_force_grid,
@@ -162,7 +163,7 @@ def generated_aero_loads(
 
 # ==================================================================================================
 
-
+@jit
 def deform_aero_grid(
     macrosurface_aero_grid,
     macrosurface_struct_grid,
@@ -265,7 +266,7 @@ def deform_aero_grid(
 
 # ==================================================================================================
 
-
+@jit
 def generate_aircraft_grids(aircraft_object, aircraft_grid_data):
 
     macrosurfaces_aero_grids = []
@@ -388,7 +389,7 @@ def generate_aircraft_grids(aircraft_object, aircraft_grid_data):
 
 # ==================================================================================================
 
-
+@jit
 def generate_aircraft_constraints(aircraft, aircraft_grids, constraints_data_list):
 
     aircraft_constraints = []
@@ -889,7 +890,7 @@ def calculate_aircraft_loads(
 
 # ==================================================================================================
 
-
+@jit
 def find_control_node_number(aircraft, aircraft_grids, control_node_string):
 
     component_identifier, node_position = control_node_string.split("-")
@@ -946,7 +947,7 @@ def find_control_node_number(aircraft, aircraft_grids, control_node_string):
 
 # ==================================================================================================
 
-
+@jit
 def calculate_deformation_table(aircraft_original_grids, aircraft_struct_deformations):
 
     aircraft_macrosurfaces_deformed_nodes = []

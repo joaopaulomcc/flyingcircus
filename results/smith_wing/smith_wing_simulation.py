@@ -56,8 +56,8 @@ from smith_wing_data import smith_wing
 
 
 # Number of panels and finite elements
-N_CHORD_PANELS = 10
-N_SPAN_PANELS = 30
+N_CHORD_PANELS = 5
+N_SPAN_PANELS = 40
 N_BEAM_ELEMENTS = 2 * N_SPAN_PANELS
 CHORD_DISCRETIZATION = "linear"
 SPAN_DISCRETIZATION = "linear"
@@ -116,7 +116,7 @@ smith_wing_constraints = aelast.functions.generate_aircraft_constraints(
 # ==================================================================================================
 # AERODYNAMIC LOADS CALCULATION - CASE 1 - ALPHA 2º - Rigid Wing
 print()
-print("# CASE 001:")
+print("# CASE 000:")
 print(f"    - Altitude: 20000m")
 print(f"    - True Airspeed: 25m/s")
 print(f"    - Alpha: 2º")
@@ -137,6 +137,79 @@ R_Z = 0
 
 # Aircraft Attitude in relation to the wind axis, in degrees
 ALPHA = 2  # Pitch angle
+BETA = 0  # Yaw angle
+GAMMA = 0  # Roll angle
+
+# Center of rotation, usually the aircraft CG position
+CENTER_OF_ROTATION = np.array([0, 0, 0])
+
+# Flight altitude, used to calculate atmosppheric conditions, in meters
+ALTITUDE = 20000
+
+# Atmospheric turbulence, function that calculates the air speeds in relation to the ground, given
+# a point coordinates
+
+
+def ATM_TURBULENCE_FUNCTION(point_coordinates):
+
+    return np.zeros(3)
+
+
+FLIGHT_CONDITIONS_DATA = {
+    "translation_velocity": np.array([V_X, V_Y, V_Z]),
+    "rotation_velocity": np.array([R_X, R_Y, R_Z]),
+    "attitude_angles_deg": np.array([ALPHA, BETA, GAMMA]),
+    "center_of_rotation": CENTER_OF_ROTATION,
+    "altitude": ALTITUDE,
+    "atm_turbulenc_function": ATM_TURBULENCE_FUNCTION,
+    "center_of_rotation": CENTER_OF_ROTATION,
+}
+
+SIMULATION_OPTIONS = {
+    "flexible_aircraft": False,
+    "status_messages": True,
+    "control_node_string": "left_wing-TIP",
+    "max_iterations": 100,
+    "bending_convergence_criteria": 0.01,
+    "torsion_convergence_criteria": 0.01,
+    "fem_prop_choice": "ROOT",
+    "interaction_algorithm": "closest",
+    "output_iteration_results": True,
+}
+
+results_case0 = aelast.functions.calculate_aircraft_loads(
+    aircraft_object=smith_wing,
+    aircraft_grid_data=smith_wing_grid_data,
+    aircraft_constraints_data=smith_wing_constrains_data,
+    flight_condition_data=FLIGHT_CONDITIONS_DATA,
+    simulation_options=SIMULATION_OPTIONS,
+    influence_coef_matrix=None,
+)
+
+# ==================================================================================================
+# AERODYNAMIC LOADS CALCULATION - CASE 1 - ALPHA 2º - Rigid Wing
+print()
+print("# CASE 001:")
+print(f"    - Altitude: 20000m")
+print(f"    - True Airspeed: 25m/s")
+print(f"    - Alpha: 4º")
+print(f"    - Rigid Wing")
+print()
+
+# Flight Conditions definition
+
+# Translation velocities
+V_X = 25
+V_Y = 0
+V_Z = 0
+
+# Rotation velocities
+R_X = 0
+R_Y = 0
+R_Z = 0
+
+# Aircraft Attitude in relation to the wind axis, in degrees
+ALPHA = 4  # Pitch angle
 BETA = 0  # Yaw angle
 GAMMA = 0  # Roll angle
 

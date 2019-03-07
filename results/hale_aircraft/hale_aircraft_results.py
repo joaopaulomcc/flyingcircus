@@ -47,22 +47,24 @@ print("============================================================")
 
 from hale_aircraft_data import hale_aircraft
 
-from hale_aircraft_simulation import results, iteration_results
+#from hale_aircraft_simulation import results, iteration_results
 
 import pickle
 
-f = open("results\\hale_aircraft\\results\\results_no_deflection.pckl", 'wb')
-pickle.dump([results, iteration_results], f)
-f.close()
+#f = open("results\\hale_aircraft\\results\\results_no_deflection.pckl", 'wb')
+#pickle.dump([results, iteration_results], f)
+#f.close()
 
-f = open("results\\hale_aircraft\\results\\results_no_deflection.pckl", "rb")
-results, iteration_results = pickle.load(f)
+f = open("results\\hale_aircraft\\hale_aircraft_sim.pckl", "rb")
+rig_results, flex_results, flex_iteration_results = pickle.load(f)
 f.close()
 
 # Draw Aircraft
 aircraft_ax, aircraft_fig = vis.plot_3D2.generate_aircraft_plot(
     hale_aircraft, title="Hale Aircraft"
 )
+
+results = flex_results[0]
 
 # ==================================================================================================
 # PROCESSING RESULTS

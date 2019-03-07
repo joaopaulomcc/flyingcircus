@@ -385,7 +385,7 @@ for component in components_loads:
     ax1.set_title("Smith Wing - Case 002 - Lift Distribution")
     ax1.set_xlabel("Spam Position [m]")
     ax1.set_ylabel("Lift [N]")
-    ax1.plot(component["y_values"], component["lift"] / (np.pi))
+    ax1.plot(component["y_values"], component["lift"])
     ax1.grid()
 
     ax2 = fig.add_subplot(3, 1, 2)
@@ -568,7 +568,7 @@ for component in components_loads:
     ax1.set_title("Smith Wing - Case 003 - Lift Distribution")
     ax1.set_xlabel("Spam Position [m]")
     ax1.set_ylabel("Lift [N]")
-    ax1.plot(component["y_values"], component["lift"] / (np.pi))
+    ax1.plot(component["y_values"], component["lift"])
     ax1.grid()
 
     ax2 = fig.add_subplot(3, 1, 2)
@@ -586,4 +586,8 @@ for component in components_loads:
     ax3.grid()
     plt.tight_layout()
 
+
+a = results_case1["aircraft_force_grid"]
+b = results_case2["aircraft_force_grid"]
+c = results_case3["aircraft_force_grid"]
 plt.show()

@@ -225,48 +225,45 @@ def calc_load_distribution(
         Cd = np.zeros(n_span_panels)
 
         for i in range(n_span_panels):
-            section_force = 0
-            section = component_force_grid[:, i]
+
+            force_section = component_force_grid[:, i]
             gamma_section = component_gamma_grid[:, i]
             panels_section = np.array(component_panel_grid)[:, i]
 
-            for force in section:
-                section_force += force
+            section_total_force = force_section.sum()
+            section_total_gamma = gamma_section.sum()
 
             # Calculate section area and chord
             section_area = 0
             section_chord = 0
-            section_gamma = 0
+
             for panel in panels_section:
                 section_area += panel.area
-                section_chord += ((panel.l_chord + panel.r_chord) / 2)
+                section_chord += m.norm(((panel.l_chord + panel.r_chord) / 2))
 
-            for panel_gamma in gamma_section:
-                section_gamma += panel_gamma
+            section_span = panel.span
 
             # Calculate section chord
 
-
-            x_force[i] = section_force[0]
-            y_force[i] = section_force[1]
-            z_force[i] = section_force[2]
+            x_force[i] = section_total_force[0]
+            y_force[i] = section_total_force[1]
+            z_force[i] = section_total_force[2]
 
             # Transform aerodynamic forces from aircraft coordinate system to wind coordinate system
             section_aero_forces = geo.functions.change_coord_sys(
-                section_force,
+                section_total_force,
                 wind_coord_sys.x_axis,
                 wind_coord_sys.y_axis,
                 wind_coord_sys.z_axis,
             )
 
-            lift[i] = section_aero_forces[2]
-            drag[i] = section_aero_forces[0]
-            side[i] = section_aero_forces[1]
+            lift[i] = section_aero_forces[2] / section_span
+            drag[i] = section_aero_forces[0] / section_span
+            side[i] = section_aero_forces[1] / section_span
 
             y_values[i] = panels_section[0].aero_center[1]
 
-            Cl[i] = lift[i] / (0.5 * density * (speed ** 2) * section_area)
-            #Cl[i] = (2 * section_gamma) / (section_chord * speed)
+            Cl[i] = section_aero_forces[2] / (0.5 * density * (speed ** 2) * section_area)
             Cd[i] = drag[i] / (0.5 * density * (speed ** 2) * section_area)
 
         loads = {
