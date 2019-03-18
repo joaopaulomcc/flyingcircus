@@ -34,13 +34,23 @@ from src import geometry as geo
 from src import loads
 from src import structures as struct
 from src import visualization as vis
+from src import mathematics as m
 
 
 from hale_aircraft_data import hale_aircraft
 
-f = open("results\\hale_aircraft\\hale_aircraft_sim.pckl", "rb")
-rig_results, flex_results, flex_iteration_results = pickle.load(f)
+#f = open("results\\hale_aircraft\\hale_aircraft_sim.pckl", "rb")
+#rig_results, flex_results, flex_iteration_results = pickle.load(f)
+#f.close()
+
+f = open("results\\hale_aircraft\\hale_aircraft_final_results.pckl", "rb")
+rig_results, flex_results = pickle.load(f)
 f.close()
+
+
+#f = open("results\\hale_aircraft\\hale_aircraft_final_results.pckl", "wb")
+#pickle.dump([rig_results, flex_results], f)
+#f.close()
 
 # Draw Aircraft
 aircraft_ax, aircraft_fig = vis.plot_3D2.generate_aircraft_plot(
@@ -60,6 +70,22 @@ aircraft_ax, aircraft_fig = vis.plot_3D2.generate_aircraft_plot(
 
 # Generate Original vs Deformed Grid Plot
 
+alphas = [1, 2, 3, 3.5, 4, 4.5, 5]
+
+color_pallet = [
+        "tab:blue",
+        "tab:orange",
+        "tab:green",
+        "tab:red",
+        "tab:purple",
+        "tab:brown",
+        "tab:pink",
+        "tab:gray",
+        "tab:olive",
+        "tab:cyan",
+]
+
+
 # Draw original grids
 grids_ax, grids_fig = vis.plot_3D2.generate_aircraft_grids_plot(
     flex_results[0]["aircraft_original_grids"]["macrosurfaces_aero_grids"],
@@ -72,67 +98,68 @@ grids_ax, grids_fig = vis.plot_3D2.generate_aircraft_grids_plot(
     alpha=0.5,
 )
 
+for i, results_m in enumerate(flex_results):
 
-# Draw deformed Grids
-grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
-    flex_results[0]["aircraft_deformed_macrosurfaces_aero_grids"],
-    flex_results[0]["aircraft_struct_fem_elements"],
-    flex_results[0]["aircraft_struct_deformations"],
-    ax=grids_ax,
-    fig=grids_fig,
-    show_origin=True,
-    show_nodes=False,
-    line_color="tab:orange",
-    alpha=1,
-)
+    # Draw deformed Grids
+    grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
+        results_m["aircraft_deformed_macrosurfaces_aero_grids"],
+        results_m["aircraft_struct_fem_elements"],
+        results_m["aircraft_struct_deformations"],
+        ax=grids_ax,
+        fig=grids_fig,
+        show_origin=True,
+        show_nodes=False,
+        line_color=color_pallet[i+1],
+        alpha=1,
+    )
 
-grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
-    flex_results[1]["aircraft_deformed_macrosurfaces_aero_grids"],
-    flex_results[1]["aircraft_struct_fem_elements"],
-    flex_results[1]["aircraft_struct_deformations"],
-    ax=grids_ax,
-    fig=grids_fig,
-    show_origin=True,
-    show_nodes=False,
-    line_color="tab:green",
-    alpha=1,
-)
-
-grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
-    flex_results[2]["aircraft_deformed_macrosurfaces_aero_grids"],
-    flex_results[2]["aircraft_struct_fem_elements"],
-    flex_results[2]["aircraft_struct_deformations"],
-    ax=grids_ax,
-    fig=grids_fig,
-    show_origin=True,
-    show_nodes=False,
-    line_color="tab:red",
-    alpha=1,
-)
-
-grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
-    flex_results[3]["aircraft_deformed_macrosurfaces_aero_grids"],
-    flex_results[3]["aircraft_struct_fem_elements"],
-    flex_results[3]["aircraft_struct_deformations"],
-    ax=grids_ax,
-    fig=grids_fig,
-    show_origin=True,
-    show_nodes=False,
-    line_color="tab:purple",
-    alpha=1,
-)
-
-grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
-    flex_results[4]["aircraft_deformed_macrosurfaces_aero_grids"],
-    flex_results[4]["aircraft_struct_fem_elements"],
-    flex_results[4]["aircraft_struct_deformations"],
-    ax=grids_ax,
-    fig=grids_fig,
-    show_origin=True,
-    show_nodes=False,
-    line_color="brown",
-    alpha=1,
-)
+#grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
+#    flex_results[1]["aircraft_deformed_macrosurfaces_aero_grids"],
+#    flex_results[1]["aircraft_struct_fem_elements"],
+#    flex_results[1]["aircraft_struct_deformations"],
+#    ax=grids_ax,
+#    fig=grids_fig,
+#    show_origin=True,
+#    show_nodes=False,
+#    line_color="tab:green",
+#    alpha=1,
+#)
+#
+#grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
+#    flex_results[2]["aircraft_deformed_macrosurfaces_aero_grids"],
+#    flex_results[2]["aircraft_struct_fem_elements"],
+#    flex_results[2]["aircraft_struct_deformations"],
+#    ax=grids_ax,
+#    fig=grids_fig,
+#    show_origin=True,
+#    show_nodes=False,
+#    line_color="tab:red",
+#    alpha=1,
+#)
+#
+#grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
+#    flex_results[3]["aircraft_deformed_macrosurfaces_aero_grids"],
+#    flex_results[3]["aircraft_struct_fem_elements"],
+#    flex_results[3]["aircraft_struct_deformations"],
+#    ax=grids_ax,
+#    fig=grids_fig,
+#    show_origin=True,
+#    show_nodes=False,
+#    line_color="tab:purple",
+#    alpha=1,
+#)
+#
+#grids_ax, grids_fig = vis.plot_3D2.generate_deformed_aircraft_grids_plot(
+#    flex_results[4]["aircraft_deformed_macrosurfaces_aero_grids"],
+#    flex_results[4]["aircraft_struct_fem_elements"],
+#    flex_results[4]["aircraft_struct_deformations"],
+#    ax=grids_ax,
+#    fig=grids_fig,
+#    show_origin=True,
+#    show_nodes=False,
+#    line_color="brown",
+#    alpha=1,
+#)
 
 #plt.show()
 
@@ -161,7 +188,7 @@ results_ax, results_fig = vis.plot_3D2.generate_results_plot(
 fig1, ax1 = plt.subplots()
 fig2, ax2 = plt.subplots()
 
-for i in range(0,5):
+for i, alpha in enumerate(alphas):
 
     deformation_table = aelast.functions.calculate_deformation_table(
         flex_results[i]["aircraft_original_grids"],
@@ -173,8 +200,8 @@ for i in range(0,5):
     nodes = deformation_table["aircraft_macrosurfaces_deformed_nodes"][0]
     nodes = nodes[nodes[:, 1].argsort()]
 
-    ax1.plot(nodes[:, 1], nodes[:, 2], label=f"Alfa {i+1}º")
-    ax2.plot(nodes[:, 1], np.degrees(nodes[:, 4]), label=f"Alfa {i+1}º")
+    ax1.plot(nodes[:, 1], nodes[:, 2], label=f"Alfa {alpha}º", color=color_pallet[i+1])
+    ax2.plot(nodes[:, 1], np.degrees(nodes[:, 4]), label=f"Alfa {alpha}º", color=color_pallet[i+1])
 
 # Plot Bending
 
@@ -198,7 +225,7 @@ ax2.legend()
 fig1, ax1 = plt.subplots()
 fig2, ax2 = plt.subplots()
 
-for i in range(0,5):
+for i, alpha in enumerate(alphas):
 
     deformation_table = aelast.functions.calculate_deformation_table(
         flex_results[i]["aircraft_original_grids"],
@@ -210,8 +237,8 @@ for i in range(0,5):
     nodes = deformation_table["aircraft_macrosurfaces_deformed_nodes"][1]
     nodes = nodes[nodes[:, 1].argsort()]
 
-    ax1.plot(nodes[:, 1], nodes[:, 2], label=f"Alfa {i+1}º")
-    ax2.plot(nodes[:, 1], np.degrees(nodes[:, 4]), label=f"Alfa {i+1}º")
+    ax1.plot(nodes[:, 1], nodes[:, 2], label=f"Alfa {alpha}º", color=color_pallet[i+1])
+    ax2.plot(nodes[:, 1], np.degrees(nodes[:, 4]), label=f"Alfa {alpha}º", color=color_pallet[i+1])
 
 # Plot Bending
 
@@ -282,9 +309,9 @@ rig_cls = [0]
 rig_cms = [0]
 rig_cds = [0]
 
-for i in range(0, 5):
+for i, alpha in enumerate(alphas):
 
-    ALPHA = i + 1
+    ALPHA = alpha
 
     forces, moments, coefficients = loads.functions.calc_lift_drag(
         aircraft=hale_aircraft,
@@ -314,8 +341,8 @@ for i in range(0, 5):
 
 
 fig, ax = plt.subplots()
-ax.plot(np.arange(0, 6), flex_cls, label="Flexível")
-ax.plot(np.arange(0, 6), rig_cls, label="Rígido")
+ax.plot([0] + alphas, flex_cls, label="Flexível")
+ax.plot([0] + alphas, rig_cls, label="Rígido")
 ax.set_xlabel("Ângulo de Ataque [Graus]")
 ax.set_ylabel("$C_l$")
 ax.set_title("Aeronave HALE $C_l$ vs $\\alpha$")
@@ -323,8 +350,8 @@ ax.grid()
 ax.legend()
 
 fig, ax = plt.subplots()
-ax.plot(np.arange(0, 6), flex_cms, label="Flexível")
-ax.plot(np.arange(0, 6), rig_cms, label="Rígido")
+ax.plot([0] + alphas, flex_cms, label="Flexível")
+ax.plot([0] + alphas, rig_cms, label="Rígido")
 ax.set_xlabel("Ângulo de Ataque [Graus]")
 ax.set_ylabel("$C_m$")
 ax.set_title("Aeronave HALE $C_m$ vs $\\alpha$")
@@ -332,8 +359,8 @@ ax.grid()
 ax.legend()
 
 fig, ax = plt.subplots()
-ax.plot(np.arange(0, 6), flex_cds, label="Flexível")
-ax.plot(np.arange(0, 6), rig_cds, label="Rígido")
+ax.plot([0] + alphas, flex_cds, label="Flexível")
+ax.plot([0] + alphas, rig_cds, label="Rígido")
 ax.set_xlabel("Ângulo de Ataque [Graus]")
 ax.set_ylabel("$C_d$")
 ax.set_title("Aeronave HALE $C_d$ vs $\\alpha$")
@@ -356,9 +383,9 @@ print(f"    - Cm: {coefficients['Cm']}")
 flex_comp = []
 rig_comp = []
 
-for i in range(0, 5):
+for i, alpha in enumerate(alphas):
 
-    ALPHA = i + 1
+    ALPHA = alpha
 
     components_loads = loads.functions.calc_load_distribution(
         aircraft_force_grid=flex_results[i]["aircraft_force_grid"],
@@ -385,19 +412,19 @@ for i in range(0, 5):
 fig1, ax1 = plt.subplots()
 ax1.set_title(f"Aeronave HALE - ASA - Distribuição de Sustentação")
 ax1.set_xlabel("Envergadura [m]")
-ax1.set_ylabel("Sustentação [N]")
+ax1.set_ylabel("Sustentação [N/m]")
 ax1.grid()
 
 fig2, ax2 = plt.subplots()
 ax2.set_title(f"Aeronave HALE - Empenagem Horizontal - Distribuição de Sustentação")
 ax2.set_xlabel("Envergadura [m]")
-ax2.set_ylabel("Sustentação [N]")
+ax2.set_ylabel("Sustentação [N/m]")
 ax2.grid()
 
 fig3, ax3 = plt.subplots()
 ax3.set_title(f"Aeronave HALE - Empenagem Vertical - Distribuição de Sustentação")
 ax3.set_xlabel("Envergadura [m]")
-ax3.set_ylabel("Sustentação [N]")
+ax3.set_ylabel("Sustentação [N/m]")
 ax3.grid()
 
 color_pallet = [
@@ -406,31 +433,41 @@ color_pallet = [
         "tab:green",
         "tab:red",
         "tab:purple",
-        "tab:brow",
+        "tab:brown",
         "tab:pink",
         "tab:gray",
         "tab:olive",
         "tab:cyan",
 ]
 
-for i in range(0, 5):
+for i, alpha in enumerate(alphas):
 
     flex_component = flex_comp[i]
     rig_component = rig_comp[i]
 
-    ax1.plot(flex_component[0]["y_values"], flex_component[0]["lift"], label=f"Flex - $\\alpha$ = {i+1}º", color=color_pallet[i])
-    ax1.plot(rig_component[0]["y_values"], rig_component[0]["lift"], label=f"Rig - $\\alpha$ = {i+1}º", linestyle="--", color=color_pallet[i])
+    ax1.plot(flex_component[0]["y_values"], flex_component[0]["lift"], label=f"Flex - $\\alpha$ = {alpha}º", color=color_pallet[i+1])
+    ax1.plot(rig_component[0]["y_values"], rig_component[0]["lift"], label=f"Rig - $\\alpha$ = {alpha}º", linestyle="--", color=color_pallet[i+1])
 
-    ax2.plot(flex_component[1]["y_values"], flex_component[1]["lift"], label=f"Flex - $\\alpha$ = {i+1}º", color=color_pallet[i])
-    ax2.plot(rig_component[1]["y_values"], rig_component[1]["lift"], label=f"Rig - $\\alpha$ = {i+1}º", linestyle="--", color=color_pallet[i])
+    ax2.plot(flex_component[1]["y_values"], flex_component[1]["lift"], label=f"Flex - $\\alpha$ = {alpha}º", color=color_pallet[i+1])
+    ax2.plot(rig_component[1]["y_values"], rig_component[1]["lift"], label=f"Rig - $\\alpha$ = {alpha}º", linestyle="--", color=color_pallet[i+1])
 
-    ax3.plot(flex_component[2]["y_values"], flex_component[2]["lift"], label=f"Flex - $\\alpha$ = {i+1}º", color=color_pallet[i])
-    ax3.plot(rig_component[2]["y_values"], rig_component[2]["lift"], label=f"Rig - $\\alpha$ = {i+1}º", linestyle="--", color=color_pallet[i])
+    #ax3.plot(flex_component[2]["y_values"], flex_component[2]["lift"], label=f"Flex - $\\alpha$ = {alpha}º", color=color_pallet[i+1])
+    #ax3.plot(rig_component[2]["y_values"], rig_component[2]["lift"], label=f"Rig - $\\alpha$ = {alpha}º", linestyle="--", color=color_pallet[i+1])
 
+    ax3.plot(np.linspace(0,2.5,5), flex_component[2]["lift"], label=f"Flex - $\\alpha$ = {alpha}º", color=color_pallet[i+1])
+    ax3.plot(np.linspace(0,2.5,5), rig_component[2]["lift"], label=f"Rig - $\\alpha$ = {alpha}º", linestyle="--", color=color_pallet[i+1])
 ax1.legend()
 ax2.legend()
 ax3.legend()
 
+#for results in flex_iteration_results[3]:
+#
+#    print(m.norm(results["aircraft_struct_deformations"][129][:3]))
+#
+
 plt.show()
+
+
+
 
 input()

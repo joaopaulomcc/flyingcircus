@@ -279,7 +279,8 @@ rig_results = []
 flex_results = []
 flex_iteration_results = []
 
-for i in range(1, 6):
+#for i in range(1, 6):
+for i in [1, 2, 3, 3.5, 4, 4.5, 5]:
 
     ALPHA = i
 
@@ -296,7 +297,7 @@ for i in range(1, 6):
     SIMULATION_OPTIONS = {
         "flexible_aircraft": True,
         "status_messages": True,
-        "control_node_string": "left_aileron-TIP",
+        "control_node_string": "left_elevator-TIP",
         "max_iterations": 100,
         "bending_convergence_criteria": 0.01,
         "torsion_convergence_criteria": 0.01,
@@ -320,7 +321,7 @@ for i in range(1, 6):
     SIMULATION_OPTIONS = {
         "flexible_aircraft": False,
         "status_messages": True,
-        "control_node_string": "left_aileron-TIP",
+        "control_node_string": "left_elevator-TIP",
         "max_iterations": 100,
         "bending_convergence_criteria": 0.01,
         "torsion_convergence_criteria": 0.01,
