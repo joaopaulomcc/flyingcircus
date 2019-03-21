@@ -454,8 +454,8 @@ for i, alpha in enumerate(alphas):
     #ax3.plot(flex_component[2]["y_values"], flex_component[2]["lift"], label=f"Flex - $\\alpha$ = {alpha}º", color=color_pallet[i+1])
     #ax3.plot(rig_component[2]["y_values"], rig_component[2]["lift"], label=f"Rig - $\\alpha$ = {alpha}º", linestyle="--", color=color_pallet[i+1])
 
-    ax3.plot(np.linspace(0,2.5,5), flex_component[2]["lift"], label=f"Flex - $\\alpha$ = {alpha}º", color=color_pallet[i+1])
-    ax3.plot(np.linspace(0,2.5,5), rig_component[2]["lift"], label=f"Rig - $\\alpha$ = {alpha}º", linestyle="--", color=color_pallet[i+1])
+    ax3.plot(np.linspace(0,2.5,5), flex_component[2]["y_force"] / 0.25, label=f"Flex - $\\alpha$ = {alpha}º", color=color_pallet[i+1])
+    ax3.plot(np.linspace(0,2.5,5), rig_component[2]["y_force"] / 0.25, label=f"Rig - $\\alpha$ = {alpha}º", linestyle="--", color=color_pallet[i+1])
 ax1.legend()
 ax2.legend()
 ax3.legend()
