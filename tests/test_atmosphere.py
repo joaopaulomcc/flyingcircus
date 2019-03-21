@@ -10,8 +10,8 @@ github: joaopaulomcc
 # ==================================================================================================
 # IMPORTS
 
-from context import src
-from src import atmosphere
+from context import flyingcircus
+from flyingcircus import atmosphere
 
 # ==================================================================================================
 # TESTS

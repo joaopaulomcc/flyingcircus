@@ -8,12 +8,12 @@ import numpy as np
 import scipy as sc
 import matplotlib.pyplot as plt
 
-from context import src
-from src import geometry as geo
-from src import visualization as vis
-from src import aerodynamics as aero
-from src import loads
-from src import structures as struct
+from context import flyingcircus
+from flyingcircus import geometry as geo
+from flyingcircus import visualization as vis
+from flyingcircus import aerodynamics as aero
+from flyingcircus import loads
+from flyingcircus import structures as struct
 
 
 # ==================================================================================================

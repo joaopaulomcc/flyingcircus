@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 
 from pyquaternion import Quaternion
 
-from context import src
-from src import geometry as geo
-from src import visualization as vis
+from context import flyingcircus
+from flyingcircus import geometry as geo
+from flyingcircus import visualization as vis
 
 
 def test_plot_node():

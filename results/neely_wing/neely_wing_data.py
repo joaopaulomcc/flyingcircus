@@ -25,9 +25,9 @@ Washington, May 1947
 import numpy as np
 
 # Import code sub packages
-from context import src
-from src import geometry as geo
-from src import structures as struct
+from context import flyingcircus
+from flyingcircus import geometry as geo
+from flyingcircus import structures as struct
 
 # ==================================================================================================
 # STRUCTURAL PROPERTIES

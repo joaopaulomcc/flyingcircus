@@ -10,7 +10,7 @@ Also demonstrates using the LinearLocator and custom formatting for the
 z axis tick labels.
 '''
 
-from context import src
+from context import flyingcircus
 from mpl_toolkits.mplot3d import Axes3D
 
 import matplotlib

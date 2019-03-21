@@ -3,16 +3,16 @@ import numpy as np
 import scipy as sc
 import matplotlib.pyplot as plt
 
-# SRC imports
-from context import src
-from src import atmosphere
-from src import basic_objects
-from src import finite_element_method
-from src import geometry
-from src import mesh
-from src import translator
-from src import vortex_lattice_method
-from src import visualization
+# flyingcircus imports
+from context import flyingcircus
+from flyingcircus import atmosphere
+from flyingcircus import basic_objects
+from flyingcircus import finite_element_method
+from flyingcircus import geometry
+from flyingcircus import mesh
+from flyingcircus import translator
+from flyingcircus import vortex_lattice_method
+from flyingcircus import visualization
 
 # Wing Properties
 wing_area = 20

@@ -21,10 +21,10 @@ import matplotlib.pyplot as plt
 from pyquaternion import Quaternion
 
 # Import code sub packages
-from context import src
-from src import geometry as geo
-from src import structures as struct
-from src import visualization as vis
+from context import flyingcircus
+from flyingcircus import geometry as geo
+from flyingcircus import structures as struct
+from flyingcircus import visualization as vis
 
 # ==================================================================================================
 # GEOMETRY DEFINITION

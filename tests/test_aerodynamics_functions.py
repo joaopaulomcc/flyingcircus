@@ -1,6 +1,6 @@
 import numpy as np
-from context import src
-from src import aerodynamics
+from context import flyingcircus
+from flyingcircus import aerodynamics
 
 # ==================================================================================================
 # FUNCTIONS

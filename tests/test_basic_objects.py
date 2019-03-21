@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 from numpy import sin, cos, tan, pi, dot, cross
 from numpy.linalg import norm
 
-from context import src
-from src import basic_objects
+from context import flyingcircus
+from flyingcircus import basic_objects
 
 # ==================================================================================================
 # TESTS
@@ -214,7 +214,7 @@ def test_structure():
              wing_left,
              wing_right,
              tail_vertical,
-             tail_horizontal_left, 
+             tail_horizontal_left,
              tail_horizontal_right]
 
     constraint = basic_objects.Constraint(1, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -227,7 +227,7 @@ def test_structure():
 
     aircraft_structure = basic_objects.Structure(structure_points, beams, loads, constraints)
     print(aircraft_structure.__dict__)
-    
+
 
 
 # ==================================================================================================

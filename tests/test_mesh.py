@@ -23,9 +23,9 @@ from mpl_toolkits.mplot3d import axes3d
 from numpy import sin, cos, tan, pi, dot, cross
 from numpy.linalg import norm
 
-from context import src
-from src import mesh
-from src import basic_objects
+from context import flyingcircus
+from flyingcircus import mesh
+from flyingcircus import basic_objects
 from samples import wing_simple
 # ==================================================================================================
 # TESTS

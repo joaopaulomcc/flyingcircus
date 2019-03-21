@@ -14,22 +14,22 @@ import time
 from numpy import sin, cos, tan, pi, dot, cross
 from numpy.linalg import norm
 
-from context import src
-from src import vortex_lattice_method
-from src import mesh
-from src import basic_objects
-from src import geometry
-from src import visualization
+from context import flyingcircus
+from flyingcircus import vortex_lattice_method
+from flyingcircus import mesh
+from flyingcircus import basic_objects
+from flyingcircus import geometry
+from flyingcircus import visualization
 from samples import wing_simple
 
 print(timeit.timeit('\
 import numpy as np \n\
-from context import src \n\
-from src import vortex_lattice_method \n\
-from src import mesh \n\
-from src import basic_objects \n\
-from src import geometry \n\
-from src import visualization \n\
+from context import flyingcircus \n\
+from flyingcircus import vortex_lattice_method \n\
+from flyingcircus import mesh \n\
+from flyingcircus import basic_objects \n\
+from flyingcircus import geometry \n\
+from flyingcircus import visualization \n\
 from samples import wing_simple \n\
 area = 20 \n\
 aspect_ratio = 5 \n\

@@ -18,8 +18,8 @@ from mpl_toolkits.mplot3d import axes3d
 from numpy import sin, cos, tan, pi, dot, cross
 from numpy.linalg import norm
 
-from context import src
-from src import geometry as geo
+from context import flyingcircus
+from flyingcircus import geometry as geo
 
 # ==================================================================================================
 # TESTS

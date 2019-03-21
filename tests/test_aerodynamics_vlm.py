@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from context import src
-from src import aerodynamics
-from src import geometry
-from src import visualization
+from context import flyingcircus
+from flyingcircus import aerodynamics
+from flyingcircus import geometry
+from flyingcircus import visualization
 
 # ==================================================================================================
 # FUNCTIONS
@@ -100,7 +100,7 @@ for mesh in wing_mesh:
 print()
 visualization.plot_3D.plot_results(wing_mesh, results)
 plt.show()
-    
+
 
 def test_create_panel_grid():
 
@@ -133,7 +133,7 @@ def test_gamma_solver():
     print("Gamma Vector:")
     for i, gamma in enumerate(gamma_vector):
         print(f"{i} : {gamma}")
-        
+
     gamma_grid = np.reshape(gamma_vector, np.shape(panel_grid))
     visualization.plot_3D.plot_results(wing_mesh, gamma_grid)
     plt.show()

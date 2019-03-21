@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from context import src
-from src import geometry
-from src import visualization
+from context import flyingcircus
+from flyingcircus import geometry
+from flyingcircus import visualization
 
 airfoil = "NACA0012"
 material = "Aluminium"

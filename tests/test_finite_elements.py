@@ -19,14 +19,14 @@ import time
 from numpy import sin, cos, tan, pi, dot, cross
 from numpy.linalg import norm
 
-from context import src
-from src import atmosphere
-from src import vortex_lattice_method
-from src import mesh
-from src import basic_objects
-from src import geometry
-from src import visualization
-from src import finite_element_method
+from context import flyingcircus
+from flyingcircus import atmosphere
+from flyingcircus import vortex_lattice_method
+from flyingcircus import mesh
+from flyingcircus import basic_objects
+from flyingcircus import geometry
+from flyingcircus import visualization
+from flyingcircus import finite_element_method
 
 from samples import wing_simple
 

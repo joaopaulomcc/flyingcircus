@@ -16,8 +16,8 @@ import matplotlib.pyplot as plt
 from numpy import sin, cos, tan, pi, dot, cross
 from numpy.linalg import norm
 
-from context import src
-from src import basic_elements
+from context import flyingcircus
+from flyingcircus import basic_elements
 
 import timeit
 # ==================================================================================================

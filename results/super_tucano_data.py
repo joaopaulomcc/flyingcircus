@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from context import src
-from src import geometry
-from src import visualization as vis
-from src import aerodynamics as aero
-from src import structures as struct
+from context import flyingcircus
+from flyingcircus import geometry
+from flyingcircus import visualization as vis
+from flyingcircus import aerodynamics as aero
+from flyingcircus import structures as struct
 
 # ==================================================================================================
 # ==================================================================================================

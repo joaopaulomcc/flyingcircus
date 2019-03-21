@@ -26,15 +26,15 @@ import pickle
 
 
 # Import code sub packages
-from context import src
-from src import aerodynamics as aero
-from src import aeroelasticity as aelast
-from src import control
-from src import flight_mechanics as flmec
-from src import geometry as geo
-from src import loads
-from src import structures as struct
-from src import visualization as vis
+from context import flyingcircus
+from flyingcircus import aerodynamics as aero
+from flyingcircus import aeroelasticity as aelast
+from flyingcircus import control
+from flyingcircus import flight_mechanics as flmec
+from flyingcircus import geometry as geo
+from flyingcircus import loads
+from flyingcircus import structures as struct
+from flyingcircus import visualization as vis
 
 # ==================================================================================================
 print()
