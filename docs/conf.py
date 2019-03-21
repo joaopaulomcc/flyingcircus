@@ -20,8 +20,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'flyingcircus'
-copyright = '2019, João Paulo Monteiro Cruvinel da Costa'
-author = 'João Paulo Monteiro Cruvinel da Costa'
+copyright = '2019, João Paulo Monteiro cruvine da Costa'
+author = 'João Paulo Monteiro cruvine da Costa'
 
 # The short X.Y version
 version = '0.1'
@@ -132,7 +132,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'flyingcircus.tex', 'flyingcircus Documentation',
-     'João Paulo Monteiro Cruvinel da Costa', 'manual'),
+     'João Paulo Monteiro cruvine da Costa', 'manual'),
 ]
 
 
