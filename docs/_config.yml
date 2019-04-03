@@ -1,5 +1,5 @@
 theme: jekyll-theme-minimal
-title: [Flying Circus]
-description: [A Python tool for the simulation of flexible aircraft]
-logo: [assets/imgs/logo.png]
-show_downloads: ["true"]
+title: Flying Circus
+description: A Python tool for the simulation of flexible aircraft
+logo: assets/imgs/logo.png
+show_downloads: "true"
