@@ -1,4 +1,3 @@
-from typing import AsyncIterable
 import numpy as np
 import scipy as sc
 import matplotlib.pyplot as plt
@@ -20,18 +19,32 @@ def read_selig_airfoil_data(airfoil_data_filepath):
 
     with open(airfoil_data_filepath, "r") as airfoil_data_file:
 
-        lines = airfoil_data_file.readlines()
+        try:
 
-        name = lines[0].strip()
+            lines = airfoil_data_file.readlines()
 
-        x = np.zeros(len(lines) - 1)
-        y = np.zeros(len(lines) - 1)
+            name = lines[0].strip()
 
-        for i, line in enumerate(lines[1:]):
-            x_data, y_data = line.split()
+            x = np.zeros(len(lines) - 1)
+            y = np.zeros(len(lines) - 1)
 
-            x[i] = float(x_data)
-            y[i] = float(y_data)
+            for i, line in enumerate(lines[1:]):
+
+                x_data, y_data = line.split()
+
+                if i == 0:
+                    if x_data != 1.0:
+                        raise ValueError
+
+                if i == len(lines - 1):
+                    if x_data != 1.0:
+                        raise ValueError
+
+                x[i] = float(x_data)
+                y[i] = float(y_data)
+
+        except Exception:
+            print("Airfoil file does not conform to the Selig format")
 
     return name, x, y
 
@@ -50,44 +63,57 @@ def read_lednicer_airfoil_data(airfoil_data_filepath):
 
     with open(airfoil_data_filepath, "r") as airfoil_data_file:
 
-        lines = airfoil_data_file.readlines()
+        try:
 
-        name = lines[0].strip()
+            lines = airfoil_data_file.readlines()
 
-        n_upper_points, n_lower_points = map(float, lines[1].split())
-        n_upper_points = int(n_upper_points)
-        n_lower_points = int(n_lower_points)
+            name = lines[0].strip()
 
-        x = np.zeros(n_upper_points + n_lower_points - 1)
-        y = np.zeros(n_upper_points + n_lower_points - 1)
+            n_upper_points, n_lower_points = map(float, lines[1].split())
+            n_upper_points = int(n_upper_points)
+            n_lower_points = int(n_lower_points)
 
-        upper_x = np.zeros(n_upper_points)
-        upper_y = np.zeros(n_lower_points)
+            if (n_upper_points <= 1) or (n_lower_points <= 1):
+                raise ValueError
 
-        lower_x = np.zeros(n_upper_points)
-        lower_y = np.zeros(n_lower_points)
+            x = np.zeros(n_upper_points + n_lower_points - 1)
+            y = np.zeros(n_upper_points + n_lower_points - 1)
 
-        for i in range(n_upper_points):
-            x_data, y_data = lines[3 + i].split()
+            upper_x = np.zeros(n_upper_points)
+            upper_y = np.zeros(n_lower_points)
 
-            upper_x[i] = float(x_data)
-            upper_y[i] = float(y_data)
+            lower_x = np.zeros(n_upper_points)
+            lower_y = np.zeros(n_lower_points)
 
-        for i in range(n_lower_points):
-            x_data, y_data = lines[4 + n_upper_points + i].split()
+            if (lines[2].strip() != "") or (lines[3 + n_upper_points].strip() != ""):
+                raise ValueError
 
-            lower_x[i] = float(x_data)
-            lower_y[i] = float(y_data)
+            for i in range(n_upper_points):
+                x_data, y_data = lines[3 + i].split()
 
-        for i, (x_value, y_value) in enumerate(zip(np.flip(upper_x), np.flip(upper_y))):
-            x[i] = x_value
-            y[i] = y_value
+                upper_x[i] = float(x_data)
+                upper_y[i] = float(y_data)
 
-        for i, (x_value, y_value) in enumerate(
-            zip(lower_x, lower_y), start=(n_upper_points - 1)
-        ):
-            x[i] = x_value
-            y[i] = y_value
+            for i in range(n_lower_points):
+                x_data, y_data = lines[4 + n_upper_points + i].split()
+
+                lower_x[i] = float(x_data)
+                lower_y[i] = float(y_data)
+
+            for i, (x_value, y_value) in enumerate(
+                zip(np.flip(upper_x), np.flip(upper_y))
+            ):
+                x[i] = x_value
+                y[i] = y_value
+
+            for i, (x_value, y_value) in enumerate(
+                zip(lower_x, lower_y), start=(n_upper_points - 1)
+            ):
+                x[i] = x_value
+                y[i] = y_value
+
+        except Exception:
+            print("Airfoil file does not conform to the Lednicer format")
 
     return name, x, y
 
@@ -166,6 +192,7 @@ def plot_airfoil(name, x, y, show_points=False):
     plt.show()
 
 
+# ======================================================================================
 if __name__ == "__main__":
 
     airfoil_folder = Path("data")
