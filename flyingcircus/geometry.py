@@ -33,11 +33,11 @@ def read_selig_airfoil_data(airfoil_data_filepath):
                 x_data, y_data = line.split()
 
                 if i == 0:
-                    if x_data != 1.0:
+                    if float(x_data) != 1.0:
                         raise ValueError
 
-                if i == len(lines - 1):
-                    if x_data != 1.0:
+                if i == len(lines) - 1:
+                    if float(x_data) != 1.0:
                         raise ValueError
 
                 x[i] = float(x_data)
@@ -45,6 +45,7 @@ def read_selig_airfoil_data(airfoil_data_filepath):
 
         except Exception:
             print("Airfoil file does not conform to the Selig format")
+            return None
 
     return name, x, y
 
@@ -114,6 +115,7 @@ def read_lednicer_airfoil_data(airfoil_data_filepath):
 
         except Exception:
             print("Airfoil file does not conform to the Lednicer format")
+            return None
 
     return name, x, y
 
@@ -195,7 +197,7 @@ def plot_airfoil(name, x, y, show_points=False):
 # ======================================================================================
 if __name__ == "__main__":
 
-    airfoil_folder = Path("data")
+    airfoil_folder = Path(r"D:\OneDrive\Projects\flyingcircus\flyingcircus\data")
 
     aifoil_files = airfoil_folder.glob("*.dat")
 
@@ -203,14 +205,19 @@ if __name__ == "__main__":
 
         print(airfoil_file.name)
 
-        name, x, y = read_airfoil_data(airfoil_file)
+        try:
 
-        print(name)
-        print()
+            name, x, y = read_airfoil_data(airfoil_file)
 
-        for x_value, y_value in zip(x, y):
-            print(f"{x_value:10.3}\t{y_value:10.3}")
+            print(name)
+            print()
 
-        print()
+            for x_value, y_value in zip(x, y):
+                print(f"{x_value:10.3}\t{y_value:10.3}")
 
-        plot_airfoil(name, x, y, show_points=False)
+            print()
+
+            plot_airfoil(name, x, y, show_points=False)
+
+        except Exception:
+            print("Oops!")
