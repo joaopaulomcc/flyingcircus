@@ -1,6 +1,5 @@
 import numpy as np
 import scipy as sc
-import matplotlib.pyplot as plt
 
 from pathlib import Path
 
@@ -162,62 +161,3 @@ def read_airfoil_data(airfoil_data_filepath):
             return None
 
     return name, x, y
-
-
-def plot_airfoil(name, x, y, show_points=False):
-
-    fig, ax = plt.subplots()
-    # Move the left and bottom spines to x = 0 and y = 0, respectively.
-    ax.spines["left"].set_position(("data", 0))
-    ax.spines["bottom"].set_position(("data", 0))
-    # Hide the top and right spines.
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-
-    # Draw arrows (as black triangles: ">k"/"^k") at the end of the axes.  In each
-    # case, one of the coordinates (0) is a data coordinate (i.e., y = 0 or x = 0,
-    # respectively) and the other one (1) is an axes coordinate (i.e., at the very
-    # right/top of the axes).  Also, disable clipping (clip_on=False) as the marker
-    # actually spills out of the axes.
-    ax.plot(1, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
-    ax.plot(0, 1, "^k", transform=ax.get_xaxis_transform(), clip_on=False)
-
-    ax.plot(x, y)
-    ax.set_title(name)
-    ax.set_xlabel("$x$")
-    ax.set_ylabel("$y$")
-    ax.axis("equal")
-
-    if show_points:
-        ax.scatter(x, y)
-
-    plt.show()
-
-
-# ======================================================================================
-if __name__ == "__main__":
-
-    airfoil_folder = Path(r"D:\OneDrive\Projects\flyingcircus\flyingcircus\data")
-
-    aifoil_files = airfoil_folder.glob("*.dat")
-
-    for airfoil_file in aifoil_files:
-
-        print(airfoil_file.name)
-
-        try:
-
-            name, x, y = read_airfoil_data(airfoil_file)
-
-            print(name)
-            print()
-
-            for x_value, y_value in zip(x, y):
-                print(f"{x_value:10.3}\t{y_value:10.3}")
-
-            print()
-
-            plot_airfoil(name, x, y, show_points=False)
-
-        except Exception:
-            print("Oops!")
